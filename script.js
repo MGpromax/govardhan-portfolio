@@ -67,10 +67,10 @@ const elementDataCache = new WeakMap();
 // INITIALIZATION - Uses requestIdleCallback for non-critical tasks
 // ============================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Critical path - render blocking
     initNavigation();
-    initImageUploads();
+    await initImageUploads();
     initPhotoEditor();
 
     // Non-critical - defer to idle time
