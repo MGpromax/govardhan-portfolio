@@ -44,6 +44,24 @@
         </div>
     </nav>
 
+    <!-- Upload Progress Overlay -->
+    <div class="upload-progress-overlay" id="upload-progress-overlay">
+        <div class="upload-progress-content">
+            <div class="upload-spinner"></div>
+            <h3 id="upload-status">Processing...</h3>
+            <div class="upload-progress-bar">
+                <div class="upload-progress-fill" id="upload-progress-fill"></div>
+            </div>
+            <p class="upload-progress-text" id="upload-progress-text">Reading file...</p>
+            <div class="upload-steps">
+                <div class="upload-step" id="step-read"><i class="fas fa-file-image"></i> Reading file</div>
+                <div class="upload-step" id="step-process"><i class="fas fa-cog"></i> Processing</div>
+                <div class="upload-step" id="step-save"><i class="fas fa-save"></i> Saving</div>
+                <div class="upload-step" id="step-verify"><i class="fas fa-check-circle"></i> Verifying</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Admin Login Button (floating) -->
     <button class="admin-login-btn" id="admin-login-btn" title="Admin Login">
         <i class="fas fa-lock"></i>

@@ -548,6 +548,105 @@ function showToast(message) {
 }
 
 /* ============================================
+   UPLOAD PROGRESS TRACKING
+   ============================================ */
+
+const uploadProgress = {
+    overlay: null,
+    status: null,
+    progressFill: null,
+    progressText: null,
+    steps: {}
+};
+
+function initUploadProgress() {
+    uploadProgress.overlay = document.getElementById('upload-progress-overlay');
+    uploadProgress.status = document.getElementById('upload-status');
+    uploadProgress.progressFill = document.getElementById('upload-progress-fill');
+    uploadProgress.progressText = document.getElementById('upload-progress-text');
+    uploadProgress.steps = {
+        read: document.getElementById('step-read'),
+        process: document.getElementById('step-process'),
+        save: document.getElementById('step-save'),
+        verify: document.getElementById('step-verify')
+    };
+}
+
+function showUploadProgress(message = 'Processing...') {
+    if (!uploadProgress.overlay) initUploadProgress();
+
+    // Reset all steps
+    Object.values(uploadProgress.steps).forEach(step => {
+        if (step) {
+            step.classList.remove('active', 'done', 'error');
+        }
+    });
+
+    uploadProgress.overlay.classList.remove('success', 'error');
+    uploadProgress.overlay.classList.add('active');
+    uploadProgress.status.textContent = message;
+    uploadProgress.progressFill.style.width = '0%';
+    uploadProgress.progressText.textContent = 'Starting...';
+}
+
+function updateUploadProgress(step, progress, text) {
+    if (!uploadProgress.overlay) return;
+
+    uploadProgress.progressFill.style.width = progress + '%';
+    uploadProgress.progressText.textContent = text;
+
+    // Update step indicators
+    const stepOrder = ['read', 'process', 'save', 'verify'];
+    const currentIndex = stepOrder.indexOf(step);
+
+    stepOrder.forEach((s, index) => {
+        if (uploadProgress.steps[s]) {
+            if (index < currentIndex) {
+                uploadProgress.steps[s].classList.remove('active');
+                uploadProgress.steps[s].classList.add('done');
+            } else if (index === currentIndex) {
+                uploadProgress.steps[s].classList.add('active');
+                uploadProgress.steps[s].classList.remove('done');
+            } else {
+                uploadProgress.steps[s].classList.remove('active', 'done');
+            }
+        }
+    });
+}
+
+function completeUploadProgress(success = true, message = 'Complete!') {
+    if (!uploadProgress.overlay) return;
+
+    uploadProgress.progressFill.style.width = '100%';
+    uploadProgress.status.textContent = message;
+
+    if (success) {
+        uploadProgress.overlay.classList.add('success');
+        uploadProgress.progressText.textContent = 'Image loaded and verified!';
+        Object.values(uploadProgress.steps).forEach(step => {
+            if (step) {
+                step.classList.remove('active');
+                step.classList.add('done');
+            }
+        });
+    } else {
+        uploadProgress.overlay.classList.add('error');
+        uploadProgress.progressText.textContent = 'Upload failed!';
+    }
+
+    // Auto close after delay
+    setTimeout(() => {
+        hideUploadProgress();
+    }, success ? 1500 : 3000);
+}
+
+function hideUploadProgress() {
+    if (uploadProgress.overlay) {
+        uploadProgress.overlay.classList.remove('active', 'success', 'error');
+    }
+}
+
+/* ============================================
    PHOTO EDITOR - Heavily Optimized
    ============================================ */
 const photoEditor = {
@@ -1493,52 +1592,84 @@ function saveAndApply() {
         return;
     }
 
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    const canvas = photoEditor.canvas;
+    // Show progress overlay
+    showUploadProgress('Saving Photo...');
+    updateUploadProgress('read', 10, 'Reading edited image...');
 
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
+    // Small delay to show UI
+    setTimeout(() => {
+        updateUploadProgress('process', 30, 'Processing image...');
 
-    tempCtx.filter = canvas.style.filter || 'none';
-    tempCtx.drawImage(canvas, 0, 0);
-    tempCtx.filter = 'none';
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const canvas = photoEditor.canvas;
 
-    photoEditor.elements.forEach((el) => {
-        if (el.type === 'sticker') {
-            tempCtx.font = `${el.size}px Arial`;
-            tempCtx.textAlign = 'center';
-            tempCtx.textBaseline = 'middle';
-            tempCtx.fillText(el.content, el.x, el.y);
-        } else if (el.type === 'text') {
-            tempCtx.font = `bold ${el.size}px Poppins, Arial`;
-            tempCtx.fillStyle = el.color;
-            tempCtx.textAlign = 'center';
-            tempCtx.textBaseline = 'middle';
-            tempCtx.strokeStyle = 'black';
-            tempCtx.lineWidth = 3;
-            tempCtx.strokeText(el.content, el.x, el.y);
-            tempCtx.fillText(el.content, el.x, el.y);
-        }
-    });
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
 
-    const finalImage = tempCanvas.toDataURL('image/png');
+        tempCtx.filter = canvas.style.filter || 'none';
+        tempCtx.drawImage(canvas, 0, 0);
+        tempCtx.filter = 'none';
 
-    currentTargetImage.imgElement.src = finalImage;
-    currentTargetImage.imgElement.style.display = 'block';
-    localStorage.setItem(currentTargetImage.imgId, finalImage);
+        photoEditor.elements.forEach((el) => {
+            if (el.type === 'sticker') {
+                tempCtx.font = `${el.size}px Arial`;
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                tempCtx.fillText(el.content, el.x, el.y);
+            } else if (el.type === 'text') {
+                tempCtx.font = `bold ${el.size}px Poppins, Arial`;
+                tempCtx.fillStyle = el.color;
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                tempCtx.strokeStyle = 'black';
+                tempCtx.lineWidth = 3;
+                tempCtx.strokeText(el.content, el.x, el.y);
+                tempCtx.fillText(el.content, el.x, el.y);
+            }
+        });
 
-    if (currentTargetImage.defaultAvatar) {
-        currentTargetImage.defaultAvatar.style.display = 'none';
-    }
+        updateUploadProgress('save', 60, 'Saving to storage...');
 
-    if (currentTargetImage.isGallery) {
-        const galleryItem = currentTargetImage.imgElement.closest('.gallery-item');
-        if (galleryItem) galleryItem.classList.add('has-image');
-    }
+        setTimeout(() => {
+            const finalImage = tempCanvas.toDataURL('image/png');
 
-    showToast('Photo saved successfully!');
-    closePhotoEditor();
+            try {
+                localStorage.setItem(currentTargetImage.imgId, finalImage);
+                updateUploadProgress('verify', 80, 'Verifying image loaded...');
+
+                // Verify image actually loads
+                const testImg = new Image();
+                testImg.onload = function() {
+                    // Update actual display
+                    currentTargetImage.imgElement.src = finalImage;
+                    currentTargetImage.imgElement.style.display = 'block';
+
+                    if (currentTargetImage.defaultAvatar) {
+                        currentTargetImage.defaultAvatar.style.display = 'none';
+                    }
+
+                    if (currentTargetImage.isGallery) {
+                        const galleryItem = currentTargetImage.imgElement.closest('.gallery-item');
+                        if (galleryItem) galleryItem.classList.add('has-image');
+                    }
+
+                    completeUploadProgress(true, 'Photo Saved!');
+                    closePhotoEditor();
+                };
+
+                testImg.onerror = function() {
+                    completeUploadProgress(false, 'Error Loading Image');
+                };
+
+                testImg.src = finalImage;
+
+            } catch (err) {
+                completeUploadProgress(false, 'Storage Full!');
+                console.error('Save error:', err);
+            }
+        }, 300);
+    }, 200);
 }
 
 /* ============================================
