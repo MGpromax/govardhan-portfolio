@@ -67,6 +67,23 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal (for viewing images in high quality) -->
+    <div class="image-lightbox" id="image-lightbox">
+        <button class="lightbox-close" id="lightbox-close">
+            <i class="fas fa-times"></i>
+        </button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="lightbox-content">
+            <img id="lightbox-img" src="" alt="Full size image">
+        </div>
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+
     <!-- Profile Fullscreen Modal with Music -->
     <div class="profile-fullscreen-modal" id="profile-fullscreen-modal">
         <button class="close-fullscreen" id="close-fullscreen">
@@ -157,11 +174,11 @@
         <div class="about-content">
             <div class="about-image">
                 <div class="image-frame">
-                    <img id="about-pic" src="" alt="Govardhan thinking">
-                    <label for="about-upload" class="upload-btn-small">
+                    <img id="about-pic" src="" alt="Govardhan thinking" class="clickable-img">
+                    <label for="about-upload" class="upload-btn-small admin-only">
                         <i class="fas fa-plus"></i>
                     </label>
-                    <input type="file" id="about-upload" accept="image/*" hidden>
+                    <input type="file" id="about-upload" accept="image/*,video/*" hidden>
                 </div>
                 <div class="floating-card card-1">
                     <i class="fas fa-bed"></i>
@@ -360,57 +377,57 @@
         </div>
         <div class="gallery-grid">
             <div class="gallery-item large">
-                <img id="gallery-1" src="" alt="Gallery photo 1">
-                <label for="gallery-upload-1" class="gallery-upload-btn">
+                <img id="gallery-1" src="" alt="Gallery photo 1" class="gallery-img">
+                <label for="gallery-upload-1" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-1" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-1" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">Main suspect in the crime of laziness</div>
             </div>
             <div class="gallery-item">
-                <img id="gallery-2" src="" alt="Gallery photo 2">
-                <label for="gallery-upload-2" class="gallery-upload-btn">
+                <img id="gallery-2" src="" alt="Gallery photo 2" class="gallery-img">
+                <label for="gallery-upload-2" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-2" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-2" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">Caught in his natural habitat</div>
             </div>
             <div class="gallery-item">
-                <img id="gallery-3" src="" alt="Gallery photo 3">
-                <label for="gallery-upload-3" class="gallery-upload-btn">
+                <img id="gallery-3" src="" alt="Gallery photo 3" class="gallery-img">
+                <label for="gallery-upload-3" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-3" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-3" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">Rare photo of him awake</div>
             </div>
             <div class="gallery-item">
-                <img id="gallery-4" src="" alt="Gallery photo 4">
-                <label for="gallery-upload-4" class="gallery-upload-btn">
+                <img id="gallery-4" src="" alt="Gallery photo 4" class="gallery-img">
+                <label for="gallery-upload-4" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-4" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-4" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">Pretending to work</div>
             </div>
             <div class="gallery-item">
-                <img id="gallery-5" src="" alt="Gallery photo 5">
-                <label for="gallery-upload-5" class="gallery-upload-btn">
+                <img id="gallery-5" src="" alt="Gallery photo 5" class="gallery-img">
+                <label for="gallery-upload-5" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-5" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-5" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">Probably sleeping somewhere</div>
             </div>
             <div class="gallery-item tall">
-                <img id="gallery-6" src="" alt="Gallery photo 6">
-                <label for="gallery-upload-6" class="gallery-upload-btn">
+                <img id="gallery-6" src="" alt="Gallery photo 6" class="gallery-img">
+                <label for="gallery-upload-6" class="gallery-upload-btn admin-only">
                     <i class="fas fa-plus"></i>
                     <span>Add Photo</span>
                 </label>
-                <input type="file" id="gallery-upload-6" accept="image/*" hidden>
+                <input type="file" id="gallery-upload-6" accept="image/*,video/*" hidden>
                 <div class="gallery-caption">The legend himself</div>
             </div>
         </div>

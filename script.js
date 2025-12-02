@@ -311,15 +311,9 @@ function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = n
     input.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showToast('Please select an image file!');
-                return;
-            }
-
-            // Validate file size (max 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                showToast('Image too large! Max 10MB.');
+            // Validate file type (allow images and videos)
+            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                showToast('Please select an image or video file!');
                 return;
             }
 
@@ -1993,12 +1987,6 @@ function initMusicUpload() {
             return;
         }
 
-        // Validate file size (max 15MB for audio)
-        if (file.size > 15 * 1024 * 1024) {
-            showToast('Audio file too large! Max 15MB.');
-            return;
-        }
-
         // Show loading state
         musicStatus.textContent = 'Uploading...';
 
@@ -2055,9 +2043,152 @@ function initMusicUpload() {
     }
 }
 
+/* ============================================
+   IMAGE LIGHTBOX - High Quality Viewing
+   ============================================ */
+
+function initLightbox() {
+    const lightbox = document.getElementById('image-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const closeBtn = document.getElementById('lightbox-close');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+
+    if (!lightbox) return;
+
+    // Collect all gallery images
+    let galleryImages = [];
+    let currentIndex = 0;
+
+    function updateGalleryImages() {
+        galleryImages = [];
+        // Get all gallery images that have a source
+        document.querySelectorAll('.gallery-img').forEach((img, index) => {
+            if (img.src && img.style.display !== 'none') {
+                const caption = img.closest('.gallery-item')?.querySelector('.gallery-caption')?.textContent || '';
+                galleryImages.push({
+                    src: img.src,
+                    caption: caption,
+                    element: img
+                });
+            }
+        });
+        // Also add about image if exists
+        const aboutImg = document.getElementById('about-pic');
+        if (aboutImg && aboutImg.src && aboutImg.style.display !== 'none') {
+            galleryImages.push({
+                src: aboutImg.src,
+                caption: 'The Legend Himself',
+                element: aboutImg
+            });
+        }
+    }
+
+    function openLightbox(imgSrc, caption, index) {
+        updateGalleryImages();
+        currentIndex = index;
+        lightboxImg.src = imgSrc;
+        lightboxCaption.textContent = caption;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Show/hide nav buttons based on gallery size
+        if (galleryImages.length > 1) {
+            prevBtn.style.display = 'flex';
+            nextBtn.style.display = 'flex';
+        } else {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        }
+    }
+
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function showPrev() {
+        if (galleryImages.length === 0) return;
+        currentIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
+        lightboxImg.src = galleryImages[currentIndex].src;
+        lightboxCaption.textContent = galleryImages[currentIndex].caption;
+    }
+
+    function showNext() {
+        if (galleryImages.length === 0) return;
+        currentIndex = (currentIndex + 1) % galleryImages.length;
+        lightboxImg.src = galleryImages[currentIndex].src;
+        lightboxCaption.textContent = galleryImages[currentIndex].caption;
+    }
+
+    // Click on gallery images to open lightbox
+    document.querySelectorAll('.gallery-img').forEach((img) => {
+        img.addEventListener('click', (e) => {
+            // Don't open lightbox in admin mode when clicking upload area
+            if (document.body.classList.contains('admin-mode') && !img.src) return;
+            if (!img.src || img.style.display === 'none') return;
+
+            updateGalleryImages();
+            const index = galleryImages.findIndex(g => g.element === img);
+            const caption = img.closest('.gallery-item')?.querySelector('.gallery-caption')?.textContent || '';
+            openLightbox(img.src, caption, index >= 0 ? index : 0);
+        });
+    });
+
+    // Click on about image
+    const aboutImg = document.getElementById('about-pic');
+    if (aboutImg) {
+        aboutImg.addEventListener('click', () => {
+            if (!aboutImg.src || aboutImg.style.display === 'none') return;
+            updateGalleryImages();
+            const index = galleryImages.findIndex(g => g.element === aboutImg);
+            openLightbox(aboutImg.src, 'The Legend Himself', index >= 0 ? index : 0);
+        });
+    }
+
+    // Close button
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+
+    // Nav buttons
+    if (prevBtn) prevBtn.addEventListener('click', showPrev);
+    if (nextBtn) nextBtn.addEventListener('click', showNext);
+
+    // Close on background click
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showPrev();
+        if (e.key === 'ArrowRight') showNext();
+    });
+
+    // Swipe support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    lightbox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) showNext();
+            else showPrev();
+        }
+    }, { passive: true });
+}
+
 // Initialize new features on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
     initAdminSystem();
     initProfileFullscreen();
     initMusicUpload();
+    initLightbox();
 });
