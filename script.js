@@ -2043,13 +2043,14 @@ function disableAdminMode() {
 
 function initProfileFullscreen() {
     const profileClickable = document.getElementById('profile-clickable');
+    const aboutPic = document.getElementById('about-pic');
     const fullscreenModal = document.getElementById('profile-fullscreen-modal');
     const closeBtn = document.getElementById('close-fullscreen');
     const fullscreenImg = document.getElementById('fullscreen-profile-img');
     const profilePic = document.getElementById('profile-pic');
     const themeSong = document.getElementById('theme-song');
 
-    if (!profileClickable || !fullscreenModal) return;
+    if (!fullscreenModal) return;
 
     // Load music from Firebase on init
     const media = getMedia();
@@ -2057,18 +2058,14 @@ function initProfileFullscreen() {
         themeSong.src = media.music;
     }
 
-    // Click on profile (only when not in admin mode)
-    profileClickable.addEventListener('click', (e) => {
-        // Don't open fullscreen in admin mode or if clicking on upload/remove buttons
-        if (document.body.classList.contains('admin-mode')) return;
-        if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
-        if (e.target.closest('input[type="file"]')) return;
+    // Long press timer
+    let pressTimer = null;
+    let isLongPress = false;
 
-        // Check if there's a profile image
-        const media = getMedia();
-        const imgSrc = media.profile || profilePic.src;
-        if (!imgSrc || imgSrc === '' || profilePic.style.display === 'none') {
-            showToast('No profile photo yet!');
+    // Function to open fullscreen with music
+    function openFullscreenWithMusic(imgSrc) {
+        if (!imgSrc || imgSrc === '') {
+            showToast('No photo yet!');
             return;
         }
 
@@ -2082,7 +2079,7 @@ function initProfileFullscreen() {
         // Add spinning animation
         fullscreenImg.classList.add('spinning');
 
-        // Play music (user interaction allows autoplay)
+        // Play music
         const currentMedia = getMedia();
         if (themeSong && currentMedia.music) {
             themeSong.src = currentMedia.music;
@@ -2091,7 +2088,74 @@ function initProfileFullscreen() {
                 console.log('Audio autoplay blocked:', err);
             });
         }
-    });
+    }
+
+    // Long press handlers for profile photo
+    if (profileClickable) {
+        // Mouse events
+        profileClickable.addEventListener('mousedown', (e) => {
+            if (document.body.classList.contains('admin-mode')) return;
+            if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
+            if (e.target.closest('input[type="file"]')) return;
+
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                const media = getMedia();
+                const imgSrc = media.profile || profilePic.src;
+                openFullscreenWithMusic(imgSrc);
+            }, 3000); // 3 seconds
+        });
+
+        profileClickable.addEventListener('mouseup', () => {
+            clearTimeout(pressTimer);
+        });
+
+        profileClickable.addEventListener('mouseleave', () => {
+            clearTimeout(pressTimer);
+        });
+
+        // Touch events for mobile
+        profileClickable.addEventListener('touchstart', (e) => {
+            if (document.body.classList.contains('admin-mode')) return;
+            if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
+            if (e.target.closest('input[type="file"]')) return;
+
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                const media = getMedia();
+                const imgSrc = media.profile || profilePic.src;
+                openFullscreenWithMusic(imgSrc);
+            }, 3000);
+        }, { passive: true });
+
+        profileClickable.addEventListener('touchend', () => {
+            clearTimeout(pressTimer);
+        });
+
+        profileClickable.addEventListener('touchcancel', () => {
+            clearTimeout(pressTimer);
+        });
+    }
+
+    // About pic - single click to view fullscreen (no music)
+    if (aboutPic) {
+        aboutPic.addEventListener('click', () => {
+            if (document.body.classList.contains('admin-mode')) return;
+            const media = getMedia();
+            const imgSrc = media.about || aboutPic.src;
+            if (!imgSrc || imgSrc === '') {
+                showToast('No photo yet!');
+                return;
+            }
+
+            fullscreenImg.src = imgSrc;
+            fullscreenModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // No spinning or music for about pic
+        });
+    }
 
     // Close fullscreen
     if (closeBtn) {
