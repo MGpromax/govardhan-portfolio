@@ -264,8 +264,25 @@ function initTypewriter() {
 
 /* ============================================
    IMAGE UPLOADS - Opens Photo Editor
+   Loads from GitHub images/ folder first, then localStorage
    ============================================ */
 let currentTargetImage = null;
+
+// Image configuration - maps image IDs to filenames in images/ folder
+// Admin: Update these filenames after adding images to the images/ folder
+const IMAGE_CONFIG = {
+    'profile-pic': 'profile.jpg',      // images/profile.jpg
+    'about-pic': '',                    // images/about.jpg (add filename when ready)
+    'gallery-1': '',                    // images/gallery-1.jpg
+    'gallery-2': '',                    // images/gallery-2.jpg
+    'gallery-3': '',                    // images/gallery-3.jpg
+    'gallery-4': '',                    // images/gallery-4.jpg
+    'gallery-5': '',                    // images/gallery-5.jpg
+    'gallery-6': ''                     // images/gallery-6.jpg
+};
+
+// Theme song filename (add to images/ folder)
+const THEME_SONG_FILE = '';  // e.g., 'theme-song.mp3'
 
 function initImageUploads() {
     setupImageUpload('profile-upload', 'profile-pic', false, 'default-avatar-main', 'remove-profile-pic');
@@ -332,9 +349,21 @@ function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = n
         });
     }
 
-    // Load saved image from localStorage
+    // Load image: First check GitHub images/ folder, then localStorage
+    const githubImage = IMAGE_CONFIG[imgId];
     const savedImage = localStorage.getItem(imgId);
-    if (savedImage) {
+
+    if (githubImage) {
+        // Load from GitHub images/ folder (visible to everyone)
+        img.src = 'images/' + githubImage;
+        img.style.display = 'block';
+        if (defaultAvatar) defaultAvatar.style.display = 'none';
+        if (isGallery) {
+            const galleryItem = img.closest('.gallery-item');
+            if (galleryItem) galleryItem.classList.add('has-image');
+        }
+    } else if (savedImage) {
+        // Fallback to localStorage (only visible to admin's browser)
         img.src = savedImage;
         img.style.display = 'block';
         if (defaultAvatar) defaultAvatar.style.display = 'none';
@@ -1926,13 +1955,22 @@ function initMusicUpload() {
 
     if (!musicUploadBtn || !musicUploadInput) return;
 
-    // Load saved music from localStorage on page load
-    const savedMusic = localStorage.getItem('theme-song');
-    if (savedMusic) {
-        themeSong.src = savedMusic;
+    // Load music: First check GitHub images/ folder, then localStorage
+    if (THEME_SONG_FILE) {
+        // Load from GitHub images/ folder (everyone hears same song)
+        themeSong.src = 'images/' + THEME_SONG_FILE;
         musicUploadBtn.classList.add('has-song');
         musicStatus.textContent = 'Theme Song Ready';
         if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
+    } else {
+        // Fallback to localStorage
+        const savedMusic = localStorage.getItem('theme-song');
+        if (savedMusic) {
+            themeSong.src = savedMusic;
+            musicUploadBtn.classList.add('has-song');
+            musicStatus.textContent = 'Theme Song Ready';
+            if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
+        }
     }
 
     // Click to upload music
