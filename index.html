@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="description" content="Govardhan HL - Professional Time Waster, CEO of Procrastination, Master of Excuses. A sarcastic portfolio website.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Govardhan HL | Professional Time Waster</title>
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Cropper.js - Professional image cropping library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <div id="particles"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-logo">
+            <span class="logo-text">G<span class="highlight">.</span>HL</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#skills">Skills</a></li>
+            <li><a href="#achievements">Achievements</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Admin Login Button (floating) -->
+    <button class="admin-login-btn" id="admin-login-btn" title="Admin Login">
+        <i class="fas fa-lock"></i>
+    </button>
+
+    <!-- Admin Login Modal (Firebase Authentication) -->
+    <div class="admin-modal" id="admin-modal">
+        <div class="admin-modal-content">
+            <h3><i class="fas fa-user-shield"></i> Admin Access</h3>
+            <p>Secure login with Firebase Authentication</p>
+            <input type="email" id="admin-email" placeholder="Email address..." autocomplete="email">
+            <input type="password" id="admin-password" placeholder="Password..." autocomplete="current-password">
+            <div class="admin-buttons">
+                <button class="admin-btn cancel" id="admin-cancel">Cancel</button>
+                <button class="admin-btn login" id="admin-submit">Login</button>
+            </div>
+            <p class="admin-error" id="admin-error" style="display: none;"></p>
+            <p class="admin-security-note">
+                <i class="fas fa-shield-alt"></i> Protected by Google Firebase
+            </p>
+        </div>
+    </div>
+
+    <!-- Profile Fullscreen Modal with Music -->
+    <div class="profile-fullscreen-modal" id="profile-fullscreen-modal">
+        <button class="close-fullscreen" id="close-fullscreen">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="fullscreen-content">
+            <div class="fullscreen-image-container">
+                <img id="fullscreen-profile-img" src="" alt="Govardhan HL">
+            </div>
+            <h2 class="fullscreen-name">GOVARDHAN HL</h2>
+            <p class="fullscreen-title">Professional Time Waster</p>
+            <div class="music-player">
+                <div class="music-visualizer">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <p class="now-playing">🎵 Theme Song Playing...</p>
+            </div>
+        </div>
+        <!-- Hidden audio element -->
+        <audio id="theme-song" loop>
+            <source src="theme-song.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="profile-container">
+                <div class="profile-pic-wrapper" id="profile-clickable">
+                    <div class="default-avatar" id="default-avatar-main">
+                        <i class="fas fa-user"></i>
+                        <span>Add Photo</span>
+                    </div>
+                    <img id="profile-pic" src="" alt="Govardhan HL" class="profile-pic" style="display: none;">
+                    <button class="remove-photo-btn admin-only" id="remove-profile-pic" title="Remove Photo" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <label for="profile-upload" class="upload-overlay admin-only" style="display: none;">
+                        <i class="fas fa-camera"></i>
+                        <span>Upload Photo</span>
+                    </label>
+                    <input type="file" id="profile-upload" accept="image/*" hidden>
+                    <div class="click-hint" id="click-hint">
+                        <i class="fas fa-hand-pointer"></i> Tap to view
+                    </div>
+                </div>
+                <div class="status-badge">
+                    <span class="pulse"></span>
+                    Currently: Doing Nothing
+                </div>
+                <!-- Music Upload Section (Admin Only) -->
+                <div class="music-upload-section admin-only" id="music-upload-section">
+                    <div class="music-upload-btn" id="music-upload-btn">
+                        <i class="fas fa-music"></i>
+                        <span id="music-status">Add Theme Song</span>
+                    </div>
+                    <input type="file" id="music-upload" accept="audio/*" hidden>
+                    <button class="remove-music-btn" id="remove-music" title="Remove Song" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="hero-text">
+                <p class="greeting">Oh look, you found the legend...</p>
+                <h1 class="glitch" data-text="GOVARDHAN HL">GOVARDHAN HL</h1>
+                <div class="typewriter">
+                    <span id="typed-text"></span><span class="cursor">|</span>
+                </div>
+                <p class="tagline">"Why do today what you can postpone indefinitely?"</p>
+                <div class="hero-buttons">
+                    <a href="#about" class="btn btn-primary">Discover the Legend</a>
+                    <a href="#contact" class="btn btn-secondary">Waste His Time</a>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll if you dare</span>
+            <i class="fas fa-chevron-down bounce"></i>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="section-header">
+            <span class="section-tag">WHO IS THIS GUY?</span>
+            <h2>About <span class="highlight">The Legend</span></h2>
+        </div>
+        <div class="about-content">
+            <div class="about-image">
+                <div class="image-frame">
+                    <img id="about-pic" src="" alt="Govardhan thinking">
+                    <label for="about-upload" class="upload-btn-small">
+                        <i class="fas fa-plus"></i>
+                    </label>
+                    <input type="file" id="about-upload" accept="image/*" hidden>
+                </div>
+                <div class="floating-card card-1">
+                    <i class="fas fa-bed"></i>
+                    <span>Sleep Expert</span>
+                </div>
+                <div class="floating-card card-2">
+                    <i class="fas fa-utensils"></i>
+                    <span>Food Vanisher</span>
+                </div>
+            </div>
+            <div class="about-text">
+                <h3>The Man, The Myth, The <span class="strikethrough">Legend</span> Liability</h3>
+                <p class="intro-text">
+                    Meet <strong>Govardhan HL</strong> – a rare specimen of humanity who has mastered the ancient art of
+                    <em>doing absolutely nothing</em> while looking extremely busy. A proud <strong>Computer Science graduate (2024)</strong>
+                    who somehow convinced a university to let him pursue <strong>MTech in Cybersecurity (2024-26)</strong>.
+                    Yes, the guy who can't even secure his own snacks is now learning to secure systems. God help us all.
+                </p>
+                <div class="fun-facts">
+                    <h4><i class="fas fa-star"></i> Fun Facts (100% Verified*)</h4>
+                    <ul>
+                        <li><i class="fas fa-clock"></i> Has been "5 minutes away" for the last 3 years</li>
+                        <li><i class="fas fa-wallet"></i> Wallet goes missing whenever the bill arrives</li>
+                        <li><i class="fas fa-moon"></i> Can sleep through earthquakes, alarms, and responsibilities</li>
+                        <li><i class="fas fa-hamburger"></i> Food around him mysteriously disappears</li>
+                        <li><i class="fas fa-phone"></i> Phone dies only when someone asks for money back</li>
+                        <li><i class="fas fa-brain"></i> Memory works perfectly except for debts</li>
+                    </ul>
+                    <p class="disclaimer">*Verified by everyone who knows him</p>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="99">0</span>
+                        <span class="stat-label">% Excuses Success Rate</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="0">0</span>
+                        <span class="stat-label">Debts Returned</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="1000">0</span>
+                        <span class="stat-label">+ Hours Slept</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="skills">
+        <div class="section-header">
+            <span class="section-tag">WHAT CAN HE DO?</span>
+            <h2>Professional <span class="highlight">Skills</span></h2>
+            <p class="section-subtitle">Expertise level: <em>Trust me bro</em></p>
+        </div>
+        <div class="skills-container">
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-bed"></i></div>
+                <h3>Sleeping</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>Can sleep anywhere, anytime. Meetings, classes, standing up - you name it!</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-comment-slash"></i></div>
+                <h3>Making Excuses</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="98"></div>
+                </div>
+                <p>Creative excuse generation that would make Shakespeare jealous.</p>
+                <span class="skill-level">MASTER</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-clock"></i></div>
+                <h3>Being Late</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>Fashionably late? No. Chaotically late? Always. IST = Indian Stretchable Time</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                <h3>Borrowing Money</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="95"></div>
+                </div>
+                <p>Professional borrower with 0% return rate. Investors hate this one trick!</p>
+                <span class="skill-level">EXPERT</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-utensils"></i></div>
+                <h3>Eating Free Food</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>Has a sixth sense for detecting free food within a 5km radius.</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-ghost"></i></div>
+                <h3>Disappearing</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="97"></div>
+                </div>
+                <p>Vanishes faster than your WiFi when you need it most. Especially when bills arrive.</p>
+                <span class="skill-level">NINJA</span>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon"><i class="fas fa-user-secret"></i></div>
+                <h3>Cybersecurity</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="15"></div>
+                </div>
+                <p>MTech student who still uses "123456" as password. Can hack into the fridge but not his own motivation.</p>
+                <span class="skill-level">LOADING...</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section id="achievements" class="achievements">
+        <div class="section-header">
+            <span class="section-tag">HALL OF FAME</span>
+            <h2>Legendary <span class="highlight">Achievements</span></h2>
+            <p class="section-subtitle">Awards nobody asked for</p>
+        </div>
+        <div class="timeline">
+            <div class="timeline-item left">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-shield-alt"></i></div>
+                    <span class="year">2024-26</span>
+                    <h3>MTech in Cybersecurity</h3>
+                    <p>Currently "securing" systems while his own passwords are still "password123". The hacker known as "SleepyDude404".</p>
+                </div>
+            </div>
+            <div class="timeline-item right">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="year">2024</span>
+                    <h3>B.Tech CS Completed (Somehow)</h3>
+                    <p>Against all odds and attendance requirements, graduated with a CS degree. The university is still investigating how.</p>
+                </div>
+            </div>
+            <div class="timeline-item left">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-medal"></i></div>
+                    <span class="year">2023</span>
+                    <h3>World Record: Longest "BRB"</h3>
+                    <p>Said "Be Right Back" in 2021. Still waiting. Friends have given up hope.</p>
+                </div>
+            </div>
+            <div class="timeline-item right">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-award"></i></div>
+                    <span class="year">2022</span>
+                    <h3>Master of Selective Memory</h3>
+                    <p>Remembers every meme but forgets assignment deadlines. Can recall every food place but not who paid last time.</p>
+                </div>
+            </div>
+            <div class="timeline-item left">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-crown"></i></div>
+                    <span class="year">2021</span>
+                    <h3>King of "I'll Pay You Back"</h3>
+                    <p>Has accumulated more IOUs than the national debt. Zero intention of clearing them. Interest rate: 0%.</p>
+                </div>
+            </div>
+            <div class="timeline-item right">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-users"></i></div>
+                    <span class="year">2020</span>
+                    <h3>Met His Victims (Engineering Batch)</h3>
+                    <p>Started engineering and met his future "sponsors" (friends who pay for his food). A tragic day for their wallets.</p>
+                </div>
+            </div>
+            <div class="timeline-item left">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-gem"></i></div>
+                    <span class="year">Forever</span>
+                    <h3>Best Friend Award</h3>
+                    <p>Despite everything above, still somehow manages to be everyone's favorite disaster. We love you, idiot! ❤️</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery">
+        <div class="section-header">
+            <span class="section-tag">EVIDENCE</span>
+            <h2>Photo <span class="highlight">Gallery</span></h2>
+            <p class="section-subtitle">Proof that he exists (unfortunately)</p>
+        </div>
+        <div class="gallery-grid">
+            <div class="gallery-item large">
+                <img id="gallery-1" src="" alt="Gallery photo 1">
+                <label for="gallery-upload-1" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-1" accept="image/*" hidden>
+                <div class="gallery-caption">Main suspect in the crime of laziness</div>
+            </div>
+            <div class="gallery-item">
+                <img id="gallery-2" src="" alt="Gallery photo 2">
+                <label for="gallery-upload-2" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-2" accept="image/*" hidden>
+                <div class="gallery-caption">Caught in his natural habitat</div>
+            </div>
+            <div class="gallery-item">
+                <img id="gallery-3" src="" alt="Gallery photo 3">
+                <label for="gallery-upload-3" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-3" accept="image/*" hidden>
+                <div class="gallery-caption">Rare photo of him awake</div>
+            </div>
+            <div class="gallery-item">
+                <img id="gallery-4" src="" alt="Gallery photo 4">
+                <label for="gallery-upload-4" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-4" accept="image/*" hidden>
+                <div class="gallery-caption">Pretending to work</div>
+            </div>
+            <div class="gallery-item">
+                <img id="gallery-5" src="" alt="Gallery photo 5">
+                <label for="gallery-upload-5" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-5" accept="image/*" hidden>
+                <div class="gallery-caption">Probably sleeping somewhere</div>
+            </div>
+            <div class="gallery-item tall">
+                <img id="gallery-6" src="" alt="Gallery photo 6">
+                <label for="gallery-upload-6" class="gallery-upload-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Photo</span>
+                </label>
+                <input type="file" id="gallery-upload-6" accept="image/*" hidden>
+                <div class="gallery-caption">The legend himself</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials">
+        <div class="section-header">
+            <span class="section-tag">WHAT PEOPLE SAY</span>
+            <h2>Honest <span class="highlight">Reviews</span></h2>
+            <p class="section-subtitle">From people who've suffered... I mean, known him</p>
+        </div>
+        <div class="testimonials-slider">
+            <div class="testimonial-card">
+                <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                <p class="testimonial-text">"He borrowed ₹500 from me in 2019. I've made peace with never seeing it again. Great guy though!"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">👤</div>
+                    <div class="author-info">
+                        <h4>Friend #1</h4>
+                        <span>Professional Lender (Unwilling)</span>
+                    </div>
+                </div>
+                <div class="rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <i class="far fa-star"></i>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                <p class="testimonial-text">"He said he'd be there in 5 minutes. That was 3 hours ago. I'm still waiting. Update: It's been 2 days."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">👤</div>
+                    <div class="author-info">
+                        <h4>Someone Who Waited</h4>
+                        <span>Time Management Victim</span>
+                    </div>
+                </div>
+                <div class="rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="far fa-star"></i>
+                    <i class="far fa-star"></i>
+                    <i class="far fa-star"></i>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                <p class="testimonial-text">"Ordered food for two. He ate for four. My wallet still hasn't recovered. 10/10 would feed again."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">👤</div>
+                    <div class="author-info">
+                        <h4>The Person Who Paid</h4>
+                        <span>Accidental Food Sponsor</span>
+                    </div>
+                </div>
+                <div class="rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                <p class="testimonial-text">"Best friend ever! Sure, he's late, lazy, and owes me money... but his excuses are genuinely entertaining!"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">❤️</div>
+                    <div class="author-info">
+                        <h4>Best Friend (You!)</h4>
+                        <span>Creator of This Masterpiece</span>
+                    </div>
+                </div>
+                <div class="rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+        </div>
+        <div class="slider-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="section-header">
+            <span class="section-tag">REACH OUT</span>
+            <h2>Contact <span class="highlight">Govardhan</span></h2>
+            <p class="section-subtitle">Response time: Somewhere between "soon" and "never"</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-info">
+                <h3>Ways to Reach Him</h3>
+                <p class="warning-text">⚠️ Warning: None of these actually work</p>
+                <div class="contact-methods">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>Always on silent or "low battery"</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email</h4>
+                            <p>Checks once per lunar eclipse</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4>Location</h4>
+                            <p>Somewhere between bed and fridge</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4>Working Hours</h4>
+                            <p>LOL, good one!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/sarcasm_only/" target="_blank" class="social-btn" title="Sarcasm Only"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.instagram.com/trolls_official/" target="_blank" class="social-btn" title="More Trolling"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" class="social-btn" title="His YouTube Channel"><i class="fab fa-youtube"></i></a>
+                    <a href="https://www.linkedin.com/company/netflix/" target="_blank" class="social-btn" title="His LinkedIn (Netflix Employee)"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://twitter.com/AmazonHelp" target="_blank" class="social-btn" title="His Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="contact-form-container">
+                <form class="contact-form" id="contact-form">
+                    <h3>Send a Message</h3>
+                    <p class="form-subtitle">(He probably won't read it, but try anyway)</p>
+                    <div class="form-group">
+                        <input type="text" id="name" required>
+                        <label for="name">Your Name</label>
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="email" required>
+                        <label for="email">Your Email</label>
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="form-group">
+                        <select id="subject" required>
+                            <option value="" disabled selected>Select a subject</option>
+                            <option value="money">Asking for money back (Good luck!)</option>
+                            <option value="plans">Making plans (He won't show up)</option>
+                            <option value="food">Free food available (Instant response!)</option>
+                            <option value="other">Other (Will be ignored)</option>
+                        </select>
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="message" rows="4" required></textarea>
+                        <label for="message">Your Message</label>
+                        <i class="fas fa-comment"></i>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <span>Send Message</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <h3>Made with <span class="heart">💔</span> and sarcasm</h3>
+                <p>This website is a joke created by a best friend who loves trolling. Govardhan is actually amazing (sometimes).</p>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 The Govardhan Troll Project | All Rights Reserved (Not Really)</p>
+                <p class="footer-note">If you're reading this Govardhan, we love you... but you still owe us money! 😂</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-main">
+            <i class="fas fa-bolt"></i>
+        </button>
+        <div class="fab-options">
+            <button class="fab-option" data-tooltip="Call (Won't answer)">
+                <i class="fas fa-phone"></i>
+            </button>
+            <button class="fab-option" data-tooltip="WhatsApp (Seen at ✓✓)">
+                <i class="fab fa-whatsapp"></i>
+            </button>
+            <button class="fab-option" data-tooltip="Share this masterpiece">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span>Photo uploaded successfully!</span>
+    </div>
+
+    <!-- Photo Editor Modal -->
+    <div class="photo-editor-modal" id="photo-editor-modal">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2><i class="fas fa-magic"></i> Troll Photo Editor</h2>
+                <button class="close-editor" id="close-editor"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="editor-body">
+                <div class="canvas-container">
+                    <!-- Image for Cropper.js (shown during crop mode) -->
+                    <div class="cropper-wrapper" id="cropper-wrapper" style="display: none;">
+                        <img id="cropper-image" src="" alt="Crop preview">
+                    </div>
+                    <!-- Canvas for editing (shown during normal mode) -->
+                    <canvas id="photo-canvas"></canvas>
+                </div>
+
+                <div class="editor-tools">
+                    <!-- Filters -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-palette"></i> Funny Filters</h3>
+                        <div class="filter-buttons">
+                            <button class="filter-btn" data-filter="none">Normal</button>
+                            <button class="filter-btn" data-filter="grayscale">Sad Mode</button>
+                            <button class="filter-btn" data-filter="sepia">Old Photo</button>
+                            <button class="filter-btn" data-filter="invert">Alien</button>
+                            <button class="filter-btn" data-filter="blur">Drunk</button>
+                            <button class="filter-btn" data-filter="brightness">Flashbang</button>
+                            <button class="filter-btn" data-filter="contrast">HDR Pro</button>
+                            <button class="filter-btn" data-filter="saturate">Radioactive</button>
+                            <button class="filter-btn" data-filter="hue-rotate">Thanos</button>
+                            <button class="filter-btn" data-filter="vintage">Boomer Era</button>
+                        </div>
+                    </div>
+
+                    <!-- Adjustments -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-sliders-h"></i> Adjustments</h3>
+                        <div class="slider-group">
+                            <label>Brightness (Glow Up)</label>
+                            <input type="range" id="brightness-slider" min="0" max="200" value="100">
+                        </div>
+                        <div class="slider-group">
+                            <label>Contrast (Drama Level)</label>
+                            <input type="range" id="contrast-slider" min="0" max="200" value="100">
+                        </div>
+                        <div class="slider-group">
+                            <label>Saturation (Spicy Level)</label>
+                            <input type="range" id="saturation-slider" min="0" max="200" value="100">
+                        </div>
+                        <div class="slider-group">
+                            <label>Blur (How sleepy he looks)</label>
+                            <input type="range" id="blur-slider" min="0" max="10" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Rotate & Flip -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-sync-alt"></i> Rotate & Flip</h3>
+                        <div class="rotate-buttons">
+                            <button class="rotate-btn" id="rotate-left"><i class="fas fa-undo"></i> Left</button>
+                            <button class="rotate-btn" id="rotate-right"><i class="fas fa-redo"></i> Right</button>
+                            <button class="rotate-btn" id="flip-h"><i class="fas fa-arrows-alt-h"></i> Flip H</button>
+                            <button class="rotate-btn" id="flip-v"><i class="fas fa-arrows-alt-v"></i> Flip V</button>
+                        </div>
+                    </div>
+
+                    <!-- Stickers -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-smile"></i> Funny Stickers</h3>
+                        <div class="sticker-grid">
+                            <button class="sticker-btn" data-sticker="🤡">🤡</button>
+                            <button class="sticker-btn" data-sticker="💩">💩</button>
+                            <button class="sticker-btn" data-sticker="🤪">🤪</button>
+                            <button class="sticker-btn" data-sticker="😴">😴</button>
+                            <button class="sticker-btn" data-sticker="🤑">🤑</button>
+                            <button class="sticker-btn" data-sticker="👑">👑</button>
+                            <button class="sticker-btn" data-sticker="💀">💀</button>
+                            <button class="sticker-btn" data-sticker="🔥">🔥</button>
+                            <button class="sticker-btn" data-sticker="⭐">⭐</button>
+                            <button class="sticker-btn" data-sticker="💔">💔</button>
+                            <button class="sticker-btn" data-sticker="🍕">🍕</button>
+                            <button class="sticker-btn" data-sticker="💤">💤</button>
+                            <button class="sticker-btn" data-sticker="🚫">🚫</button>
+                            <button class="sticker-btn" data-sticker="⚠️">⚠️</button>
+                            <button class="sticker-btn" data-sticker="🎭">🎭</button>
+                            <button class="sticker-btn" data-sticker="👻">👻</button>
+                        </div>
+                    </div>
+
+                    <!-- Text Overlay -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-font"></i> Add Roast Text</h3>
+                        <input type="text" id="text-input" placeholder="Type your roast here...">
+                        <div class="text-options">
+                            <select id="text-color">
+                                <option value="#ffffff">White</option>
+                                <option value="#ff0000">Red</option>
+                                <option value="#ffff00">Yellow</option>
+                                <option value="#00ff00">Green</option>
+                                <option value="#ff69b4">Pink</option>
+                                <option value="#000000">Black</option>
+                            </select>
+                            <select id="text-size">
+                                <option value="20">Small</option>
+                                <option value="32" selected>Medium</option>
+                                <option value="48">Large</option>
+                                <option value="64">HUGE</option>
+                            </select>
+                            <button class="add-text-btn" id="add-text-btn">Add Text</button>
+                        </div>
+                        <div class="quick-texts">
+                            <button class="quick-text" data-text="WANTED: For Laziness">WANTED</button>
+                            <button class="quick-text" data-text="Professional Sleeper">Sleeper</button>
+                            <button class="quick-text" data-text="Owes Everyone Money">Debt King</button>
+                            <button class="quick-text" data-text="Will Pay Back... NEVER">Never Pays</button>
+                        </div>
+                    </div>
+
+                    <!-- Added Elements List -->
+                    <div class="tool-section" id="elements-section" style="display: none;">
+                        <h3><i class="fas fa-layer-group"></i> Added Elements</h3>
+                        <p class="elements-hint">Select element to resize or delete</p>
+                        <div class="elements-list" id="elements-list"></div>
+
+                        <!-- Resize Controls (shown when element selected) -->
+                        <div class="resize-controls" id="resize-controls" style="display: none;">
+                            <h4>Resize Selected</h4>
+                            <div class="size-buttons">
+                                <button class="size-btn" id="size-decrease"><i class="fas fa-minus"></i></button>
+                                <span class="size-value" id="size-value">60</span>
+                                <button class="size-btn" id="size-increase"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <input type="range" id="size-slider" min="20" max="150" value="60">
+                        </div>
+                    </div>
+
+                    <!-- Crop Tool -->
+                    <div class="tool-section">
+                        <h3><i class="fas fa-crop-alt"></i> Crop</h3>
+                        <p class="crop-hint">Draw on image to select crop area</p>
+                        <div class="crop-buttons">
+                            <button class="crop-preset active" data-ratio="free">Free Select</button>
+                            <button class="crop-preset" data-ratio="1:1">1:1 Square</button>
+                            <button class="crop-preset" data-ratio="4:3">4:3</button>
+                            <button class="crop-preset" data-ratio="16:9">16:9</button>
+                        </div>
+                        <div class="crop-actions">
+                            <button class="start-crop-btn" id="start-crop"><i class="fas fa-crop-alt"></i> Start Crop</button>
+                            <button class="apply-crop-btn" id="apply-crop" disabled><i class="fas fa-check"></i> Apply Crop</button>
+                            <button class="cancel-crop-btn" id="cancel-crop" disabled><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-footer">
+                <button class="editor-btn reset-btn" id="reset-btn"><i class="fas fa-undo-alt"></i> Reset All</button>
+                <button class="editor-btn save-btn" id="save-btn"><i class="fas fa-check"></i> Save & Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (for secure authentication) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <!-- Cropper.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
