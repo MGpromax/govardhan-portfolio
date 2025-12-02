@@ -2334,18 +2334,19 @@ function initLightbox() {
         lightboxCaption.textContent = galleryImages[currentIndex].caption;
     }
 
-    // Click on gallery images to open lightbox
-    document.querySelectorAll('.gallery-img').forEach((img) => {
-        img.addEventListener('click', (e) => {
-            // Don't open lightbox in admin mode when clicking upload area
-            if (document.body.classList.contains('admin-mode') && !img.src) return;
-            if (!img.src || img.style.display === 'none') return;
+    // Click on gallery images to open lightbox (using event delegation for dynamic images)
+    document.addEventListener('click', (e) => {
+        const img = e.target.closest('.gallery-img');
+        if (!img) return;
 
-            updateGalleryImages();
-            const index = galleryImages.findIndex(g => g.element === img);
-            const caption = img.closest('.gallery-item')?.querySelector('.gallery-caption')?.textContent || '';
-            openLightbox(img.src, caption, index >= 0 ? index : 0);
-        });
+        // Don't open lightbox in admin mode when clicking upload area
+        if (document.body.classList.contains('admin-mode') && !img.src) return;
+        if (!img.src || img.style.display === 'none') return;
+
+        updateGalleryImages();
+        const index = galleryImages.findIndex(g => g.src === img.src);
+        const caption = img.closest('.gallery-item')?.querySelector('.gallery-caption')?.textContent || '';
+        openLightbox(img.src, caption, index >= 0 ? index : 0);
     });
 
     // Click on about image
