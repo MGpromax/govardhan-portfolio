@@ -284,31 +284,28 @@ body {
 /* View Full Button */
 .view-full-btn {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    opacity: 0;
     transition: all 0.3s ease;
     z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: center;
-}
-
-.profile-pic-wrapper:hover .view-full-btn {
-    opacity: 1;
+    gap: 6px;
+    backdrop-filter: blur(10px);
 }
 
 .view-full-btn:hover {
     background: var(--accent-primary);
-    transform: scale(1.1);
+    border-color: var(--accent-primary);
+    transform: translateX(-50%) scale(1.05);
 }
 
 /* Hide view button in admin mode */
