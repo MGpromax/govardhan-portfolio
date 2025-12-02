@@ -2072,11 +2072,13 @@ function initProfileFullscreen() {
         fullscreenModal.classList.add('active');
         document.body.style.overflow = 'hidden';
 
+        // Add spinning animation
+        fullscreenImg.classList.add('spinning');
+
         // Play music (user interaction allows autoplay)
-        if (themeSong) {
+        if (themeSong && themeSong.src) {
             themeSong.currentTime = 0;
             themeSong.play().catch(() => {
-                // Autoplay blocked - that's ok
                 console.log('Audio autoplay blocked');
             });
         }
@@ -2097,6 +2099,9 @@ function initProfileFullscreen() {
     function closeFullscreen() {
         fullscreenModal.classList.remove('active');
         document.body.style.overflow = '';
+
+        // Stop spinning
+        fullscreenImg.classList.remove('spinning');
 
         // Stop music
         if (themeSong) {
@@ -2157,7 +2162,7 @@ async function initMusicUpload() {
             // Save URL
             const media = getMedia();
             media.music = cloudUrl;
-            saveMedia(media);
+            await saveMedia(media);
 
             // Update audio element
             themeSong.src = cloudUrl;
@@ -2178,12 +2183,12 @@ async function initMusicUpload() {
 
     // Remove music
     if (removeMusicBtn) {
-        removeMusicBtn.addEventListener('click', (e) => {
+        removeMusicBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
 
             const media = getMedia();
             media.music = '';
-            saveMedia(media);
+            await saveMedia(media);
 
             themeSong.src = '';
             musicUploadBtn.classList.remove('has-song');

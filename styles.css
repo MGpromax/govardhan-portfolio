@@ -3438,6 +3438,21 @@ body.admin-mode .gallery-delete-btn {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Spinning animation when music plays */
+.fullscreen-image-container img.spinning {
+    animation: spinPhoto 4s linear infinite;
+}
+
+@keyframes spinPhoto {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .fullscreen-name {
