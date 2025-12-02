@@ -2051,6 +2051,12 @@ function initProfileFullscreen() {
 
     if (!profileClickable || !fullscreenModal) return;
 
+    // Load music from Firebase on init
+    const media = getMedia();
+    if (media.music && themeSong) {
+        themeSong.src = media.music;
+    }
+
     // Click on profile (only when not in admin mode)
     profileClickable.addEventListener('click', (e) => {
         // Don't open fullscreen in admin mode or if clicking on upload/remove buttons
@@ -2059,8 +2065,9 @@ function initProfileFullscreen() {
         if (e.target.closest('input[type="file"]')) return;
 
         // Check if there's a profile image
-        const imgSrc = profilePic.src || localStorage.getItem('profile-pic');
-        if (!imgSrc || profilePic.style.display === 'none') {
+        const media = getMedia();
+        const imgSrc = media.profile || profilePic.src;
+        if (!imgSrc || imgSrc === '' || profilePic.style.display === 'none') {
             showToast('No profile photo yet!');
             return;
         }
@@ -2076,10 +2083,12 @@ function initProfileFullscreen() {
         fullscreenImg.classList.add('spinning');
 
         // Play music (user interaction allows autoplay)
-        if (themeSong && themeSong.src) {
+        const currentMedia = getMedia();
+        if (themeSong && currentMedia.music) {
+            themeSong.src = currentMedia.music;
             themeSong.currentTime = 0;
-            themeSong.play().catch(() => {
-                console.log('Audio autoplay blocked');
+            themeSong.play().catch((err) => {
+                console.log('Audio autoplay blocked:', err);
             });
         }
     });
@@ -2088,6 +2097,13 @@ function initProfileFullscreen() {
     if (closeBtn) {
         closeBtn.addEventListener('click', closeFullscreen);
     }
+
+    // Close on clicking background
+    fullscreenModal.addEventListener('click', (e) => {
+        if (e.target === fullscreenModal) {
+            closeFullscreen();
+        }
+    });
 
     // Close on escape key
     document.addEventListener('keydown', (e) => {
