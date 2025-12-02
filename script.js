@@ -288,6 +288,9 @@ let cloudinaryMedia = {
 const CLOUDINARY_STORAGE_KEY = 'cloudinary-media-urls';
 
 function initImageUploads() {
+    // Load Cloudinary URLs first
+    loadCloudinaryUrls();
+
     setupImageUpload('profile-upload', 'profile-pic', false, 'default-avatar-main', 'remove-profile-pic');
     setupImageUpload('about-upload', 'about-pic');
 
@@ -345,30 +348,22 @@ function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = n
         });
     }
 
-    // Load image: localStorage FIRST (admin uploads), then GitHub fallback
-    const githubImage = IMAGE_CONFIG[imgId];
-    const savedImage = localStorage.getItem(imgId);
+    // Load image: Cloudinary FIRST, then fallback
+    let cloudinaryUrl = '';
+    if (imgId === 'profile-pic') {
+        cloudinaryUrl = cloudinaryMedia.profilePic;
+    } else if (imgId === 'about-pic') {
+        cloudinaryUrl = cloudinaryMedia.aboutPic;
+    }
 
-    if (savedImage) {
-        // localStorage takes priority (admin's new uploads show immediately)
-        img.src = savedImage;
+    if (cloudinaryUrl) {
+        // Load from Cloudinary (visible to everyone!)
+        img.src = cloudinaryUrl;
         img.style.display = 'block';
         if (defaultAvatar) defaultAvatar.style.display = 'none';
         if (removeBtn) removeBtn.style.display = 'flex';
-        if (isGallery) {
-            const galleryItem = img.closest('.gallery-item');
-            if (galleryItem) galleryItem.classList.add('has-image');
-        }
-    } else if (githubImage) {
-        // Fallback to GitHub images/ folder (for visitors)
-        img.src = 'images/' + githubImage;
-        img.style.display = 'block';
-        if (defaultAvatar) defaultAvatar.style.display = 'none';
-        if (isGallery) {
-            const galleryItem = img.closest('.gallery-item');
-            if (galleryItem) galleryItem.classList.add('has-image');
-        }
     } else {
+        // No image uploaded yet
         if (defaultAvatar) {
             defaultAvatar.style.display = 'flex';
             img.style.display = 'none';
@@ -377,7 +372,14 @@ function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = n
 }
 
 function removePhoto(imgId, imgElement, defaultAvatar) {
-    localStorage.removeItem(imgId);
+    // Clear Cloudinary URL
+    if (imgId === 'profile-pic') {
+        cloudinaryMedia.profilePic = '';
+    } else if (imgId === 'about-pic') {
+        cloudinaryMedia.aboutPic = '';
+    }
+    saveCloudinaryUrls();
+
     imgElement.src = '';
     imgElement.style.display = 'none';
 
