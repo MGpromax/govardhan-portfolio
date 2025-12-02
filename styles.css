@@ -223,6 +223,10 @@ body {
 
 .profile-container {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 60px; /* Space for status badge and button */
 }
 
 .profile-pic-wrapper {
@@ -283,13 +287,16 @@ body {
 
 /* View Full Button */
 .view-full-btn {
-    margin-top: 15px;
-    padding: 10px 20px;
-    border-radius: 25px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 18px;
+    border-radius: 20px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -297,12 +304,13 @@ body {
     justify-content: center;
     gap: 8px;
     backdrop-filter: blur(10px);
+    white-space: nowrap;
 }
 
 .view-full-btn:hover {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
-    transform: scale(1.05);
+    transform: translateX(-50%) scale(1.05);
 }
 
 /* Hide view button in admin mode */
@@ -312,7 +320,7 @@ body {
 
 .status-badge {
     position: absolute;
-    bottom: -10px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--bg-card);
