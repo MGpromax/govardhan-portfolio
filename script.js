@@ -271,21 +271,49 @@ let currentTargetImage = null;
 const CLOUD_NAME = 'dldf0uldk';
 const UPLOAD_PRESET = 'govardhan-uploads';
 
-// Storage key for saving URLs
-const MEDIA_KEY = 'govardhan-media';
+// Firebase Database URL
+const FIREBASE_DB_URL = 'https://govardhan-portfolio-default-rtdb.firebaseio.com';
 
-// Get saved media URLs
+// Media cache (loaded from Firebase)
+let mediaCache = { profile: '', about: '', gallery: [], music: '' };
+
+// Get media from cache
 function getMedia() {
+    return mediaCache;
+}
+
+// Save media to Firebase Database
+async function saveMedia(media) {
+    mediaCache = media;
     try {
-        return JSON.parse(localStorage.getItem(MEDIA_KEY)) || { profile: '', about: '', gallery: [], music: '' };
-    } catch (e) {
-        return { profile: '', about: '', gallery: [], music: '' };
+        await fetch(`${FIREBASE_DB_URL}/media.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(media)
+        });
+    } catch (err) {
+        console.error('Failed to save to Firebase:', err);
     }
 }
 
-// Save media URLs
-function saveMedia(media) {
-    localStorage.setItem(MEDIA_KEY, JSON.stringify(media));
+// Load media from Firebase Database
+async function loadMediaFromFirebase() {
+    try {
+        const res = await fetch(`${FIREBASE_DB_URL}/media.json`);
+        const data = await res.json();
+        if (data) {
+            mediaCache = {
+                profile: data.profile || '',
+                about: data.about || '',
+                gallery: data.gallery || [],
+                music: data.music || ''
+            };
+        }
+        return mediaCache;
+    } catch (err) {
+        console.error('Failed to load from Firebase:', err);
+        return mediaCache;
+    }
 }
 
 // Upload to Cloudinary - Simple function
@@ -337,7 +365,9 @@ function hideLoading() {
 }
 
 // Initialize all uploads
-function initImageUploads() {
+async function initImageUploads() {
+    // Load media from Firebase first
+    await loadMediaFromFirebase();
     const media = getMedia();
 
     // Profile pic
@@ -2080,7 +2110,7 @@ function initProfileFullscreen() {
    MUSIC UPLOAD FUNCTIONALITY
    ============================================ */
 
-function initMusicUpload() {
+async function initMusicUpload() {
     const musicUploadBtn = document.getElementById('music-upload-btn');
     const musicUploadInput = document.getElementById('music-upload');
     const removeMusicBtn = document.getElementById('remove-music');
@@ -2089,7 +2119,7 @@ function initMusicUpload() {
 
     if (!musicUploadBtn || !musicUploadInput) return;
 
-    // Load music from storage
+    // Load music from Firebase (media already loaded in initImageUploads)
     const media = getMedia();
     if (media.music) {
         themeSong.src = media.music;
