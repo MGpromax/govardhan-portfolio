@@ -342,22 +342,23 @@ function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = n
         });
     }
 
-    // Load image: First check GitHub images/ folder, then localStorage
+    // Load image: localStorage FIRST (admin uploads), then GitHub fallback
     const githubImage = IMAGE_CONFIG[imgId];
     const savedImage = localStorage.getItem(imgId);
 
-    if (githubImage) {
-        // Load from GitHub images/ folder (visible to everyone)
-        img.src = 'images/' + githubImage;
+    if (savedImage) {
+        // localStorage takes priority (admin's new uploads show immediately)
+        img.src = savedImage;
         img.style.display = 'block';
         if (defaultAvatar) defaultAvatar.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'flex';
         if (isGallery) {
             const galleryItem = img.closest('.gallery-item');
             if (galleryItem) galleryItem.classList.add('has-image');
         }
-    } else if (savedImage) {
-        // Fallback to localStorage (only visible to admin's browser)
-        img.src = savedImage;
+    } else if (githubImage) {
+        // Fallback to GitHub images/ folder (for visitors)
+        img.src = 'images/' + githubImage;
         img.style.display = 'block';
         if (defaultAvatar) defaultAvatar.style.display = 'none';
         if (isGallery) {
