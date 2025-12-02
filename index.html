@@ -375,61 +375,17 @@
             <h2>Photo <span class="highlight">Gallery</span></h2>
             <p class="section-subtitle">Proof that he exists (unfortunately)</p>
         </div>
-        <div class="gallery-grid">
-            <div class="gallery-item large">
-                <img id="gallery-1" src="" alt="Gallery photo 1" class="gallery-img">
-                <label for="gallery-upload-1" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-1" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">Main suspect in the crime of laziness</div>
-            </div>
-            <div class="gallery-item">
-                <img id="gallery-2" src="" alt="Gallery photo 2" class="gallery-img">
-                <label for="gallery-upload-2" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-2" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">Caught in his natural habitat</div>
-            </div>
-            <div class="gallery-item">
-                <img id="gallery-3" src="" alt="Gallery photo 3" class="gallery-img">
-                <label for="gallery-upload-3" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-3" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">Rare photo of him awake</div>
-            </div>
-            <div class="gallery-item">
-                <img id="gallery-4" src="" alt="Gallery photo 4" class="gallery-img">
-                <label for="gallery-upload-4" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-4" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">Pretending to work</div>
-            </div>
-            <div class="gallery-item">
-                <img id="gallery-5" src="" alt="Gallery photo 5" class="gallery-img">
-                <label for="gallery-upload-5" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-5" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">Probably sleeping somewhere</div>
-            </div>
-            <div class="gallery-item tall">
-                <img id="gallery-6" src="" alt="Gallery photo 6" class="gallery-img">
-                <label for="gallery-upload-6" class="gallery-upload-btn admin-only">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Photo</span>
-                </label>
-                <input type="file" id="gallery-upload-6" accept="image/*,video/*" hidden>
-                <div class="gallery-caption">The legend himself</div>
-            </div>
+        <!-- Dynamic gallery - images loaded from JavaScript -->
+        <div class="gallery-grid" id="gallery-grid">
+            <!-- Images will be dynamically inserted here -->
+        </div>
+        <!-- Admin: Add more photos button -->
+        <div class="add-photo-section admin-only" id="add-photo-section">
+            <label for="gallery-upload" class="add-photo-btn">
+                <i class="fas fa-plus"></i>
+                <span>Add Photos</span>
+            </label>
+            <input type="file" id="gallery-upload" accept="image/*,video/*" multiple hidden>
         </div>
     </section>
 

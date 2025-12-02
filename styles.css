@@ -3114,13 +3114,73 @@ body.admin-mode .click-hint {
     filter: brightness(1.1);
 }
 
-/* Hide gallery items without images for visitors */
-.gallery-item:not(.has-image) .gallery-upload-btn {
+/* Add Photo Section for Admin */
+.add-photo-section {
+    display: none;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+body.admin-mode .add-photo-section {
+    display: flex !important;
+}
+
+.add-photo-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gradient-1);
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-card);
+}
+
+.add-photo-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+}
+
+.add-photo-btn i {
+    font-size: 1.2rem;
+}
+
+/* Gallery item delete button (admin only) */
+.gallery-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, 0.8);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+    z-index: 5;
     display: none;
 }
 
-body.admin-mode .gallery-item:not(.has-image) .gallery-upload-btn {
-    display: flex !important;
+body.admin-mode .gallery-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-item:hover .gallery-delete-btn {
+    opacity: 1;
+}
+
+.gallery-delete-btn:hover {
+    background: #ff0000;
+    transform: scale(1.1);
 }
 
 /* Mobile lightbox adjustments */

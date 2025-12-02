@@ -268,17 +268,17 @@ function initTypewriter() {
    ============================================ */
 let currentTargetImage = null;
 
-// Image configuration - maps image IDs to filenames in images/ folder
-// Admin: Update these filenames after adding images to the images/ folder
+// Gallery images configuration - ADD YOUR IMAGES HERE
+// Format: { filename: 'image.jpg', caption: 'Your caption' }
+const GALLERY_IMAGES = [
+    // Example: { filename: 'gallery-1.jpg', caption: 'Main suspect in the crime of laziness' },
+    // Add your images here after uploading to images/ folder
+];
+
+// Profile and about image configuration
 const IMAGE_CONFIG = {
     'profile-pic': 'profile.jpg',      // images/profile.jpg
-    'about-pic': '',                    // images/about.jpg (add filename when ready)
-    'gallery-1': '',                    // images/gallery-1.jpg
-    'gallery-2': '',                    // images/gallery-2.jpg
-    'gallery-3': '',                    // images/gallery-3.jpg
-    'gallery-4': '',                    // images/gallery-4.jpg
-    'gallery-5': '',                    // images/gallery-5.jpg
-    'gallery-6': ''                     // images/gallery-6.jpg
+    'about-pic': ''                     // images/about.jpg (add filename when ready)
 };
 
 // Theme song filename (add to images/ folder)
@@ -288,9 +288,8 @@ function initImageUploads() {
     setupImageUpload('profile-upload', 'profile-pic', false, 'default-avatar-main', 'remove-profile-pic');
     setupImageUpload('about-upload', 'about-pic');
 
-    for (let i = 1; i <= 6; i++) {
-        setupImageUpload(`gallery-upload-${i}`, `gallery-${i}`, true);
-    }
+    // Initialize dynamic gallery
+    initDynamicGallery();
 }
 
 function setupImageUpload(inputId, imgId, isGallery = false, defaultAvatarId = null, removeButtonId = null) {
@@ -388,6 +387,150 @@ function removePhoto(imgId, imgElement, defaultAvatar) {
     }
 
     showToast('Photo removed!');
+}
+
+/* ============================================
+   DYNAMIC GALLERY - Unlimited Images
+   ============================================ */
+function initDynamicGallery() {
+    const galleryGrid = document.getElementById('gallery-grid');
+    const galleryUpload = document.getElementById('gallery-upload');
+
+    if (!galleryGrid) return;
+
+    // Load images from GALLERY_IMAGES config (GitHub) + localStorage
+    loadGalleryImages();
+
+    // Handle new uploads (admin only)
+    if (galleryUpload) {
+        galleryUpload.addEventListener('click', function() {
+            this.value = '';
+        });
+
+        galleryUpload.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (!files.length) return;
+
+            Array.from(files).forEach((file, index) => {
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    showToast('Please select image or video files only!');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Save to localStorage with unique ID
+                    const imageId = 'gallery-local-' + Date.now() + '-' + index;
+                    try {
+                        localStorage.setItem(imageId, event.target.result);
+                        addGalleryItem(event.target.result, 'New photo', imageId, true);
+                        showToast('Photo added!');
+                    } catch (err) {
+                        showToast('Storage full! Try smaller images.');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
+}
+
+function loadGalleryImages() {
+    const galleryGrid = document.getElementById('gallery-grid');
+    if (!galleryGrid) return;
+
+    galleryGrid.innerHTML = '';
+
+    // Load from GALLERY_IMAGES config (GitHub images - visible to everyone)
+    GALLERY_IMAGES.forEach((img, index) => {
+        if (img.filename) {
+            addGalleryItem('images/' + img.filename, img.caption || '', 'gallery-github-' + index, false);
+        }
+    });
+
+    // Load from localStorage (admin's local uploads)
+    const localKeys = Object.keys(localStorage).filter(key => key.startsWith('gallery-local-'));
+    localKeys.forEach(key => {
+        const imgData = localStorage.getItem(key);
+        if (imgData) {
+            addGalleryItem(imgData, 'Photo', key, true);
+        }
+    });
+
+    // Show message if no images and not admin
+    if (galleryGrid.children.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'gallery-empty-msg';
+        emptyMsg.innerHTML = '<p>No photos yet. Check back soon!</p>';
+        emptyMsg.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-secondary);';
+        galleryGrid.appendChild(emptyMsg);
+
+        // Hide message in admin mode
+        if (document.body.classList.contains('admin-mode')) {
+            emptyMsg.style.display = 'none';
+        }
+    }
+}
+
+function addGalleryItem(src, caption, imageId, isLocal = false) {
+    const galleryGrid = document.getElementById('gallery-grid');
+    if (!galleryGrid) return;
+
+    // Remove empty message if exists
+    const emptyMsg = galleryGrid.querySelector('.gallery-empty-msg');
+    if (emptyMsg) emptyMsg.remove();
+
+    const item = document.createElement('div');
+    item.className = 'gallery-item has-image';
+    item.dataset.imageId = imageId;
+
+    item.innerHTML = `
+        <img src="${src}" alt="Gallery photo" class="gallery-img">
+        <button class="gallery-delete-btn" title="Delete photo">
+            <i class="fas fa-trash"></i>
+        </button>
+        <div class="gallery-caption">${caption}</div>
+    `;
+
+    // Click image to open lightbox
+    const img = item.querySelector('.gallery-img');
+    img.addEventListener('click', () => {
+        openImageLightbox(src, caption);
+    });
+
+    // Delete button (admin only, local images only)
+    const deleteBtn = item.querySelector('.gallery-delete-btn');
+    if (isLocal) {
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            localStorage.removeItem(imageId);
+            item.remove();
+            showToast('Photo deleted!');
+
+            // Show empty message if no images left
+            if (galleryGrid.children.length === 0) {
+                loadGalleryImages();
+            }
+        });
+    } else {
+        // Hide delete button for GitHub images (can't delete from browser)
+        deleteBtn.style.display = 'none';
+    }
+
+    galleryGrid.appendChild(item);
+}
+
+function openImageLightbox(src, caption) {
+    const lightbox = document.getElementById('image-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+
+    if (!lightbox || !lightboxImg) return;
+
+    lightboxImg.src = src;
+    if (lightboxCaption) lightboxCaption.textContent = caption || '';
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function showToast(message) {
