@@ -264,25 +264,28 @@ function initTypewriter() {
 
 /* ============================================
    IMAGE UPLOADS - Opens Photo Editor
-   Loads from GitHub images/ folder first, then localStorage
+   Now uploads to Cloudinary for everyone to see!
    ============================================ */
 let currentTargetImage = null;
 
-// Gallery images configuration - ADD YOUR IMAGES HERE
-// Format: { filename: 'image.jpg', caption: 'Your caption' }
-const GALLERY_IMAGES = [
-    // Example: { filename: 'gallery-1.jpg', caption: 'Main suspect in the crime of laziness' },
-    // Add your images here after uploading to images/ folder
-];
-
-// Profile and about image configuration
-const IMAGE_CONFIG = {
-    'profile-pic': 'profile.jpg',      // images/profile.jpg
-    'about-pic': ''                     // images/about.jpg (add filename when ready)
+// Cloudinary Configuration
+const CLOUDINARY_CONFIG = {
+    cloudName: 'dldf0uldk',
+    uploadPreset: 'govardhan-uploads',
+    folder: 'govardhan-portfolio'
 };
 
-// Theme song filename (add to images/ folder)
-const THEME_SONG_FILE = '';  // e.g., 'theme-song.mp3'
+// Cloudinary URLs for saved media (loaded from Cloudinary)
+// These will be fetched from Cloudinary API
+let cloudinaryMedia = {
+    profilePic: '',
+    aboutPic: '',
+    themeSong: '',
+    gallery: []
+};
+
+// Local storage keys for Cloudinary URLs
+const CLOUDINARY_STORAGE_KEY = 'cloudinary-media-urls';
 
 function initImageUploads() {
     setupImageUpload('profile-upload', 'profile-pic', false, 'default-avatar-main', 'remove-profile-pic');
@@ -399,39 +402,62 @@ function initDynamicGallery() {
 
     if (!galleryGrid) return;
 
-    // Load images from GALLERY_IMAGES config (GitHub) + localStorage
+    // Load images from Cloudinary
     loadGalleryImages();
 
-    // Handle new uploads (admin only)
+    // Handle new uploads (admin only) - Upload to Cloudinary
     if (galleryUpload) {
         galleryUpload.addEventListener('click', function() {
             this.value = '';
         });
 
-        galleryUpload.addEventListener('change', function(e) {
+        galleryUpload.addEventListener('change', async function(e) {
             const files = e.target.files;
             if (!files.length) return;
 
-            Array.from(files).forEach((file, index) => {
+            showUploadProgress('Uploading to Cloud...');
+            let uploaded = 0;
+            const total = files.length;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
                 if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
                     showToast('Please select image or video files only!');
-                    return;
+                    continue;
                 }
 
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    // Save to localStorage with unique ID
-                    const imageId = 'gallery-local-' + Date.now() + '-' + index;
-                    try {
-                        localStorage.setItem(imageId, event.target.result);
-                        addGalleryItem(event.target.result, 'New photo', imageId, true);
-                        showToast('Photo added!');
-                    } catch (err) {
-                        showToast('Storage full! Try smaller images.');
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
+                updateUploadProgress('save', Math.round((i / total) * 80), `Uploading ${i + 1} of ${total}...`);
+
+                try {
+                    // Upload to Cloudinary
+                    const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+                    const result = await uploadToCloudinary(file, resourceType);
+                    const cloudinaryUrl = result.secure_url;
+
+                    // Add to gallery array
+                    cloudinaryMedia.gallery.push({
+                        url: cloudinaryUrl,
+                        caption: 'Photo',
+                        id: result.public_id
+                    });
+
+                    addGalleryItem(cloudinaryUrl, 'Photo', result.public_id, true);
+                    uploaded++;
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    showToast('Failed to upload: ' + file.name);
+                }
+            }
+
+            // Save updated gallery URLs
+            saveCloudinaryUrls();
+
+            if (uploaded > 0) {
+                completeUploadProgress(true, `${uploaded} photo(s) uploaded!`);
+            } else {
+                completeUploadProgress(false, 'Upload failed!');
+            }
         });
     }
 }
@@ -442,23 +468,19 @@ function loadGalleryImages() {
 
     galleryGrid.innerHTML = '';
 
-    // Load from GALLERY_IMAGES config (GitHub images - visible to everyone)
-    GALLERY_IMAGES.forEach((img, index) => {
-        if (img.filename) {
-            addGalleryItem('images/' + img.filename, img.caption || '', 'gallery-github-' + index, false);
-        }
-    });
+    // Load Cloudinary URLs from storage
+    loadCloudinaryUrls();
 
-    // Load from localStorage (admin's local uploads)
-    const localKeys = Object.keys(localStorage).filter(key => key.startsWith('gallery-local-'));
-    localKeys.forEach(key => {
-        const imgData = localStorage.getItem(key);
-        if (imgData) {
-            addGalleryItem(imgData, 'Photo', key, true);
-        }
-    });
+    // Load gallery images from Cloudinary
+    if (cloudinaryMedia.gallery && cloudinaryMedia.gallery.length > 0) {
+        cloudinaryMedia.gallery.forEach((img, index) => {
+            if (img.url) {
+                addGalleryItem(img.url, img.caption || 'Photo', img.id || 'gallery-' + index, true);
+            }
+        });
+    }
 
-    // Show message if no images and not admin
+    // Show message if no images
     if (galleryGrid.children.length === 0) {
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'gallery-empty-msg';
@@ -643,6 +665,111 @@ function completeUploadProgress(success = true, message = 'Complete!') {
 function hideUploadProgress() {
     if (uploadProgress.overlay) {
         uploadProgress.overlay.classList.remove('active', 'success', 'error');
+    }
+}
+
+/* ============================================
+   CLOUDINARY UPLOAD FUNCTIONS
+   ============================================ */
+
+// Upload file to Cloudinary
+async function uploadToCloudinary(file, resourceType = 'image') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('folder', CLOUDINARY_CONFIG.folder);
+
+    const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/${resourceType}/upload`,
+        {
+            method: 'POST',
+            body: formData
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error('Upload failed');
+    }
+
+    return await response.json();
+}
+
+// Upload base64 data to Cloudinary
+async function uploadBase64ToCloudinary(base64Data, resourceType = 'image', publicId = null) {
+    const formData = new FormData();
+    formData.append('file', base64Data);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('folder', CLOUDINARY_CONFIG.folder);
+    if (publicId) {
+        formData.append('public_id', publicId);
+    }
+
+    const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/${resourceType}/upload`,
+        {
+            method: 'POST',
+            body: formData
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error('Upload failed');
+    }
+
+    return await response.json();
+}
+
+// Save Cloudinary URLs to localStorage (so we know what's uploaded)
+function saveCloudinaryUrls() {
+    localStorage.setItem(CLOUDINARY_STORAGE_KEY, JSON.stringify(cloudinaryMedia));
+}
+
+// Load Cloudinary URLs from localStorage
+function loadCloudinaryUrls() {
+    const saved = localStorage.getItem(CLOUDINARY_STORAGE_KEY);
+    if (saved) {
+        try {
+            cloudinaryMedia = JSON.parse(saved);
+        } catch (e) {
+            console.error('Error loading cloudinary URLs:', e);
+        }
+    }
+}
+
+// Load media from Cloudinary on page load
+async function loadCloudinaryMedia() {
+    loadCloudinaryUrls();
+
+    // Load profile pic
+    if (cloudinaryMedia.profilePic) {
+        const profileImg = document.getElementById('profile-pic');
+        const defaultAvatar = document.getElementById('default-avatar-main');
+        if (profileImg) {
+            profileImg.src = cloudinaryMedia.profilePic;
+            profileImg.style.display = 'block';
+            if (defaultAvatar) defaultAvatar.style.display = 'none';
+        }
+    }
+
+    // Load about pic
+    if (cloudinaryMedia.aboutPic) {
+        const aboutImg = document.getElementById('about-pic');
+        if (aboutImg) {
+            aboutImg.src = cloudinaryMedia.aboutPic;
+            aboutImg.style.display = 'block';
+        }
+    }
+
+    // Load theme song
+    if (cloudinaryMedia.themeSong) {
+        const themeSong = document.getElementById('theme-song');
+        const musicBtn = document.getElementById('music-upload-btn');
+        const musicStatus = document.getElementById('music-status');
+        if (themeSong) {
+            themeSong.src = cloudinaryMedia.themeSong;
+            if (musicBtn) musicBtn.classList.add('has-song');
+            if (musicStatus) musicStatus.textContent = 'Theme Song Ready';
+        }
     }
 }
 
@@ -1593,11 +1720,11 @@ function saveAndApply() {
     }
 
     // Show progress overlay
-    showUploadProgress('Saving Photo...');
+    showUploadProgress('Uploading to Cloud...');
     updateUploadProgress('read', 10, 'Reading edited image...');
 
     // Small delay to show UI
-    setTimeout(() => {
+    setTimeout(async () => {
         updateUploadProgress('process', 30, 'Processing image...');
 
         const tempCanvas = document.createElement('canvas');
@@ -1629,46 +1756,55 @@ function saveAndApply() {
             }
         });
 
-        updateUploadProgress('save', 60, 'Saving to storage...');
+        const finalImage = tempCanvas.toDataURL('image/png');
 
-        setTimeout(() => {
-            const finalImage = tempCanvas.toDataURL('image/png');
+        updateUploadProgress('save', 50, 'Uploading to Cloudinary...');
 
-            try {
-                localStorage.setItem(currentTargetImage.imgId, finalImage);
-                updateUploadProgress('verify', 80, 'Verifying image loaded...');
+        try {
+            // Upload to Cloudinary
+            const result = await uploadBase64ToCloudinary(finalImage, 'image', currentTargetImage.imgId);
+            const cloudinaryUrl = result.secure_url;
 
-                // Verify image actually loads
-                const testImg = new Image();
-                testImg.onload = function() {
-                    // Update actual display
-                    currentTargetImage.imgElement.src = finalImage;
-                    currentTargetImage.imgElement.style.display = 'block';
+            updateUploadProgress('verify', 80, 'Verifying upload...');
 
-                    if (currentTargetImage.defaultAvatar) {
-                        currentTargetImage.defaultAvatar.style.display = 'none';
-                    }
-
-                    if (currentTargetImage.isGallery) {
-                        const galleryItem = currentTargetImage.imgElement.closest('.gallery-item');
-                        if (galleryItem) galleryItem.classList.add('has-image');
-                    }
-
-                    completeUploadProgress(true, 'Photo Saved!');
-                    closePhotoEditor();
-                };
-
-                testImg.onerror = function() {
-                    completeUploadProgress(false, 'Error Loading Image');
-                };
-
-                testImg.src = finalImage;
-
-            } catch (err) {
-                completeUploadProgress(false, 'Storage Full!');
-                console.error('Save error:', err);
+            // Save URL based on image type
+            if (currentTargetImage.imgId === 'profile-pic') {
+                cloudinaryMedia.profilePic = cloudinaryUrl;
+            } else if (currentTargetImage.imgId === 'about-pic') {
+                cloudinaryMedia.aboutPic = cloudinaryUrl;
             }
-        }, 300);
+            saveCloudinaryUrls();
+
+            // Verify image actually loads
+            const testImg = new Image();
+            testImg.onload = function() {
+                // Update actual display
+                currentTargetImage.imgElement.src = cloudinaryUrl;
+                currentTargetImage.imgElement.style.display = 'block';
+
+                if (currentTargetImage.defaultAvatar) {
+                    currentTargetImage.defaultAvatar.style.display = 'none';
+                }
+
+                if (currentTargetImage.isGallery) {
+                    const galleryItem = currentTargetImage.imgElement.closest('.gallery-item');
+                    if (galleryItem) galleryItem.classList.add('has-image');
+                }
+
+                completeUploadProgress(true, 'Uploaded to Cloud!');
+                closePhotoEditor();
+            };
+
+            testImg.onerror = function() {
+                completeUploadProgress(false, 'Error Loading Image');
+            };
+
+            testImg.src = cloudinaryUrl;
+
+        } catch (err) {
+            console.error('Cloudinary upload error:', err);
+            completeUploadProgress(false, 'Upload Failed! Check connection.');
+        }
     }, 200);
 }
 
@@ -2224,22 +2360,13 @@ function initMusicUpload() {
 
     if (!musicUploadBtn || !musicUploadInput) return;
 
-    // Load music: First check GitHub images/ folder, then localStorage
-    if (THEME_SONG_FILE) {
-        // Load from GitHub images/ folder (everyone hears same song)
-        themeSong.src = 'images/' + THEME_SONG_FILE;
+    // Load music from Cloudinary
+    loadCloudinaryUrls();
+    if (cloudinaryMedia.themeSong) {
+        themeSong.src = cloudinaryMedia.themeSong;
         musicUploadBtn.classList.add('has-song');
         musicStatus.textContent = 'Theme Song Ready';
         if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
-    } else {
-        // Fallback to localStorage
-        const savedMusic = localStorage.getItem('theme-song');
-        if (savedMusic) {
-            themeSong.src = savedMusic;
-            musicUploadBtn.classList.add('has-song');
-            musicStatus.textContent = 'Theme Song Ready';
-            if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
-        }
     }
 
     // Click to upload music
@@ -2252,7 +2379,7 @@ function initMusicUpload() {
         this.value = ''; // Reset to allow re-upload of same file
     });
 
-    musicUploadInput.addEventListener('change', function(e) {
+    musicUploadInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -2262,44 +2389,37 @@ function initMusicUpload() {
             return;
         }
 
-        // Show loading state
-        musicStatus.textContent = 'Uploading...';
+        // Show progress
+        showUploadProgress('Uploading Music...');
+        updateUploadProgress('read', 20, 'Reading audio file...');
 
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const audioData = event.target.result;
+        try {
+            updateUploadProgress('save', 50, 'Uploading to Cloudinary...');
 
-            // Save to localStorage
-            try {
-                localStorage.setItem('theme-song', audioData);
+            // Upload to Cloudinary as video (audio is uploaded as video type)
+            const result = await uploadToCloudinary(file, 'video');
+            const cloudinaryUrl = result.secure_url;
 
-                // Update audio element
-                themeSong.src = audioData;
+            updateUploadProgress('verify', 80, 'Verifying...');
 
-                // Update UI
-                musicUploadBtn.classList.add('has-song');
-                musicStatus.textContent = 'Theme Song Ready';
-                if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
+            // Save URL
+            cloudinaryMedia.themeSong = cloudinaryUrl;
+            saveCloudinaryUrls();
 
-                showToast('Theme song uploaded!');
-            } catch (err) {
-                // localStorage might be full
-                if (err.name === 'QuotaExceededError') {
-                    showToast('Storage full! Try a smaller file.');
-                } else {
-                    showToast('Error saving song. Try again.');
-                }
-                musicStatus.textContent = 'Add Theme Song';
-                console.error('Music upload error:', err);
-            }
-        };
+            // Update audio element
+            themeSong.src = cloudinaryUrl;
 
-        reader.onerror = function() {
-            showToast('Error reading file!');
+            // Update UI
+            musicUploadBtn.classList.add('has-song');
+            musicStatus.textContent = 'Theme Song Ready';
+            if (removeMusicBtn) removeMusicBtn.style.display = 'flex';
+
+            completeUploadProgress(true, 'Music Uploaded!');
+        } catch (err) {
+            console.error('Music upload error:', err);
+            completeUploadProgress(false, 'Upload Failed!');
             musicStatus.textContent = 'Add Theme Song';
-        };
-
-        reader.readAsDataURL(file);
+        }
     });
 
     // Remove music
@@ -2307,8 +2427,9 @@ function initMusicUpload() {
         removeMusicBtn.addEventListener('click', (e) => {
             e.stopPropagation();
 
-            localStorage.removeItem('theme-song');
-            themeSong.src = 'theme-song.mp3'; // Reset to default
+            cloudinaryMedia.themeSong = '';
+            saveCloudinaryUrls();
+            themeSong.src = '';
             musicUploadBtn.classList.remove('has-song');
             musicStatus.textContent = 'Add Theme Song';
             removeMusicBtn.style.display = 'none';
