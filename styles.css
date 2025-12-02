@@ -3442,8 +3442,9 @@ body.admin-mode .gallery-delete-btn {
 }
 
 /* Spinning animation when music plays */
-.fullscreen-image-container img.spinning {
-    animation: spinPhoto 4s linear infinite;
+.fullscreen-image-container img.spinning,
+#fullscreen-profile-img.spinning {
+    animation: spinPhoto 4s linear infinite !important;
 }
 
 @keyframes spinPhoto {
