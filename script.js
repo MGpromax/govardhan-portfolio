@@ -2043,6 +2043,7 @@ function disableAdminMode() {
 
 function initProfileFullscreen() {
     const profileClickable = document.getElementById('profile-clickable');
+    const viewFullBtn = document.getElementById('view-full-btn');
     const aboutPic = document.getElementById('about-pic');
     const fullscreenModal = document.getElementById('profile-fullscreen-modal');
     const closeBtn = document.getElementById('close-fullscreen');
@@ -2058,84 +2059,58 @@ function initProfileFullscreen() {
         themeSong.src = media.music;
     }
 
-    // Long press timer
-    let pressTimer = null;
-    let isLongPress = false;
+    // Click on profile - plays music + spinning (old behavior)
+    if (profileClickable) {
+        profileClickable.addEventListener('click', (e) => {
+            if (document.body.classList.contains('admin-mode')) return;
+            if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
+            if (e.target.closest('input[type="file"]')) return;
+            if (e.target.closest('#view-full-btn')) return; // Don't trigger if clicking view button
 
-    // Function to open fullscreen with music
-    function openFullscreenWithMusic(imgSrc) {
-        if (!imgSrc || imgSrc === '') {
-            showToast('No photo yet!');
-            return;
-        }
+            const media = getMedia();
+            const imgSrc = media.profile || profilePic.src;
+            if (!imgSrc || imgSrc === '' || profilePic.style.display === 'none') {
+                showToast('No profile photo yet!');
+                return;
+            }
 
-        // Set fullscreen image
-        fullscreenImg.src = imgSrc;
+            // Open fullscreen with spinning + music
+            fullscreenImg.src = imgSrc;
+            fullscreenModal.classList.add('active');
+            fullscreenModal.classList.remove('full-view-mode');
+            document.body.style.overflow = 'hidden';
+            fullscreenImg.classList.add('spinning');
 
-        // Open fullscreen modal
-        fullscreenModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        // Add spinning animation
-        fullscreenImg.classList.add('spinning');
-
-        // Play music
-        const currentMedia = getMedia();
-        if (themeSong && currentMedia.music) {
-            themeSong.src = currentMedia.music;
-            themeSong.currentTime = 0;
-            themeSong.play().catch((err) => {
-                console.log('Audio autoplay blocked:', err);
-            });
-        }
+            // Play music
+            const currentMedia = getMedia();
+            if (themeSong && currentMedia.music) {
+                themeSong.src = currentMedia.music;
+                themeSong.currentTime = 0;
+                themeSong.play().catch((err) => {
+                    console.log('Audio autoplay blocked:', err);
+                });
+            }
+        });
     }
 
-    // Long press handlers for profile photo
-    if (profileClickable) {
-        // Mouse events
-        profileClickable.addEventListener('mousedown', (e) => {
+    // View Full button - shows full size image (no crop, no music, no spin)
+    if (viewFullBtn) {
+        viewFullBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (document.body.classList.contains('admin-mode')) return;
-            if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
-            if (e.target.closest('input[type="file"]')) return;
 
-            isLongPress = false;
-            pressTimer = setTimeout(() => {
-                isLongPress = true;
-                const media = getMedia();
-                const imgSrc = media.profile || profilePic.src;
-                openFullscreenWithMusic(imgSrc);
-            }, 3000); // 3 seconds
-        });
+            const media = getMedia();
+            const imgSrc = media.profile || profilePic.src;
+            if (!imgSrc || imgSrc === '' || profilePic.style.display === 'none') {
+                showToast('No profile photo yet!');
+                return;
+            }
 
-        profileClickable.addEventListener('mouseup', () => {
-            clearTimeout(pressTimer);
-        });
-
-        profileClickable.addEventListener('mouseleave', () => {
-            clearTimeout(pressTimer);
-        });
-
-        // Touch events for mobile
-        profileClickable.addEventListener('touchstart', (e) => {
-            if (document.body.classList.contains('admin-mode')) return;
-            if (e.target.closest('.upload-overlay') || e.target.closest('.remove-photo-btn')) return;
-            if (e.target.closest('input[type="file"]')) return;
-
-            isLongPress = false;
-            pressTimer = setTimeout(() => {
-                isLongPress = true;
-                const media = getMedia();
-                const imgSrc = media.profile || profilePic.src;
-                openFullscreenWithMusic(imgSrc);
-            }, 3000);
-        }, { passive: true });
-
-        profileClickable.addEventListener('touchend', () => {
-            clearTimeout(pressTimer);
-        });
-
-        profileClickable.addEventListener('touchcancel', () => {
-            clearTimeout(pressTimer);
+            // Open fullscreen in full view mode (no spinning, no music)
+            fullscreenImg.src = imgSrc;
+            fullscreenModal.classList.add('active', 'full-view-mode');
+            document.body.style.overflow = 'hidden';
+            fullscreenImg.classList.remove('spinning');
         });
     }
 
@@ -2151,9 +2126,9 @@ function initProfileFullscreen() {
             }
 
             fullscreenImg.src = imgSrc;
-            fullscreenModal.classList.add('active');
+            fullscreenModal.classList.add('active', 'full-view-mode');
             document.body.style.overflow = 'hidden';
-            // No spinning or music for about pic
+            fullscreenImg.classList.remove('spinning');
         });
     }
 
@@ -2177,7 +2152,7 @@ function initProfileFullscreen() {
     });
 
     function closeFullscreen() {
-        fullscreenModal.classList.remove('active');
+        fullscreenModal.classList.remove('active', 'full-view-mode');
         document.body.style.overflow = '';
 
         // Stop spinning

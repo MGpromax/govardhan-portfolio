@@ -281,6 +281,41 @@ body {
     opacity: 1;
 }
 
+/* View Full Button */
+.view-full-btn {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-pic-wrapper:hover .view-full-btn {
+    opacity: 1;
+}
+
+.view-full-btn:hover {
+    background: var(--accent-primary);
+    transform: scale(1.1);
+}
+
+/* Hide view button in admin mode */
+.admin-mode .view-full-btn {
+    display: none;
+}
+
 .status-badge {
     position: absolute;
     bottom: -10px;
@@ -3454,6 +3489,35 @@ body.admin-mode .gallery-delete-btn {
     100% {
         transform: rotate(360deg);
     }
+}
+
+/* Full View Mode - Shows full image without circle crop */
+.profile-fullscreen-modal.full-view-mode .fullscreen-image-container {
+    width: auto;
+    height: auto;
+    max-width: 90vw;
+    max-height: 70vh;
+    border-radius: 12px;
+    overflow: hidden;
+    animation: none;
+    border: none;
+    background: transparent;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.profile-fullscreen-modal.full-view-mode .fullscreen-image-container img {
+    width: auto;
+    height: auto;
+    max-width: 90vw;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.profile-fullscreen-modal.full-view-mode .fullscreen-name,
+.profile-fullscreen-modal.full-view-mode .fullscreen-title,
+.profile-fullscreen-modal.full-view-mode .music-player {
+    display: none;
 }
 
 .fullscreen-name {
