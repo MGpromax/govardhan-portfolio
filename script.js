@@ -779,19 +779,6 @@ function randomHighlight() {
 }
 setInterval(randomHighlight, 5000);
 
-// Easter Egg: Konami Code
-let konamiCode = [];
-const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
-document.addEventListener('keydown', (e) => {
-    konamiCode.push(e.keyCode);
-    konamiCode = konamiCode.slice(-10);
-    if (konamiCode.join(',') === konamiSequence.join(',')) {
-        createEmojiRain('🔥', 50);
-        createConfetti(window.innerWidth / 2, window.innerHeight / 2, 100);
-        alert('🔥 ಗಾಂಡು MODE ACTIVATED! 🔥');
-    }
-});
-
 /* ============================================
    FIREBASE AUTHENTICATION
    ============================================ */
