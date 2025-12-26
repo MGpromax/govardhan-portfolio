@@ -95,55 +95,67 @@ function initMobileMenu() {
    TYPEWRITER EFFECT
    ============================================ */
 function initTypewriter() {
-    const typedText = document.getElementById('typed-text');
-    if (!typedText) return;
-
-    const phrases = [
-        'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
-        'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
-        'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
-        'ಆರು ಜನ, ಆರು ಕಥೆ, ಲಕ್ಷ ತಮಾಷೆ! 😂',
-        'ಒಬ್ಬೊಬ್ಬರೂ ಒಂದೊಂದು ಥರ ಗಾಂಡುಗಳು! 🤪',
-        'Biryani ಇದ್ರೆ ಎಲ್ಲಿಗಾದ್ರೂ ಬರ್ತೀವಿ! 🍗',
-        'Late ಬರೋದು ನಮ್ಮ ಜನ್ಮ ಸಿದ್ಧಿ! ⏰',
-        'Roasting = Our Profession! 🔥',
-        'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
-        'ಎಲ್ಲರೂ ಸೇರಿ ಒಂದೇ Brain Cell! 🧠',
-        'Best Friends Forever! ❤️',
-        'Pruthvi vs Gowtham = ∞ Roasts! 😈'
-    ];
-
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-    let typingSpeed = 100;
-
-    function type() {
-        const currentPhrase = phrases[phraseIndex];
-
-        if (isDeleting) {
-            typedText.textContent = currentPhrase.substring(0, charIndex - 1);
-                charIndex--;
-            typingSpeed = 50;
-        } else {
-            typedText.textContent = currentPhrase.substring(0, charIndex + 1);
-            charIndex++;
-            typingSpeed = 100;
+    try {
+        const typedText = document.getElementById('typed-text');
+        if (!typedText) {
+            console.error('Typewriter element not found');
+            return;
         }
 
-        if (!isDeleting && charIndex === currentPhrase.length) {
-            isDeleting = true;
-            typingSpeed = 2000; // Pause at end
-        } else if (isDeleting && charIndex === 0) {
-                    isDeleting = false;
-                    phraseIndex = (phraseIndex + 1) % phrases.length;
-            typingSpeed = 500; // Pause before typing next
+        const phrases = [
+            'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
+            'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
+            'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
+            'ಆರು ಜನ, ಆರು ಕಥೆ, ಲಕ್ಷ ತಮಾಷೆ! 😂',
+            'ಒಬ್ಬೊಬ್ಬರೂ ಒಂದೊಂದು ಥರ ಗಾಂಡುಗಳು! 🤪',
+            'Biryani ಇದ್ರೆ ಎಲ್ಲಿಗಾದ್ರೂ ಬರ್ತೀವಿ! 🍗',
+            'Late ಬರೋದು ನಮ್ಮ ಜನ್ಮ ಸಿದ್ಧಿ! ⏰',
+            'Roasting = Our Profession! 🔥',
+            'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
+            'Best Friends Forever! ❤️',
+            'Pruthvi vs Gowtham = ∞ Roasts! 😈'
+        ];
+
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typingSpeed = 100;
+
+        function type() {
+            try {
+                const currentPhrase = phrases[phraseIndex];
+
+                if (isDeleting) {
+                    charIndex--;
+                    typedText.textContent = currentPhrase.substring(0, charIndex);
+                    typingSpeed = 50;
+                } else {
+                    charIndex++;
+                    typedText.textContent = currentPhrase.substring(0, charIndex);
+                    typingSpeed = 100;
                 }
 
-        setTimeout(type, typingSpeed);
+                if (!isDeleting && charIndex === currentPhrase.length) {
+                    isDeleting = true;
+                    typingSpeed = 2000; // Pause at end
+                } else if (isDeleting && charIndex === 0) {
+                    isDeleting = false;
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    typingSpeed = 500; // Pause before typing next
+                }
+
+                setTimeout(type, typingSpeed);
+            } catch (e) {
+                console.error('Typewriter error:', e);
+            }
         }
 
-    type();
+        // Start typing
+        setTimeout(type, 1000);
+        console.log('Typewriter initialized');
+    } catch (e) {
+        console.error('Typewriter init error:', e);
+    }
 }
 
 /* ============================================
