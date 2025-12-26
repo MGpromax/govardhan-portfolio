@@ -96,13 +96,13 @@ function initMobileMenu() {
    ============================================ */
 function initTypewriter() {
     try {
-        const typedText = document.getElementById('typed-text');
+    const typedText = document.getElementById('typed-text');
         if (!typedText) {
             console.error('Typewriter element not found');
             return;
         }
 
-        const phrases = [
+    const phrases = [
             'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
             'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
             'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
@@ -114,20 +114,20 @@ function initTypewriter() {
             'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
             'Best Friends Forever! ❤️',
             'Pruthvi vs Gowtham = ∞ Roasts! 😈'
-        ];
+    ];
 
-        let phraseIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
         let typingSpeed = 100;
 
         function type() {
             try {
-                const currentPhrase = phrases[phraseIndex];
+        const currentPhrase = phrases[phraseIndex];
 
                 if (isDeleting) {
-                    charIndex--;
-                    typedText.textContent = currentPhrase.substring(0, charIndex);
+                charIndex--;
+                typedText.textContent = currentPhrase.substring(0, charIndex);
                     typingSpeed = 50;
                 } else {
                     charIndex++;
@@ -833,6 +833,48 @@ function initAdminPanel() {
                 adminModal.classList.remove('show');
             }
         });
+    }
+
+    // Email/Password Sign-in
+    const emailLoginBtn = document.getElementById('email-login');
+    const adminEmailInput = document.getElementById('admin-email');
+    const adminPasswordInput = document.getElementById('admin-password');
+    
+    if (emailLoginBtn) {
+        emailLoginBtn.addEventListener('click', () => {
+            const email = adminEmailInput.value.trim();
+            const password = adminPasswordInput.value;
+            
+            if (!email || !password) {
+                showToast('⚠️ Enter email and password!');
+                return;
+            }
+            
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((result) => {
+                    console.log('Signed in:', result.user.email);
+                    showToast('✅ Login successful!');
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    if (error.code === 'auth/user-not-found') {
+                        showToast('❌ User not found!');
+                    } else if (error.code === 'auth/wrong-password') {
+                        showToast('❌ Wrong password!');
+                    } else {
+                        showToast('❌ Login failed: ' + error.message);
+                    }
+                });
+        });
+        
+        // Allow Enter key to login
+        if (adminPasswordInput) {
+            adminPasswordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    emailLoginBtn.click();
+                }
+            });
+        }
     }
 
     // Google Sign-in

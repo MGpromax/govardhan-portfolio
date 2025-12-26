@@ -703,13 +703,21 @@
                 <i class="fas fa-user-shield"></i>
                 <h2>Admin Login</h2>
             </div>
-            <div id="login-form" class="admin-form">
+<div id="login-form" class="admin-form">
                 <p>Sign in to edit the website</p>
+                <div class="login-inputs">
+                    <input type="email" id="admin-email" placeholder="Email" class="admin-input">
+                    <input type="password" id="admin-password" placeholder="Password" class="admin-input">
+                    <button class="btn btn-primary btn-login" id="email-login">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </div>
+                <div class="login-divider"><span>or</span></div>
                 <button class="btn btn-google" id="google-login">
                     <i class="fab fa-google"></i> Sign in with Google
                 </button>
                 <p class="admin-note">⚠️ Only authorized admins can login</p>
-                    </div>
+            </div>
             <div id="admin-panel" class="admin-form" style="display: none;">
                 <div class="admin-user-info">
                     <img id="admin-avatar" src="" alt="Admin">
