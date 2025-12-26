@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="description" content="ಗಾಂಡು ಚೂತಿಯಗಳು - The Ultimate Friend Group">
+    <title>ಗಾಂಡು ಚೂತಿಯಗಳು | The Legend Gang</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="stars"></div>
+        <div class="stars2"></div>
+        <div class="stars3"></div>
+    </div>
+
+    <!-- Floating Emojis -->
+    <div class="floating-emojis" id="floating-emojis"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-logo">
+            <span class="logo-text animate-logo">ಗಾ<span class="highlight">.</span>ಚೂ</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home" class="nav-link">ಮನೆ</a></li>
+            <li><a href="#gang" class="nav-link">ನಮ್ಮ Gang</a></li>
+            <li><a href="#skills" class="nav-link">Skills</a></li>
+            <li><a href="#achievements" class="nav-link">ಸಾಧನೆಗಳು</a></li>
+            <li><a href="#gallery" class="nav-link">Photos</a></li>
+            <li><a href="#contact" class="nav-link">ಸಂಪರ್ಕ</a></li>
+        </ul>
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <p class="greeting animate-slide-down">ನೋಡ್ರಪ್ಪ ಯಾರು ಬಂದ್ರು...</p>
+                <h1 class="glitch animate-glitch" data-text="ಗಾಂಡು ಚೂತಿಯಗಳು">ಗಾಂಡು ಚೂತಿಯಗಳು</h1>
+                <div class="typewriter">
+                    <span id="typed-text"></span><span class="cursor">|</span>
+                </div>
+                <p class="tagline animate-fade-in">"ಬ್ಯಾವರ್ಸಿಗಳ ಅಧಿಕೃತ ಗ್ಯಾಂಗ್! 🔥"</p>
+                
+                <div class="gang-count animate-scale-in">
+                    <div class="count-item">
+                        <span class="count-number" data-count="6">0</span>
+                        <span class="count-label">ಗಾಂಡುಗಳು</span>
+            </div>
+                    <div class="count-item">
+                        <span class="count-number" data-count="6">0</span>
+                        <span class="count-label">PhD in ಗಾಂಡುತನ 🎓</span>
+            </div>
+                    <div class="count-item">
+                        <span class="count-number" data-count="0">0</span>
+                        <span class="count-label">Common Sense</span>
+        </div>
+    </div>
+
+                <div class="hero-buttons animate-bounce-in">
+                    <a href="#gang" class="btn btn-primary pulse-btn">
+                        <i class="fas fa-users"></i> ಗಾಂಡುಗಳನ್ನ ನೋಡಿ
+                    </a>
+                    <a href="#achievements" class="btn btn-secondary">
+                        <i class="fas fa-trophy"></i> ನಮ್ಮ ಸಾಧನೆಗಳು
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator animate-bounce">
+            <span>ಕೆಳಗೆ Scroll ಮಾಡಿ</span>
+            <i class="fas fa-chevron-down"></i>
+    </div>
+
+        <!-- Hero Decorations -->
+        <div class="hero-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </section>
+
+    <!-- Meet The Gang Section -->
+    <section id="gang" class="gang-section">
+        <div class="section-header">
+            <span class="section-tag animate-tag">ನಮ್ಮ GANG</span>
+            <h2 class="animate-title">ನೋಡಿ ಈ <span class="highlight">ಗಾಂಡುಗಳನ್ನ</span></h2>
+            <p class="section-subtitle">⚠️ ಈ ಜನಗಳನ್ನ ನೋಡಿ ನಗೋದು ತಪ್ಪಲ್ಲ!</p>
+        </div>
+
+        <div class="gang-grid" id="gang-grid">
+            
+            <!-- Member 1: Govardhan HL aka BETAPPA -->
+            <div class="member-card animate-card" data-member="govardhan">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="govardhan" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="govardhan" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="govardhan" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-govardhan-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-govardhan-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-govardhan-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-govardhan">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img class="member-photo" id="photo-govardhan" src="" alt="Govardhan HL" style="display: none;">
+                    <video class="member-video" id="video-govardhan" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">⚡ ಬೆಟ್ಟಪ್ಪ</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Govardhan HL</h3>
+                    <p class="member-title">Human Power Generator 🦵⚡</p>
+                    
+                    <a href="https://www.instagram.com/g_o_w_d_a.08" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @g_o_w_d_a.08
+                    </a>
+                    
+                    <p class="member-roast">"ಕಾಲು ಅಲ್ಲಾಡಿಸಿ Current ಮಾಡೋ ಛೋಟಾ ಭೀಮ್!" ⚡</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-bolt"></i> ಕಾಲು Vibrator</span>
+                        <span class="trait animate-trait"><i class="fas fa-bed"></i> 50°C ಅಲ್ಲೂ ಬ್ಲಾಂಕೆಟ್</span>
+                        <span class="trait animate-trait"><i class="fas fa-trophy"></i> Class Topper</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>🏆 <strong>Topper</strong> - ಓದೋದು, ಬರಿಯೋದು ಯಾವಾಗ್ಲೂ first, assignment Submit ಮಾಡೋದು ಎಲ್ಲಾ Fast!</p>
+                        <p>🛏️ <strong>Corner ಅಲ್ಲೇ ನಿದ್ದೆ</strong> - Wall side ಬಿಟ್ಟು ಬೇರೆ ಕಡೆ ಮಲಗಲ್ಲ</p>
+                        <p>🔥 <strong>50°C ಇದ್ರೂ ಬ್ಲಾಂಕೆಟ್ ಬೇಕು</strong> - ಚಳಿ ಆಗಲ್ಲ ಮತ್ತೆ ಬ್ಲಾಂಕೆಟ್ ಇಲ್ಲದೆ ಮಲಗಲ್ಲ!</p>
+                        <p>📺 <strong>BBK Fan</strong> - Manjanna ನ ದೊಡ್ಡ fan! Season 11 ❤️</p>
+                        <p>🎬 <strong>Movie Expert</strong> - Internet ಅಲ್ಲಿರೋ ಎಲ್ಲಾ movies ನೋಡಿದ್ದಾನೆ!</p>
+    </div>
+
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num animate-number">∞</span>
+                            <span class="mini-stat-label">Vibrations/sec</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">💰</span>
+                            <span class="mini-stat-label">ಯಾವಾಗ್ಲೂ Pay ಮಾಡ್ತಾನೆ</span>
+                        </div>
+            </div>
+                    
+                    <p class="member-special">💡 ಇವನ ಕಾಲಿಂದ Electricity generate ಆಗುತ್ತೆ ಅಂತ rumor! ⚡</p>
+                </div>
+    </div>
+
+            <!-- Member 2: Gowtham K - RASIKARA RAJA -->
+            <div class="member-card animate-card" data-member="gowtham">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="gowtham" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="gowtham" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="gowtham" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-gowtham-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-gowtham-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-gowtham-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-gowtham">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img class="member-photo" id="photo-gowtham" src="" alt="Gowtham K" style="display: none;">
+                    <video class="member-video" id="video-gowtham" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">👑 ರಸಿಕರ ರಾಜ</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Gowtham K</h3>
+                    <p class="member-title">Rich Boy + K-Pop ಭಕ್ತ 🌹</p>
+                    
+                    <a href="https://www.instagram.com/gowtham._.k" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @gowtham._.k
+                    </a>
+                    
+                    <p class="member-roast">"3 Credit Card ಇದೆ, ಆದ್ರೆ iPhone 17 ಎಲ್ಲಿ ಗುರು?!" 📱 (Abhimanigala mandalada maathu)</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-heart"></i> ಹುಡುಗಿಯರ Favorite</span>
+                        <span class="trait animate-trait"><i class="fas fa-credit-card"></i> 3+ Cards</span>
+                        <span class="trait animate-trait"><i class="fas fa-bed"></i> ಗೊರಕೆ King</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>💕 <strong>ರಸಿಕರ ರಾಜ</strong> - ಎಲ್ಲಾ ಹುಡುಗಿಯರ ಮೆಚ್ಚಿನ ಹುಡುಗ!</p>
+                        <p>🏢 <strong>Big Company</strong> - Best friend Naga jealous ಆಗಿದ್ದಾನೆ!</p>
+                        <p>💳 <strong>Rich Guy</strong> - 3+ Credit cards ಇದೆ ಆದ್ರೆ iPhone ಕೊಡ್ಸಲ್ಲ!</p>
+                        <p>🌹 <strong>ROSÉ Fan</strong> - "Bangkok ಹೋಗೋಣ ಬಾ Rosé ನೋಡಕ್ಕೆ!"</p>
+                        <p>😴 <strong>ಗೊರಕೆ Legend</strong> - ಇವನ ಗೊರಕೆ ಕೇಳಿದ್ರೆ ಇಡೀ room ನಡುಗುತ್ತೆ!</p>
+                        <p>🚫 <strong>No Alcohol</strong> - ಅಂತ ಹೇಳ್ತಾನೆ, ನಂಬೋರು ನಂಬಲಿ! 😏</p>
+                    </div>
+                    
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">3+</span>
+                            <span class="mini-stat-label">Credit Cards</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">0</span>
+                            <span class="mini-stat-label">iPhone ಕನಸು ಮಾತ್ರ, ಕೊಡ್ಸಿದ್ದು ಶೂನ್ಯ!</span>
+                        </div>
+                    </div>
+                    
+                    <p class="member-special">📱 Manoj & Varun ಇನ್ನೂ iPhone 17 Pro Max ಗೆ wait ಮಾಡ್ತಿದ್ದಾರೆ!</p>
+                </div>
+            </div>
+
+            <!-- Member 3: Varun - BLANKET SUPERMAN -->
+            <div class="member-card animate-card" data-member="varun">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="varun" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="varun" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="varun" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-varun-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-varun-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-varun-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-varun">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img class="member-photo" id="photo-varun" src="" alt="Varun" style="display: none;">
+                    <video class="member-video" id="video-varun" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">🦸 ಬ್ಲಾಂಕೆಟ್ Superman</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Varun</h3>
+                    <p class="member-title">Sports Star + Part-time Superman 🦸‍♂️</p>
+                    
+                    <a href="https://www.instagram.com/_not_kakashi__" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @_not_kakashi__
+                    </a>
+                    
+                    <p class="member-roast">"ಬ್ಲಾಂಕೆಟ್ Cape ಹಾಕ್ಕೊಂಡು Superman ಆಗ್ತಾನೆ!" 🦸</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-running"></i> Sports Star</span>
+                        <span class="trait animate-trait"><i class="fas fa-mask"></i> Superman</span>
+                        <span class="trait animate-trait"><i class="fas fa-star"></i> Famous</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>🌟 <strong>Mr. Popular</strong> - ಎಲ್ಲರಿಗೂ ಗೊತ್ತಿರೋ ಮನುಷ್ಯ!</p>
+                        <p>🏃 <strong>Sports Person</strong> - Athletic ಮತ್ತು Fit!</p>
+                        <p>🦸 <strong>Superman Mode</strong> - ಬ್ಲಾಂಕೆಟ್ ಹಾಕ್ಕೊಂಡು hero pose ಕೊಡ್ತಾನೆ!</p>
+                        <p>💕 <strong>ಹುಡುಗಿಯರ Favorite</strong> - ಈ matter ಅಲ್ಲಿ Gowtham ನ ಶಿಷ್ಯ, ಆದ್ರೆ Gowtham ಯಾವಾಗ್ಲೂ Lord! 😂</p>
+                        <p>📱 <strong>iPhone Wait</strong> - Gowtham ಕೊಡ್ತಾನೆ ಅಂತ ನಂಬಿದ್ದಾನೆ!</p>
+                    </div>
+                    
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">100%</span>
+                            <span class="mini-stat-label">ಎಲ್ಲರಿಗೂ ಗೊತ್ತು</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">0</span>
+                            <span class="mini-stat-label">iPhone ಸಿಕ್ಕಿದ್ದು</span>
+                        </div>
+                    </div>
+                    
+                    <p class="member-special">🦸‍♂️ ಬ್ಲಾಂಕೆಟ್ = Cape, Varun = Superman! ಆದ್ರೆ fly ಮಾಡಕ್ಕಾಗಲ್ಲ! 😂</p>
+                </div>
+            </div>
+
+            <!-- Member 4: Gahan - BATHROOM KING -->
+            <div class="member-card animate-card" data-member="gahan">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="gahan" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="gahan" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="gahan" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-gahan-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-gahan-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-gahan-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-gahan">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img class="member-photo" id="photo-gahan" src="" alt="Gahan" style="display: none;">
+                    <video class="member-video" id="video-gahan" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">🚽 Bathroom King</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Gahan</h3>
+                    <p class="member-title">Overworked Employee + D-Boss ಭಕ್ತ 🎬</p>
+                    
+                    <a href="https://www.instagram.com/__gahan_" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @__gahan_
+                    </a>
+                    
+                    <p class="member-roast">"Bathroom ಅಲ್ಲಿ GF ಜೊತೆ Call ಅಲ್ಲಿ ಮಾತಾಡ್ತಾನೆ!" 📱🚽</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-toilet"></i> Bathroom King</span>
+                        <span class="trait animate-trait"><i class="fas fa-tired"></i> Overworked</span>
+                        <span class="trait animate-trait"><i class="fas fa-film"></i> D-Boss Fan</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>🏢 <strong>Office Slave</strong> - Office ಬಿಟ್ಟರೂ Office ಅವರು ಬಿಡಲ್ಲ! 24/7 Company call, ಇವನಿಗೆ ನೆಮ್ಮದಿ ಇಲ್ಲ, ರಾತ್ರಿ ಹಗಲು ನಾಯಿ ಥರ ದುಡಿತಾನೆ!</p>
+                        <p>🐍 <strong>Snake Colleagues</strong> - Colleagues ಅಲ್ಲ, ನಾಗರಹಾವುಗಳು! ಯಾವಾಗ ಕಚ್ತಾರೋ ಗೊತ್ತಿಲ್ಲ! Colleagues ಜೊತೆ ಇರೋದು ಹಾವಿನ ಜೊತೆ ಇದ್ದಂಗೆ!</p>
+                        <p>🚽 <strong>Bathroom King</strong> - Bathroom ಇವನ GF call center, ಅಲ್ಲೇ ಕೂತು ಗಂಟೆಗಟ್ಟಲೆ ಪಿಸುಗುಡ್ತಾನೆ!</p>
+                        <p>🍗 <strong>Sat-Mon Veg Only</strong> - ಆ ದಿನ non-veg ತಿಂದ್ರೆ ನರಕಕ್ಕೆ! 😂</p>
+                        <p>🎬 <strong>D-Boss ಭಕ್ತ</strong> - D-Boss movie ಹಾಕಿದ್ರೆ ಎಲ್ಲಾ ಬಿಟ್ಟು ಕೂರ್ತಾನೆ, office call ನೂ ಎತ್ತಲ್ಲ!</p>
+                        <p>💕 <strong>ಹುಡುಗಿಯರ Favorite</strong> - ಕೆಲವರಿಗೆ ಇಷ್ಟ, ಆದ್ರೆ Gowtham ಮುಂದೆ ಏನೂ ಇಲ್ಲ!</p>
+                    </div>
+                    
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">24/7</span>
+                            <span class="mini-stat-label">Work Calls</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">5 Days</span>
+                            <span class="mini-stat-label">Non-Veg ತಿನ್ನಬಹುದು</span>
+                        </div>
+                    </div>
+                    
+                    <p class="member-special">🚽 GF call ಬಂದಾಗ bathroom ಕಡೆ ಓಡ್ತಾನೆ! Privacy: 💯</p>
+                </div>
+            </div>
+
+            <!-- Member 5: Pruthvi - GOWTHAM ROASTER -->
+            <div class="member-card animate-card" data-member="pruthvi">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="pruthvi" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="pruthvi" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="pruthvi" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-pruthvi-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-pruthvi-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-pruthvi-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-pruthvi">
+                        <i class="fas fa-user"></i>
+        </div>
+                    <img class="member-photo" id="photo-pruthvi" src="" alt="Pruthvi" style="display: none;">
+                    <video class="member-video" id="video-pruthvi" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">🔥 Gowtham Roaster</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Pruthvi</h3>
+                    <p class="member-title">Professional Gowtham Troller + Player 😎</p>
+                    
+                    <a href="https://www.instagram.com/__.pruthvi_gowda_" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @__.pruthvi_gowda_
+                    </a>
+                    
+                    <p class="member-roast">"Gowtham ನ roast ಮಾಡೋಕೆ ಹುಟ್ಟಿದವನು!" 🔥</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-fire"></i> Roast King</span>
+                        <span class="trait animate-trait"><i class="fas fa-motorcycle"></i> Biker</span>
+                        <span class="trait animate-trait"><i class="fas fa-heart"></i> 5+ GFs</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>🔥 <strong>Born to Roast</strong> - Gowtham ನ troll ಮಾಡೋದೇ ಕೆಲಸ!</p>
+                        <p>😄 <strong>Jolly Mood</strong> - Sad ಅನ್ನೋ word ಇವನ dictionary ಅಲ್ಲಿ ಇಲ್ಲ! ಯಾವಾಗ್ಲೂ jolly jolly!</p>
+                        <p>🍗 <strong>Biryani ಭಕ್ತ</strong> - ವಾರಕ್ಕೆ 7 ದಿನ Biryani ತಿಂದ್ರೂ ಸಾಕಾಗಲ್ಲ!</p>
+                        <p>💕 <strong>5+ GFs</strong> - 5+ GFs, ಆದ್ರೂ single ಅಂತ ಹೇಳ್ಕೊಳ್ತಾನೆ! ಬ್ಯಾವರ್ಸಿ 😈🎭</p>
+                        <p>🏍️ <strong>Biker Boy</strong> - Long ride ಅಂದ್ರೆ ready, ಎಷ್ಟು km ಆದ್ರೂ ಸರಿ! Bike ಇಲ್ಲದೆ ಎಲ್ಲೂ ಹೋಗಲ್ಲ, 100 meter ಆದ್ರೂ bike ಬೇಕು!</p>
+                        <p>🎬 <strong>D-Boss Fan</strong> - D-Boss dialogue ಎಲ್ಲಾ ಬಾಯಿಪಾಠ! "ಇದ್ರೆ ನೆಮ್ಮದಿಯಾಗಿ ಇರ್ಕೇಡು......" ಮುಂದೆ ನೀವೇ fill ಮಾಡ್ಕೊಳಿ! 🎬🔥</p>
+                        <p>🚫 <strong>No Alcohol</strong> - ಅಂತ ಹೇಳ್ತಾನೆ, ಆದ್ರೆ party ಅಲ್ಲಿ ಏನು ಕುಡಿತಾನೋ ಯಾರಿಗೂ ಗೊತ್ತಿಲ್ಲ! 😏🍻</p>
+                    </div>
+                    
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">∞</span>
+                            <span class="mini-stat-label">Gowtham Roasts</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">5+</span>
+                            <span class="mini-stat-label">GFs 💀</span>
+                        </div>
+                </div>
+                    
+                    <p class="member-special">🍗 Biryani + Bike + Gowtham ನ Roast = Perfect Day!</p>
+                </div>
+            </div>
+
+            <!-- Member 6: Likhith Gowda - STOCKS KING / TRAITOR -->
+            <div class="member-card animate-card" data-member="likhith">
+                <div class="card-glow"></div>
+                <!-- Upload Buttons (Admin Only) -->
+                <button class="upload-btn upload-photo" data-member="likhith" data-type="photo" title="Upload Photo"><i class="fas fa-camera"></i></button>
+                <button class="upload-btn upload-video" data-member="likhith" data-type="video" title="Upload Video"><i class="fas fa-video"></i></button>
+                <button class="upload-btn upload-music" data-member="likhith" data-type="music" title="Upload Music"><i class="fas fa-music"></i></button>
+                <input type="file" class="hidden-input" id="file-likhith-photo" accept="image/*">
+                <input type="file" class="hidden-input" id="file-likhith-video" accept="video/*">
+                <input type="file" class="hidden-input" id="file-likhith-music" accept="audio/*">
+                
+                <div class="member-image-wrapper">
+                    <div class="member-avatar" id="avatar-likhith">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img class="member-photo" id="photo-likhith" src="" alt="Likhith Gowda" style="display: none;">
+                    <video class="member-video" id="video-likhith" loop muted playsinline style="display: none;"></video>
+                    <div class="member-badge animate-pulse">💰 Stocks King / 🐍 TRAITOR</div>
+                    <div class="member-ring"></div>
+                </div>
+                
+                <div class="member-info">
+                    <h3 class="member-name">Likhith Gowda</h3>
+                    <p class="member-title">DADIYA BYAVARSI (Manoj ಮಗ) 🐍</p>
+                    
+                    <a href="https://www.instagram.com/likhithgowdaan" target="_blank" class="member-instagram">
+                        <i class="fab fa-instagram"></i> @likhithgowdaan
+                    </a>
+                    
+                    <p class="member-roast">"2CR+ Stocks ಇದೆ, Gang ಗೆ ಒಂದು tea ಕೊಡಿಸಲ್ಲ!" 💀🐍</p>
+                    
+                    <div class="member-traits">
+                        <span class="trait animate-trait"><i class="fas fa-chart-line"></i> Stocks King</span>
+                        <span class="trait animate-trait"><i class="fas fa-skull"></i> Traitor</span>
+                        <span class="trait animate-trait"><i class="fas fa-beer"></i> Alcoholic</span>
+                    </div>
+                    
+                    <div class="member-fun-facts">
+                        <p>🐍 <strong>TRAITOR</strong> - ನಮ್ಮನ್ನ ಮರೆತು new friends ಜೊತೆ enjoy, gang ಗೆ ಮೋಸ ಮಾಡಿದ ಬ್ಯಾವರ್ಸಿ ಬೋಳಿಮಗ! 🐍💀</p>
+                        <p>💰 <strong>Stocks King</strong> - Share market ಅಲ್ಲಿ king, ಆದ್ರೆ party ಕೊಡ್ಸೋದ್ರಲ್ಲಿ nothing! 📈💸</p>
+                        <p>₿ <strong>Crypto King</strong> - Crypto king ಅಂತ ಹೇಳ್ಕೊಳ್ತಾನೆ, bank balance ತೋರ್ಸು ಅಂದ್ರೆ phone off ಮಾಡ್ತಾನೆ! 📵💀</p>
+                        <p>🚗 <strong>Rich Boy</strong> - High-end phone 📱, costliest bike 🏍️, ಈಗ most overpriced car plan! 🚗💰</p>
+                        <p>💸 <strong>Betrayal</strong> - New colleagues ಜೊತೆ 5 star hotel, gang ಜೊತೆ road side tea ಗೂ ಬರಲ್ಲ! Office friends ಗೆ treat on treat, ನಮಗೆ 'ಈಗ ದುಡ್ಡಿಲ್ಲ ಕಣೋ' ಅಂತಾನೆ! ಲಕ್ಷಗಟ್ಟಲೆ ಖರ್ಚು new friends ಗೆ, ನಮಗೆ ಒಂದು chai ಗೂ ಕಷ್ಟ! 🏨💔</p>
+                        <p>🍺 <strong>Alcoholic</strong> - ಇಡೀ gang ಅಲ್ಲಿ ಕುಡಿಯೋನು ಇವನೊಬ್ಬನೇ! Bottle ನೋಡಿದ್ರೆ ಕಣ್ಣು ಹೊಳೆಯುತ್ತೆ, ಕುಡಿದ ಮೇಲೆ ಜಗತ್ತೇ ಮರೆತು ಮಲಗ್ತಾನೆ! 🍻😴</p>
+                        <p>😴 <strong>ನಿದ್ದೆ King</strong> - ಎದ್ದಾಗ ಮಲಗೋ ಯೋಚನೆ, ಮಲಗಿದಾಗ ಮತ್ತೆ ಮಲಗೋ ಯೋಚನೆ! 💤🛏️</p>
+                    </div>
+                    
+                    <div class="member-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">2CR+</span>
+                            <span class="mini-stat-label">Stocks Value</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-num">₹0</span>
+                            <span class="mini-stat-label">Gang ಗೆ ಖರ್ಚು</span>
+                        </div>
+                    </div>
+                    
+                    <p class="member-special">⚠️ Stocks 2 Crore cross ಆದ್ರೂ, gang ಗೆ ಒಂದು chai ಗೂ 'market down ಕಣೋ' ಅಂತ excuse ಕೊಡ್ತಾನೆ! ಇವ್ನು ಮಗ ಅಲ್ಲ ಬೋಳಿಮಗ! 🐍💀</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="skills">
+        <div class="section-header">
+            <span class="section-tag animate-tag">ನಮ್ಮ SKILLS</span>
+            <h2 class="animate-title">Group <span class="highlight">Skills</span></h2>
+            <p class="section-subtitle">ಒಟ್ಟಾಗಿ ನಾವು ಏನೆಲ್ಲಾ ಮಾಡಬಲ್ಲೆವು!</p>
+        </div>
+        <div class="skills-container">
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-bed"></i></div>
+                <h3>ನಿದ್ದೆ Mastery</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>ಎಲ್ಲಿ ಬೇಕಾದ್ರೂ, ಯಾವಾಗ ಬೇಕಾದ್ರೂ ನಿದ್ದೆ ಮಾಡೋ experts!</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-fire"></i></div>
+                <h3>Roasting King</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>ಒಬ್ಬರನ್ನೊಬ್ಬರು roast ಮಾಡೋದ್ರಲ್ಲಿ world champions!</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-clock"></i></div>
+                <h3>Late ಬರೋದು</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>IST = Indian Stretchable Time. ನಾವು time ಗೆ ಬರಲ್ಲ!</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-comment-slash"></i></div>
+                <h3>ನೆಪ Master</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="98"></div>
+                </div>
+                <p>Shakespeare ನೂ ನಾಚುವ ಹಾಗೆ excuse ಹೇಳ್ತೀವಿ!</p>
+                <span class="skill-level">MASTER</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-utensils"></i></div>
+                <h3>Biryani ಭಕ್ತರು</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="100"></div>
+                </div>
+                <p>Biryani ಇದ್ರೆ ಎಲ್ಲಿಗಾದ್ರೂ ಬರ್ತೀವಿ! 🍗</p>
+                <span class="skill-level">LEGENDARY</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-ghost"></i></div>
+                <h3>ಮಾಯ ಆಗೋದು</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="97"></div>
+                </div>
+                <p>Trip plan final ಆದಾಗ, last minute cancel! 🚫✈️</p>
+                <span class="skill-level">NINJA</span>
+            </div>
+            <div class="skill-card animate-skill">
+                <div class="skill-icon"><i class="fas fa-briefcase"></i></div>
+                <h3>Business Plan</h3>
+                <div class="skill-bar">
+                    <div class="skill-progress" data-progress="0"></div>
+                </div>
+                <p>Business plan ಮಾಡೋದ್ನ ಅಂದ್ರೆ ಮಾತೇ ಇಲ್ಲ! 💼🤐</p>
+                <span class="skill-level">ZERO</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section id="achievements" class="achievements">
+        <div class="section-header">
+            <span class="section-tag animate-tag">ನಮ್ಮ HISTORY</span>
+            <h2 class="animate-title">Legendary <span class="highlight">ಸಾಧನೆಗಳು</span></h2>
+            <p class="section-subtitle">ನಾವು ಮಾಡಿದ disasters!</p>
+        </div>
+        <div class="timeline">
+            <div class="timeline-item left animate-timeline">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-users"></i></div>
+                    <span class="year">2024</span>
+                    <h3>Gang Formation</h3>
+                    <p>6 ಗಾಂಡುಗಳು ಒಟ್ಟಾದ ದಿನ. Universe ತಲೆ ಮೇಲೆ ಕೈ ಇಟ್ಕೊಂಡಿತು!</p>
+                </div>
+            </div>
+            <div class="timeline-item right animate-timeline">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-comments"></i></div>
+                    <span class="year">2024</span>
+                    <h3>Roast Championship</h3>
+                    <p>ಒಬ್ಬರನ್ನೊಬ್ಬರು roast ಮಾಡಿ world record! Pruthvi vs Gowtham! 🔥</p>
+                </div>
+            </div>
+            <div class="timeline-item left animate-timeline">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-clock"></i></div>
+                    <span class="year">2023</span>
+                    <h3>World Record: Group Late</h3>
+                    <p>6 ಜನ ಒಟ್ಟಿಗೆ 4 ಘಂಟೆ late ಬಂದ್ವಿ. Host ಊಟ ಮಾಡಿ ಮಲಗಿದ್ರು!</p>
+                </div>
+            </div>
+            <div class="timeline-item right animate-timeline">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-utensils"></i></div>
+                    <span class="year">2023</span>
+                    <h3>Biryani Champions</h3>
+                    <p>ಒಂದು restaurant ಅಲ್ಲಿ biryani ತಿಂದ ಮೇಲೆ owner "ಮತ್ತೆ ಬರಬೇಡಿ" ಅಂದ! 😂</p>
+                </div>
+            </div>
+            <div class="timeline-item right animate-timeline">
+                <div class="timeline-content">
+                    <div class="achievement-icon"><i class="fas fa-heart"></i></div>
+                    <span class="year">Forever</span>
+                    <h3>Best ಗಾಂಡುಗಳು Ever ❤️</h3>
+                    <p>ಎಲ್ಲಾ ಆದ್ರೂ, ನಾವು best friends! ಒಬ್ಬರಿಗೊಬ್ಬರು ತ್ರಾಸ್ ಕೊಟ್ಟರೂ, ಪ್ರೀತಿ ಜಾಸ್ತಿ!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery">
+        <div class="section-header">
+            <span class="section-tag animate-tag">EVIDENCE</span>
+            <h2 class="animate-title">Photo <span class="highlight">Gallery</span></h2>
+            <p class="section-subtitle">ನಮ್ಮ disasters ನ proof!</p>
+        </div>
+        <div class="gallery-grid" id="gallery-grid">
+            <div class="gallery-item animate-gallery">
+                <div class="gallery-placeholder">
+                    <i class="fas fa-camera"></i>
+                    <p>Photos coming soon!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="section-header">
+            <span class="section-tag animate-tag">ಸಂಪರ್ಕ</span>
+            <h2 class="animate-title">Contact <span class="highlight">The Gang</span></h2>
+            <p class="section-subtitle">Response time: ಎಂದೋ ಒಂದು ದಿನ!</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-info animate-contact">
+                <h3>ನಮ್ಮನ್ನ Contact ಮಾಡೋ ವಿಧಾನಗಳು</h3>
+                <p class="warning-text">⚠️ Warning: ಯಾವುದೂ work ಆಗಲ್ಲ!</p>
+                <div class="contact-methods">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>ಯಾವಾಗ್ಲೂ silent / switch off</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email</h4>
+                            <p>ವರ್ಷಕ್ಕೊಂದು ಸಲ check ಮಾಡ್ತೀವಿ</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4>Location</h4>
+                            <p>ಮಂಚದ ಮೇಲೆ / Biryani ಇರೋ ಕಡೆ</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <a href="#" class="social-btn animate-social"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-btn animate-social"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="social-btn animate-social"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                <h3>Made with <span class="heart animate-heart">💔</span> and bakwas</h3>
+                <p>ಈ website ಒಂದು joke! ನಮ್ಮ gang ಗೆ ಪ್ರೀತಿಯಿಂದ troll ಮಾಡಿದ್ದು. We actually love these idiots! ❤️</p>
+            </div>
+            <div class="gang-signature animate-signature">
+                <p>🤝 Govardhan • Gowtham • Varun • Gahan • Pruthvi • Likhith 🤝</p>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ಗಾಂಡು ಚೂತಿಯಗಳು | ಎಲ್ಲಾ ಹಕ್ಕುಗಳು Reserved (Not Really)</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+            </button>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Message sent!</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- Admin Login Modal -->
+    <div class="admin-modal" id="admin-modal">
+        <div class="admin-modal-content">
+            <button class="close-modal" id="close-admin-modal">&times;</button>
+            <div class="admin-header">
+                <i class="fas fa-user-shield"></i>
+                <h2>Admin Login</h2>
+            </div>
+            <div id="login-form" class="admin-form">
+                <p>Sign in to edit the website</p>
+                <button class="btn btn-google" id="google-login">
+                    <i class="fab fa-google"></i> Sign in with Google
+                </button>
+                <p class="admin-note">⚠️ Only authorized admins can login</p>
+                    </div>
+            <div id="admin-panel" class="admin-form" style="display: none;">
+                <div class="admin-user-info">
+                    <img id="admin-avatar" src="" alt="Admin">
+                    <span id="admin-name"></span>
+                    <button class="btn btn-small btn-logout" id="logout-btn">Logout</button>
+                </div>
+                <h3>🎛️ Admin Controls</h3>
+                <p class="admin-instruction">Click on any member's 📷 🎥 🎵 buttons to upload media!</p>
+                <div class="admin-status">
+                    <span class="status-dot active"></span> Admin Mode Active
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Floating Button -->
+    <button class="admin-fab" id="admin-fab" title="Admin Login">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <script src="script.js"></script>
+</body>
+</html>

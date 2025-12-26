@@ -1,0 +1,1067 @@
+/* ============================================
+   GANDU CHUTIYAGALU - JavaScript
+   With LOTS of Animations!
+   ============================================ */
+
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAhW4q769KsFnIN5he-7xir7qzxhA7iz5w",
+    authDomain: "govardhan-portfolio.firebaseapp.com",
+    databaseURL: "https://govardhan-portfolio-default-rtdb.firebaseio.com",
+    projectId: "govardhan-portfolio",
+    storageBucket: "govardhan-portfolio.firebasestorage.app",
+    messagingSenderId: "672217063954",
+    appId: "1:672217063954:web:ad5dadd92e9fde58156ecb"
+};
+
+// Authorized Admin Email
+const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
+
+// Global state
+let isAdmin = false;
+let currentUser = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Firebase
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        initFirebaseAuth();
+        loadAllMemberMedia();
+    }
+    
+    // Initialize all modules
+    initNavigation();
+            initTypewriter();
+            initCounters();
+    initFloatingEmojis();
+            initScrollAnimations();
+            initSkillBars();
+    initBackToTop();
+    initParallax();
+    initCardEffects();
+    initMobileMenu();
+    initAdminPanel();
+    initMediaUploads();
+});
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+function initNavigation() {
+    const navbar = document.querySelector('.navbar');
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                // Close mobile menu if open
+                document.querySelector('.nav-links').classList.remove('active');
+                document.querySelector('.hamburger').classList.remove('active');
+            }
+        });
+    });
+}
+
+/* ============================================
+   MOBILE MENU
+   ============================================ */
+function initMobileMenu() {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (hamburger) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+    }
+}
+
+/* ============================================
+   TYPEWRITER EFFECT
+   ============================================ */
+function initTypewriter() {
+    const typedText = document.getElementById('typed-text');
+    if (!typedText) return;
+
+    const phrases = [
+        'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
+        'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
+        'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
+        'ಆರು ಜನ, ಆರು ಕಥೆ, ಲಕ್ಷ ತಮಾಷೆ! 😂',
+        'ಒಬ್ಬೊಬ್ಬರೂ ಒಂದೊಂದು ಥರ ಗಾಂಡುಗಳು! 🤪',
+        'Biryani ಇದ್ರೆ ಎಲ್ಲಿಗಾದ್ರೂ ಬರ್ತೀವಿ! 🍗',
+        'Late ಬರೋದು ನಮ್ಮ ಜನ್ಮ ಸಿದ್ಧಿ! ⏰',
+        'Roasting = Our Profession! 🔥',
+        'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
+        'ಎಲ್ಲರೂ ಸೇರಿ ಒಂದೇ Brain Cell! 🧠',
+        'Best Friends Forever! ❤️',
+        'Pruthvi vs Gowtham = ∞ Roasts! 😈'
+    ];
+
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typingSpeed = 100;
+
+    function type() {
+        const currentPhrase = phrases[phraseIndex];
+
+        if (isDeleting) {
+            typedText.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+            typingSpeed = 50;
+        } else {
+            typedText.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+            typingSpeed = 100;
+        }
+
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            isDeleting = true;
+            typingSpeed = 2000; // Pause at end
+        } else if (isDeleting && charIndex === 0) {
+                    isDeleting = false;
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+            typingSpeed = 500; // Pause before typing next
+                }
+
+        setTimeout(type, typingSpeed);
+        }
+
+    type();
+}
+
+/* ============================================
+   COUNTER ANIMATION
+   ============================================ */
+function initCounters() {
+    const counters = document.querySelectorAll('.count-number[data-count]');
+    
+    const observerOptions = {
+        threshold: 0.5
+    };
+
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counter = entry.target;
+                const target = parseInt(counter.getAttribute('data-count'));
+                animateCounter(counter, target);
+                counterObserver.unobserve(counter);
+            }
+        });
+    }, observerOptions);
+
+    counters.forEach(counter => {
+        counterObserver.observe(counter);
+    });
+}
+
+function animateCounter(element, target) {
+    let current = 0;
+    const increment = target / 50;
+    const duration = 2000;
+    const stepTime = duration / 50;
+
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+    } else {
+            element.textContent = Math.floor(current);
+        }
+    }, stepTime);
+}
+
+/* ============================================
+   FLOATING EMOJIS
+   ============================================ */
+function initFloatingEmojis() {
+    const container = document.getElementById('floating-emojis');
+    if (!container) return;
+
+    const emojis = ['😂', '🔥', '💀', '🍗', '😴', '🦸', '👑', '🐍', '⚡', '🎬', '💕', '🏍️', '📱', '🚽'];
+    
+    function createEmoji() {
+        const emoji = document.createElement('div');
+        emoji.className = 'floating-emoji';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.left = Math.random() * 100 + '%';
+        emoji.style.animationDuration = (Math.random() * 10 + 10) + 's';
+        emoji.style.animationDelay = Math.random() * 5 + 's';
+        emoji.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+        container.appendChild(emoji);
+
+        // Remove emoji after animation
+        setTimeout(() => {
+            emoji.remove();
+        }, 20000);
+    }
+
+    // Create initial emojis
+    for (let i = 0; i < 10; i++) {
+        setTimeout(createEmoji, i * 500);
+    }
+
+    // Keep creating emojis
+    setInterval(createEmoji, 3000);
+}
+
+/* ============================================
+   SCROLL ANIMATIONS
+   ============================================ */
+function initScrollAnimations() {
+    const animatedElements = document.querySelectorAll('.animate-card, .animate-skill, .animate-timeline, .animate-gallery, .animate-contact, .section-header');
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animated');
+                
+                // Trigger child animations
+                const children = entry.target.querySelectorAll('.animate-trait, .animate-social');
+                children.forEach((child, index) => {
+                    setTimeout(() => {
+                        child.classList.add('animated');
+                    }, index * 100);
+                });
+            }
+        });
+    }, observerOptions);
+
+    animatedElements.forEach(element => {
+        scrollObserver.observe(element);
+    });
+
+    // Add scroll-animate class for general elements
+    document.querySelectorAll('.section-header, .member-card, .skill-card, .timeline-item, .contact-info').forEach(el => {
+        el.classList.add('scroll-animate');
+    });
+}
+
+/* ============================================
+   SKILL BARS ANIMATION
+   ============================================ */
+function initSkillBars() {
+    const skillBars = document.querySelectorAll('.skill-progress');
+    
+    const observerOptions = {
+        threshold: 0.5
+    };
+
+    const skillObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const bar = entry.target;
+                const progress = bar.getAttribute('data-progress') || 100;
+                bar.style.setProperty('--progress', progress + '%');
+                bar.style.width = progress + '%';
+                skillObserver.unobserve(bar);
+            }
+        });
+    }, observerOptions);
+
+    skillBars.forEach(bar => {
+        skillObserver.observe(bar);
+    });
+}
+
+/* ============================================
+   BACK TO TOP BUTTON
+   ============================================ */
+function initBackToTop() {
+    const backToTop = document.getElementById('back-to-top');
+    if (!backToTop) return;
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+            backToTop.classList.add('visible');
+            } else {
+            backToTop.classList.remove('visible');
+        }
+    });
+
+    backToTop.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+/* ============================================
+   PARALLAX EFFECT
+   ============================================ */
+function initParallax() {
+    const shapes = document.querySelectorAll('.shape');
+    
+    window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY;
+        
+        shapes.forEach((shape, index) => {
+            const speed = (index + 1) * 0.1;
+            shape.style.transform = `translateY(${scrollY * speed}px)`;
+        });
+    });
+
+    // Mouse parallax on hero section
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        hero.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            
+            shapes.forEach((shape, index) => {
+                const factor = (index + 1) * 0.5;
+                shape.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+            });
+        });
+    }
+}
+
+/* ============================================
+   CARD HOVER EFFECTS
+   ============================================ */
+function initCardEffects() {
+    const cards = document.querySelectorAll('.member-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const glow = card.querySelector('.card-glow');
+            if (glow) {
+                glow.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 0, 110, 0.15) 0%, transparent 70%)`;
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            const glow = card.querySelector('.card-glow');
+            if (glow) {
+                glow.style.background = 'radial-gradient(circle, rgba(255, 0, 110, 0.1) 0%, transparent 70%)';
+            }
+        });
+    });
+
+    // Tilt effect
+    cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = (y - centerY) / 20;
+            const rotateY = (centerX - x) / 20;
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+        });
+    });
+}
+
+/* ============================================
+   TOAST NOTIFICATION
+   ============================================ */
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    if (toast && toastMessage) {
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+
+            setTimeout(() => {
+            toast.classList.remove('show');
+            }, 3000);
+        }
+}
+
+/* ============================================
+   CONFETTI EFFECT (for special moments)
+   ============================================ */
+function createConfetti() {
+    const colors = ['#ff006e', '#8338ec', '#3a86ff', '#00ff88', '#ff00ff'];
+    
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.cssText = `
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            left: ${Math.random() * 100}vw;
+            top: -10px;
+            border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+            pointer-events: none;
+            z-index: 9999;
+            animation: confettiFall ${Math.random() * 3 + 2}s linear forwards;
+        `;
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 5000);
+    }
+}
+
+// Add confetti animation to CSS dynamically
+        const style = document.createElement('style');
+        style.textContent = `
+    @keyframes confettiFall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+/* ============================================
+   EASTER EGG - Konami Code
+   ============================================ */
+const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiIndex = 0;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === konamiCode[konamiIndex]) {
+        konamiIndex++;
+        if (konamiIndex === konamiCode.length) {
+            createConfetti();
+            showToast('🎉 ಗಾಂಡುಗಳು Forever! 🎉');
+            konamiIndex = 0;
+        }
+            } else {
+        konamiIndex = 0;
+    }
+});
+
+/* ============================================
+   RANDOM GANG MEMBER HIGHLIGHT
+   ============================================ */
+function highlightRandomMember() {
+    const cards = document.querySelectorAll('.member-card');
+    if (cards.length === 0) return;
+    
+    const randomCard = cards[Math.floor(Math.random() * cards.length)];
+    randomCard.style.animation = 'none';
+    randomCard.offsetHeight; // Trigger reflow
+    randomCard.style.animation = 'cardHighlight 2s ease-out';
+}
+
+// Add highlight animation
+const highlightStyle = document.createElement('style');
+highlightStyle.textContent = `
+    @keyframes cardHighlight {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 110, 0); }
+        50% { box-shadow: 0 0 50px 20px rgba(255, 0, 110, 0.3); }
+    }
+`;
+document.head.appendChild(highlightStyle);
+
+// Highlight random member every 10 seconds
+setInterval(highlightRandomMember, 10000);
+
+/* ============================================
+   CURSOR TRAIL EFFECT
+   ============================================ */
+function initCursorTrail() {
+    const trail = [];
+    const trailLength = 10;
+    
+    for (let i = 0; i < trailLength; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'cursor-trail';
+        dot.style.cssText = `
+            position: fixed;
+            width: ${10 - i}px;
+            height: ${10 - i}px;
+            background: rgba(255, 0, 110, ${1 - i * 0.1});
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
+        document.body.appendChild(dot);
+        trail.push(dot);
+    }
+    
+    let positions = [];
+    
+    document.addEventListener('mousemove', (e) => {
+        positions.unshift({ x: e.clientX, y: e.clientY });
+        positions = positions.slice(0, trailLength);
+        
+        trail.forEach((dot, index) => {
+            if (positions[index]) {
+                dot.style.left = positions[index].x - 5 + 'px';
+                dot.style.top = positions[index].y - 5 + 'px';
+                dot.style.opacity = '1';
+            }
+        });
+    });
+    
+    document.addEventListener('mouseleave', () => {
+        trail.forEach(dot => {
+            dot.style.opacity = '0';
+        });
+    });
+}
+
+// Initialize cursor trail on desktop only
+if (window.innerWidth > 768) {
+    initCursorTrail();
+}
+
+/* ============================================
+   PAGE LOAD ANIMATION
+   ============================================ */
+window.addEventListener('load', () => {
+    document.body.classList.add('loaded');
+    
+    // Stagger animation for hero elements
+    const heroElements = document.querySelectorAll('.hero .animate-slide-down, .hero .glitch, .hero .animate-fade-in, .hero .animate-scale-in, .hero .animate-bounce-in');
+    heroElements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.2}s`;
+    });
+});
+
+console.log('🔥 ಗಾಂಡು ಚೂತಿಯಗಳು loaded! Best gang ever! 🔥');
+
+/* ============================================
+   EXTRA ANIMATIONS - MAXIMUM DRAMA! 🔥
+   ============================================ */
+
+// Ripple Effect on Buttons
+document.querySelectorAll('.btn, button').forEach(btn => {
+    btn.classList.add('ripple');
+    btn.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple-effect');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
+        ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
+});
+
+// Confetti Burst Function
+function createConfetti(x, y, count = 30) {
+    const colors = ['#ff006e', '#8338ec', '#3a86ff', '#00ff88', '#ff00ff', '#feca57', '#ff6b6b'];
+    for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.left = x + 'px';
+        confetti.style.top = y + 'px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 50 + Math.random() * 100;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        confetti.style.setProperty('--vx', vx + 'px');
+        confetti.style.setProperty('--vy', vy + 'px');
+        confetti.style.animation = `confettiFall ${2 + Math.random() * 2}s ease-out forwards`;
+        
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 4000);
+    }
+}
+
+// Emoji Rain Function
+function createEmojiRain(emoji = '🔥', count = 20) {
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+            const emojiEl = document.createElement('div');
+            emojiEl.classList.add('emoji-rain');
+            emojiEl.textContent = emoji;
+            emojiEl.style.left = Math.random() * window.innerWidth + 'px';
+            emojiEl.style.animationDuration = (2 + Math.random() * 3) + 's';
+            document.body.appendChild(emojiEl);
+            setTimeout(() => emojiEl.remove(), 5000);
+        }, i * 100);
+    }
+}
+
+// Particle Explosion on Card Hover
+document.querySelectorAll('.member-card').forEach(card => {
+    card.addEventListener('mouseenter', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 10; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.width = (5 + Math.random() * 10) + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.backgroundColor = ['#ff006e', '#8338ec', '#00ff88', '#00d4ff'][Math.floor(Math.random() * 4)];
+            
+            const angle = (Math.PI * 2 / 10) * i;
+            const distance = 50 + Math.random() * 50;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--tx', tx + 'px');
+            particle.style.setProperty('--ty', ty + 'px');
+            particle.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+            ], { duration: 800, easing: 'ease-out' });
+            
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 800);
+        }
+    });
+});
+
+// Spotlight Effect Following Mouse
+document.querySelectorAll('.member-card, .skill-item, .achievement-content').forEach(el => {
+    el.classList.add('spotlight');
+    el.addEventListener('mousemove', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        this.style.setProperty('--mouse-x', x + '%');
+        this.style.setProperty('--mouse-y', y + '%');
+    });
+});
+
+// Random Emoji Burst on Double Click
+document.addEventListener('dblclick', (e) => {
+    const emojis = ['🔥', '😂', '🤣', '💀', '🎉', '✨', '💯', '🙌', '😈', '🍻'];
+    createConfetti(e.clientX, e.clientY, 20);
+    createEmojiRain(emojis[Math.floor(Math.random() * emojis.length)], 10);
+});
+
+// Add Shimmer to Titles
+document.querySelectorAll('.section-title, .member-name').forEach(el => {
+    el.classList.add('shimmer-text');
+});
+
+// Add Jelly Effect to Profile Images
+document.querySelectorAll('.profile-container').forEach(img => {
+    img.classList.add('jelly-hover');
+});
+
+// Add Bounce to Buttons
+document.querySelectorAll('.btn, .instagram-btn').forEach(btn => {
+    btn.classList.add('bounce-hover');
+});
+
+// Add Float Animation to Emojis in Text
+document.querySelectorAll('.member-roasts p').forEach(p => {
+    const text = p.innerHTML;
+    const emojiRegex = /(\p{Emoji})/gu;
+    p.innerHTML = text.replace(emojiRegex, '<span class="float" style="display:inline-block;animation-delay:' + Math.random() * 2 + 's">$1</span>');
+});
+
+// Matrix Rain Effect (Subtle Background)
+function initMatrixRain() {
+    const chars = 'ಗಾಂಡು01';
+    setInterval(() => {
+        if (Math.random() > 0.95) { // Only occasionally
+            const char = document.createElement('div');
+            char.classList.add('matrix-char');
+            char.textContent = chars[Math.floor(Math.random() * chars.length)];
+            char.style.left = Math.random() * window.innerWidth + 'px';
+            char.style.animationDuration = (5 + Math.random() * 10) + 's';
+            document.body.appendChild(char);
+            setTimeout(() => char.remove(), 15000);
+        }
+    }, 200);
+}
+initMatrixRain();
+
+// Tilt Effect on Cards (Enhanced)
+document.querySelectorAll('.member-card').forEach(card => {
+    card.addEventListener('mousemove', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 10;
+        const rotateY = (centerX - x) / 10;
+        
+        this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+    });
+});
+
+// Typing Sound Effect (Visual)
+const typewriter = document.querySelector('.typewriter');
+if (typewriter) {
+    const cursor = typewriter.querySelector('.cursor');
+    if (cursor) {
+        cursor.classList.add('cursor-blink');
+    }
+}
+
+// Add Electric Effect to Instagram Buttons
+document.querySelectorAll('.instagram-btn').forEach(btn => {
+    btn.classList.add('electric');
+});
+
+// Scroll Progress Indicator
+const progressBar = document.createElement('div');
+progressBar.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff006e, #8338ec, #00ff88);
+    z-index: 10000;
+    transition: width 0.1s;
+`;
+document.body.appendChild(progressBar);
+
+window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPercent = (scrollTop / docHeight) * 100;
+    progressBar.style.width = scrollPercent + '%';
+});
+
+// Random Member Highlight Every Few Seconds
+function randomHighlight() {
+    const cards = document.querySelectorAll('.member-card');
+    cards.forEach(card => card.classList.remove('neon-breathe'));
+    const randomCard = cards[Math.floor(Math.random() * cards.length)];
+    if (randomCard) {
+        randomCard.classList.add('neon-breathe');
+    }
+}
+setInterval(randomHighlight, 5000);
+
+// Easter Egg: Konami Code
+let konamiCode = [];
+const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+document.addEventListener('keydown', (e) => {
+    konamiCode.push(e.keyCode);
+    konamiCode = konamiCode.slice(-10);
+    if (konamiCode.join(',') === konamiSequence.join(',')) {
+        createEmojiRain('🔥', 50);
+        createConfetti(window.innerWidth / 2, window.innerHeight / 2, 100);
+        alert('🔥 ಗಾಂಡು MODE ACTIVATED! 🔥');
+    }
+});
+
+/* ============================================
+   FIREBASE AUTHENTICATION
+   ============================================ */
+function initFirebaseAuth() {
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            if (user.email === AUTHORIZED_ADMIN) {
+                isAdmin = true;
+                enableAdminMode();
+                showAdminPanel(user);
+            } else {
+                isAdmin = false;
+                disableAdminMode();
+                showToast('⚠️ Not authorized! Only admin can edit.');
+                firebase.auth().signOut();
+            }
+        } else {
+            currentUser = null;
+            isAdmin = false;
+            disableAdminMode();
+            showLoginForm();
+        }
+    });
+}
+
+function initAdminPanel() {
+    const adminFab = document.getElementById('admin-fab');
+    const adminModal = document.getElementById('admin-modal');
+    const closeModal = document.getElementById('close-admin-modal');
+    const googleLoginBtn = document.getElementById('google-login');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // Open admin modal
+    if (adminFab) {
+        adminFab.addEventListener('click', () => {
+            adminModal.classList.add('show');
+        });
+    }
+
+    // Close admin modal
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            adminModal.classList.remove('show');
+        });
+    }
+
+    // Close on outside click
+    if (adminModal) {
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) {
+                adminModal.classList.remove('show');
+            }
+        });
+    }
+
+    // Google Sign-in
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    console.log('Signed in:', result.user.email);
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    showToast('❌ Login failed: ' + error.message);
+                });
+        });
+    }
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            firebase.auth().signOut()
+                .then(() => {
+                    showToast('👋 Logged out successfully!');
+                })
+                .catch((error) => {
+                    console.error('Logout error:', error);
+                });
+        });
+    }
+}
+
+function enableAdminMode() {
+    document.body.classList.add('admin-mode');
+    const adminFab = document.getElementById('admin-fab');
+    if (adminFab) {
+        adminFab.classList.add('admin-active');
+        adminFab.innerHTML = '<i class="fas fa-check"></i>';
+    }
+    showToast('🔓 Admin Mode Activated!');
+}
+
+function disableAdminMode() {
+    document.body.classList.remove('admin-mode');
+    const adminFab = document.getElementById('admin-fab');
+    if (adminFab) {
+        adminFab.classList.remove('admin-active');
+        adminFab.innerHTML = '<i class="fas fa-cog"></i>';
+    }
+}
+
+function showAdminPanel(user) {
+    const loginForm = document.getElementById('login-form');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminAvatar = document.getElementById('admin-avatar');
+    const adminName = document.getElementById('admin-name');
+
+    if (loginForm) loginForm.style.display = 'none';
+    if (adminPanel) adminPanel.style.display = 'block';
+    if (adminAvatar) adminAvatar.src = user.photoURL || '';
+    if (adminName) adminName.textContent = user.displayName || user.email;
+}
+
+function showLoginForm() {
+    const loginForm = document.getElementById('login-form');
+    const adminPanel = document.getElementById('admin-panel');
+
+    if (loginForm) loginForm.style.display = 'block';
+    if (adminPanel) adminPanel.style.display = 'none';
+}
+
+/* ============================================
+   MEDIA UPLOADS & FIREBASE DATABASE
+   ============================================ */
+function initMediaUploads() {
+    const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
+    
+    members.forEach(member => {
+        // Photo upload
+        const photoBtn = document.querySelector(`.upload-photo[data-member="${member}"]`);
+        const photoInput = document.getElementById(`file-${member}-photo`);
+        if (photoBtn && photoInput) {
+            photoBtn.addEventListener('click', () => photoInput.click());
+            photoInput.addEventListener('change', (e) => handleFileUpload(e, member, 'photo'));
+        }
+
+        // Video upload
+        const videoBtn = document.querySelector(`.upload-video[data-member="${member}"]`);
+        const videoInput = document.getElementById(`file-${member}-video`);
+        if (videoBtn && videoInput) {
+            videoBtn.addEventListener('click', () => videoInput.click());
+            videoInput.addEventListener('change', (e) => handleFileUpload(e, member, 'video'));
+        }
+
+        // Music upload
+        const musicBtn = document.querySelector(`.upload-music[data-member="${member}"]`);
+        const musicInput = document.getElementById(`file-${member}-music`);
+        if (musicBtn && musicInput) {
+            musicBtn.addEventListener('click', () => musicInput.click());
+            musicInput.addEventListener('change', (e) => handleFileUpload(e, member, 'music'));
+            }
+        });
+    }
+
+function handleFileUpload(event, member, type) {
+    if (!isAdmin) {
+        showToast('⚠️ Only admin can upload!');
+                return;
+            }
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB for images, 20MB for videos/music)
+    const maxSize = type === 'photo' ? 5 * 1024 * 1024 : 20 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showToast(`❌ File too large! Max ${type === 'photo' ? '5MB' : '20MB'}`);
+                return;
+            }
+
+    showToast('📤 Uploading...');
+
+    // Convert to base64 and save to Firebase
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Data = e.target.result;
+        saveMediaToFirebase(member, type, base64Data);
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveMediaToFirebase(member, type, data) {
+    const db = firebase.database();
+    const mediaRef = db.ref(`members/${member}/${type}`);
+    
+    mediaRef.set({
+        data: data,
+        updatedAt: Date.now(),
+        updatedBy: currentUser.email
+    })
+    .then(() => {
+        showToast(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} uploaded!`);
+        applyMedia(member, type, data);
+    })
+    .catch((error) => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed: ' + error.message);
+    });
+}
+
+function loadAllMemberMedia() {
+    const db = firebase.database();
+    const membersRef = db.ref('members');
+    
+    membersRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).forEach(member => {
+                const memberData = data[member];
+                if (memberData.photo) applyMedia(member, 'photo', memberData.photo.data);
+                if (memberData.video) applyMedia(member, 'video', memberData.video.data);
+                if (memberData.music) applyMedia(member, 'music', memberData.music.data);
+            });
+        }
+    });
+}
+
+function applyMedia(member, type, data) {
+    if (type === 'photo') {
+        const avatar = document.getElementById(`avatar-${member}`);
+        const photo = document.getElementById(`photo-${member}`);
+        if (avatar && photo) {
+            avatar.style.display = 'none';
+            photo.src = data;
+            photo.style.display = 'block';
+        }
+    } else if (type === 'video') {
+        const avatar = document.getElementById(`avatar-${member}`);
+        const photo = document.getElementById(`photo-${member}`);
+        const video = document.getElementById(`video-${member}`);
+        if (video) {
+            if (avatar) avatar.style.display = 'none';
+            if (photo) photo.style.display = 'none';
+            video.src = data;
+            video.style.display = 'block';
+            video.play().catch(() => {}); // Auto-play (muted)
+        }
+    } else if (type === 'music') {
+        // Create or update audio element for the member
+        let audio = document.getElementById(`audio-${member}`);
+        if (!audio) {
+            audio = document.createElement('audio');
+            audio.id = `audio-${member}`;
+            audio.loop = true;
+            document.body.appendChild(audio);
+        }
+        audio.src = data;
+        
+        // Add music indicator to member card
+        const card = document.querySelector(`.member-card[data-member="${member}"]`);
+        if (card && !card.querySelector('.music-indicator')) {
+            const musicIndicator = document.createElement('div');
+            musicIndicator.className = 'music-indicator';
+            musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+            musicIndicator.style.cssText = 'position:absolute;bottom:10px;right:10px;background:var(--neon-green);color:var(--dark-bg);padding:5px 10px;border-radius:20px;font-size:0.8rem;cursor:pointer;';
+            musicIndicator.onclick = () => {
+                if (audio.paused) {
+                    // Pause all other audios first
+                    document.querySelectorAll('audio').forEach(a => a.pause());
+                    audio.play();
+                    musicIndicator.innerHTML = '<i class="fas fa-pause"></i> Playing';
+        } else {
+                    audio.pause();
+                    musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+                }
+            };
+            card.style.position = 'relative';
+            card.appendChild(musicIndicator);
+        }
+    }
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    if (toast && toastMessage) {
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+}
+
