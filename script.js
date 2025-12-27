@@ -1318,7 +1318,8 @@ function openCloudinaryPhotoUpload(member) {
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        // Remove publicIdPrefix to avoid conflicts
+        // Organize photo files by member
+        publicIdPrefix: `members/${member}/photo/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
