@@ -1370,18 +1370,19 @@ function openCloudinaryPhotoUpload(member) {
     
     console.log('Photo Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-        if (error) {
-            console.error('Cloudinary upload error:', error);
-            showToast('❌ Upload error: ' + error.message);
-            return;
-        }
-        
-        if (result.event === 'success') {
-            const url = result.info.secure_url;
-            const publicId = result.info.public_id;
-            savePhotoToFirebase(member, url, publicId);
-        }
+    try {
+        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
+                showToast('❌ Upload error: ' + error.message);
+                return;
+            }
+            
+            if (result.event === 'success') {
+                const url = result.info.secure_url;
+                const publicId = result.info.public_id;
+                savePhotoToFirebase(member, url, publicId);
+            }
         });
         
         uploadWidget.open();
