@@ -1020,58 +1020,55 @@ function showLoginForm() {
    ============================================ */
 function initMediaUploads() {
     const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
-    const storage = firebase.storage();
-    const db = firebase.database();
     
     // Initialize gallery buttons
     initGalleryButtons();
     
-    // Initialize profile picture upload buttons
-    initProfilePictureUploads();
+    // Initialize PFP upload buttons and click handlers
+    initPFPUploads();
     
+    // Initialize PFP popup
+    initPFPPopup();
+    
+    // Initialize old gallery upload buttons (for gallery photos/videos)
     members.forEach(member => {
-        // Photo upload (for gallery)
+        // Photo upload (for gallery) - using Cloudinary
         const photoBtn = document.querySelector(`.upload-photo[data-member="${member}"]`);
-        const photoInput = document.getElementById(`file-${member}-photo`);
-        if (photoBtn && photoInput) {
+        if (photoBtn) {
             photoBtn.addEventListener('click', () => {
                 if (isAdmin) {
-                    photoInput.click();
+                    openCloudinaryUpload(member, 'photos');
                 } else {
                     showToast('⚠️ Only admin can upload!');
                 }
             });
-            photoInput.addEventListener('change', (e) => handleGalleryUpload(e, member, 'photos'));
         }
 
-        // Video upload (for gallery)
+        // Video upload (for gallery) - using Cloudinary
         const videoBtn = document.querySelector(`.upload-video[data-member="${member}"]`);
-        const videoInput = document.getElementById(`file-${member}-video`);
-        if (videoBtn && videoInput) {
+        if (videoBtn) {
             videoBtn.addEventListener('click', () => {
                 if (isAdmin) {
-                    videoInput.click();
+                    openCloudinaryUpload(member, 'videos');
                 } else {
                     showToast('⚠️ Only admin can upload!');
                 }
             });
-            videoInput.addEventListener('change', (e) => handleGalleryUpload(e, member, 'videos'));
         }
 
-        // Music upload
+        // Music upload - using Cloudinary
         const musicBtn = document.querySelector(`.upload-music[data-member="${member}"]`);
-        const musicInput = document.getElementById(`file-${member}-music`);
-        if (musicBtn && musicInput) {
+        if (musicBtn) {
             musicBtn.addEventListener('click', () => {
                 if (isAdmin) {
-                    musicInput.click();
+                    openCloudinaryUpload(member, 'music');
                 } else {
                     showToast('⚠️ Only admin can upload!');
                 }
             });
-            musicInput.addEventListener('change', (e) => handleFileUpload(e, member, 'music', storage, db));
         }
     });
+
 }
 
 function initGalleryButtons() {
