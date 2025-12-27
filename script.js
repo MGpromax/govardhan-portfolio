@@ -1107,7 +1107,8 @@ function initPFPUploads() {
         // PFP Upload Button (Profile Picture - circular crop)
         const pfpBtn = document.querySelector(`.upload-pfp-btn[data-member="${member}"]`);
         if (pfpBtn) {
-            pfpBtn.addEventListener('click', () => {
+            pfpBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (isAdmin) {
                     openCloudinaryPFPUpload(member);
                 } else {
@@ -1119,9 +1120,23 @@ function initPFPUploads() {
         // Photo Upload Button (regular photo - no crop)
         const photoBtn = document.querySelector(`.upload-photo-btn[data-member="${member}"]`);
         if (photoBtn) {
-            photoBtn.addEventListener('click', () => {
+            photoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (isAdmin) {
                     openCloudinaryPhotoUpload(member);
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+        }
+        
+        // Music Upload Button (on image wrapper)
+        const musicBtnWrapper = document.querySelector(`.upload-music-btn[data-member="${member}"]`);
+        if (musicBtnWrapper) {
+            musicBtnWrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isAdmin) {
+                    openCloudinaryUpload(member, 'music');
                 } else {
                     showToast('⚠️ Only admin can upload!');
                 }

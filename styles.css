@@ -3350,7 +3350,8 @@ body.admin-mode .upload-profile-picture {
     }
     
     .upload-pfp-btn,
-    .upload-photo-btn {
+    .upload-photo-btn,
+    .upload-music-btn {
         width: 30px;
         height: 30px;
         font-size: 0.8rem;
@@ -3358,5 +3359,9 @@ body.admin-mode .upload-profile-picture {
     
     .upload-photo-btn {
         right: 45px;
+    }
+    
+    .upload-music-btn {
+        right: 80px;
     }
 }
