@@ -1191,6 +1191,12 @@ function openCloudinaryUpload(member, type) {
                 return;
             }
 
+    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
+        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
+        return;
+    }
+    
     const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
     const folder = `members/${member}/${type}`;
     
@@ -1235,6 +1241,12 @@ function openCloudinaryPFPUpload(member) {
         return;
     }
     
+    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
+        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
+        return;
+    }
+    
     const uploadWidget = cloudinary.createUploadWidget({
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
@@ -1272,6 +1284,12 @@ function openCloudinaryPFPUpload(member) {
 function openCloudinaryPhotoUpload(member) {
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
         showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        return;
+    }
+    
+    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
+        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
         return;
     }
     
