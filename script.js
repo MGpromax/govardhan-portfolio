@@ -1357,16 +1357,19 @@ function openCloudinaryPhotoUpload(member) {
     
     console.log('Opening Cloudinary photo upload with preset:', presetName);
     
+    // Build widget options - try without publicIdPrefix first to test
     const widgetOptions = {
         cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
         uploadPreset: presetName,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        publicIdPrefix: `members/${member}/photo/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
     };
+    
+    // Add publicIdPrefix separately - sometimes helps with widget processing
+    widgetOptions.publicIdPrefix = `members/${member}/photo/`;
     
     console.log('Photo Widget options:', JSON.stringify(widgetOptions, null, 2));
     
