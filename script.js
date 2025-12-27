@@ -1313,17 +1313,25 @@ function openCloudinaryPhotoUpload(member) {
         uploadPreset: CLOUDINARY_UPLOAD_PRESET
     });
     
-    const uploadWidget = cloudinary.createUploadWidget({
+    // Build widget config object
+    const widgetConfig = {
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        // Organize photo files by member
-        publicIdPrefix: `members/${member}/photo/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
-    }, (error, result) => {
+    };
+    
+    // Only add publicIdPrefix if preset allows it
+    if (CLOUDINARY_UPLOAD_PRESET) {
+        widgetConfig.publicIdPrefix = `members/${member}/photo/`;
+    }
+    
+    console.log('Widget config:', widgetConfig);
+    
+    const uploadWidget = cloudinary.createUploadWidget(widgetConfig, (error, result) => {
         if (error) {
             console.error('Cloudinary upload error:', error);
             showToast('❌ Upload error: ' + error.message);
