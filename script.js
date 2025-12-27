@@ -1230,9 +1230,13 @@ function openCloudinaryUpload(member, type) {
                 saveMediaToFirebaseGallery(member, type, url, publicId);
             }
         }
-    });
-    
-    uploadWidget.open();
+        });
+        
+        uploadWidget.open();
+    } catch (err) {
+        console.error('Error creating upload widget:', err);
+        showToast('❌ Failed to create upload widget: ' + err.message);
+    }
 }
 
 function openCloudinaryPFPUpload(member) {
@@ -1286,9 +1290,13 @@ function openCloudinaryPFPUpload(member) {
             const publicId = result.info.public_id;
             savePFPToFirebase(member, circularUrl, publicId);
         }
-    });
-    
-    uploadWidget.open();
+        });
+        
+        uploadWidget.open();
+    } catch (err) {
+        console.error('Error creating upload widget:', err);
+        showToast('❌ Failed to create upload widget: ' + err.message);
+    }
 }
 
 function openCloudinaryPhotoUpload(member) {
@@ -1343,9 +1351,13 @@ function openCloudinaryPhotoUpload(member) {
             const publicId = result.info.public_id;
             savePhotoToFirebase(member, url, publicId);
         }
-    });
-    
-    uploadWidget.open();
+        });
+        
+        uploadWidget.open();
+    } catch (err) {
+        console.error('Error creating upload widget:', err);
+        showToast('❌ Failed to create upload widget: ' + err.message);
+    }
 }
 
 function openPFPPopup(member) {
