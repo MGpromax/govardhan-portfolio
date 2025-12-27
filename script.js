@@ -1198,14 +1198,15 @@ function openCloudinaryUpload(member, type) {
     }
     
     const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
-    const folder = `members/${member}/${type}`;
+    // Note: folder is handled by the upload preset's asset folder setting
     
     const uploadWidget = cloudinary.createUploadWidget({
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: resourceType,
-        folder: folder,
+        // Don't set folder here - let the preset handle it, or use publicIdPrefix for subfolders
+        publicIdPrefix: `members/${member}/${type}/`,
         multiple: type !== 'music', // Allow multiple for photos/videos, single for music
         maxFileSize: type === 'photos' ? 10000000 : 100000000, // 10MB for images, 100MB for videos/audio
         clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
@@ -1252,7 +1253,7 @@ function openCloudinaryPFPUpload(member) {
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        folder: `members/${member}/pfp`,
+        publicIdPrefix: `members/${member}/pfp/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
@@ -1298,7 +1299,7 @@ function openCloudinaryPhotoUpload(member) {
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        folder: `members/${member}/photo`,
+        publicIdPrefix: `members/${member}/photo/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
