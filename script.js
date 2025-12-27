@@ -356,44 +356,59 @@ function initParallax() {
    CARD HOVER EFFECTS
    ============================================ */
 function initCardEffects() {
+    // Skip heavy effects on mobile/touch devices
+    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    if (isMobile) return;
+    
     const cards = document.querySelectorAll('.member-card');
     
+    // Throttle function for performance
+    let ticking = false;
+    function throttleUpdate(card, callback) {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                callback();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }
+    
     cards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
+        // Simplified glow effect (removed dynamic positioning for performance)
+        card.addEventListener('mouseenter', () => {
             const glow = card.querySelector('.card-glow');
             if (glow) {
-                glow.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 0, 110, 0.15) 0%, transparent 70%)`;
+                glow.style.opacity = '1';
             }
         });
 
         card.addEventListener('mouseleave', () => {
             const glow = card.querySelector('.card-glow');
             if (glow) {
-                glow.style.background = 'radial-gradient(circle, rgba(255, 0, 110, 0.1) 0%, transparent 70%)';
+                glow.style.opacity = '0';
             }
         });
     });
 
-    // Tilt effect
+    // Simplified tilt effect with throttling
     cards.forEach(card => {
         card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = (y - centerY) / 20;
-            const rotateY = (centerX - x) / 20;
-            
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+            throttleUpdate(card, () => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 25; // Reduced intensity
+                const rotateY = (centerX - x) / 25;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+            });
         });
 
         card.addEventListener('mouseleave', () => {
-            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+            card.style.transform = '';
         });
     });
 }
@@ -493,57 +508,165 @@ highlightStyle.textContent = `
 `;
 document.head.appendChild(highlightStyle);
 
-// Highlight random member every 10 seconds
-setInterval(highlightRandomMember, 10000);
+// Highlight random member - DISABLED for performance
+// Removed automatic highlight that was causing reflows
 
 /* ============================================
-   CURSOR TRAIL EFFECT
+   ENHANCED CURSOR TRAIL EFFECT
    ============================================ */
 function initCursorTrail() {
     const trail = [];
-    const trailLength = 10;
+    const trailLength = 15; // Increased trail length for smoother effect
     
+    // Create trail dots with varying sizes and colors
     for (let i = 0; i < trailLength; i++) {
         const dot = document.createElement('div');
         dot.className = 'cursor-trail';
+        const size = 12 - (i * 0.4); // Gradual size decrease
+        const opacity = 1 - (i * 0.06); // Gradual opacity decrease
+        
+        // Alternate between primary and secondary colors for gradient effect
+        const colorMix = i / trailLength;
+        const r1 = 255, g1 = 0, b1 = 110; // Primary pink
+        const r2 = 131, g2 = 56, b2 = 236; // Secondary purple
+        const r = Math.round(r1 + (r2 - r1) * colorMix);
+        const g = Math.round(g1 + (g2 - g1) * colorMix);
+        const b = Math.round(b1 + (b2 - b1) * colorMix);
+        
         dot.style.cssText = `
             position: fixed;
-            width: ${10 - i}px;
-            height: ${10 - i}px;
-            background: rgba(255, 0, 110, ${1 - i * 0.1});
+            width: ${size}px;
+            height: ${size}px;
+            background: radial-gradient(circle, rgba(${r}, ${g}, ${b}, ${opacity}), rgba(${r}, ${g}, ${b}, ${opacity * 0.5}));
             border-radius: 50%;
             pointer-events: none;
             z-index: 9999;
             opacity: 0;
-            transition: opacity 0.3s;
+            left: 0;
+            top: 0;
+            transition: opacity 0.2s ease-out;
+            box-shadow: 0 0 ${size * 2}px rgba(${r}, ${g}, ${b}, ${opacity * 0.8});
         `;
         document.body.appendChild(dot);
-        trail.push(dot);
+        trail.push({ element: dot, x: 0, y: 0, size: size });
     }
     
     let positions = [];
+    let isMoving = false;
+    let animationFrame = null;
+    let lastMouseMoveTime = 0;
+    let fadeOutTimeout = null;
+    
+    // Function to hide all trail dots
+    function hideTrail() {
+        trail.forEach(trailDot => {
+            trailDot.element.style.opacity = '0';
+        });
+        positions = [];
+        isMoving = false;
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+    }
+    
+    // Smooth interpolation for trail positions
+    function animateTrail() {
+        trail.forEach((trailDot, index) => {
+            if (positions[index]) {
+                const { x, y } = positions[index];
+                const currentX = trailDot.x || x;
+                const currentY = trailDot.y || y;
+                
+                // Calculate distance
+                const dx = x - currentX;
+                const dy = y - currentY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Smooth interpolation - always update if there's a target position
+                const newX = currentX + dx * 0.25;
+                const newY = currentY + dy * 0.25;
+                
+                trailDot.element.style.left = (newX - trailDot.size / 2) + 'px';
+                trailDot.element.style.top = (newY - trailDot.size / 2) + 'px';
+                trailDot.element.style.opacity = '1';
+                trailDot.x = newX;
+                trailDot.y = newY;
+            }
+        });
+        
+        // Continue animation loop while moving
+        if (isMoving) {
+            animationFrame = requestAnimationFrame(animateTrail);
+        } else {
+            animationFrame = null;
+        }
+    }
+    
+    // Start animation loop
+    function startAnimation() {
+        if (!animationFrame) {
+            isMoving = true;
+            animateTrail();
+        }
+    }
+    
+    // Throttled mousemove handler for better performance
+    let lastMoveTime = 0;
+    const throttleDelay = 5; // Smoother updates
     
     document.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        if (now - lastMoveTime < throttleDelay) return;
+        lastMoveTime = now;
+        lastMouseMoveTime = now;
+        
+        // Clear any pending fade out
+        if (fadeOutTimeout) {
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = null;
+        }
+        
         positions.unshift({ x: e.clientX, y: e.clientY });
         positions = positions.slice(0, trailLength);
         
-        trail.forEach((dot, index) => {
-            if (positions[index]) {
-                dot.style.left = positions[index].x - 5 + 'px';
-                dot.style.top = positions[index].y - 5 + 'px';
-                dot.style.opacity = '1';
-            }
-        });
+        // Start animation if not already running
+        startAnimation();
+        
+        // Hide trail if mouse stops moving for 200ms
+        fadeOutTimeout = setTimeout(() => {
+            hideTrail();
+        }, 200);
     });
     
+    // Hide trail when scrolling
+    let scrollTimeout = null;
+    window.addEventListener('scroll', () => {
+        hideTrail();
+        
+        // Clear any pending timeout
+        if (fadeOutTimeout) {
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = null;
+        }
+    }, { passive: true });
+    
+    // Handle mouse leaving window
     document.addEventListener('mouseleave', () => {
-        trail.forEach(dot => {
-            dot.style.opacity = '0';
-        });
+        hideTrail();
+        if (fadeOutTimeout) {
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = null;
+        }
+    });
+    
+    // Handle mouse entering window
+    document.addEventListener('mouseenter', () => {
+        // Trail will resume on next mousemove
     });
 }
 
-// Initialize cursor trail on desktop only
+// Initialize enhanced cursor trail on desktop only
 if (window.innerWidth > 768) {
     initCursorTrail();
 }
@@ -623,51 +746,11 @@ function createEmojiRain(emoji = '🔥', count = 20) {
     }
 }
 
-// Particle Explosion on Card Hover
-document.querySelectorAll('.member-card').forEach(card => {
-    card.addEventListener('mouseenter', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        
-        for (let i = 0; i < 10; i++) {
-            const particle = document.createElement('div');
-            particle.classList.add('particle');
-            particle.style.left = x + 'px';
-            particle.style.top = y + 'px';
-            particle.style.width = (5 + Math.random() * 10) + 'px';
-            particle.style.height = particle.style.width;
-            particle.style.backgroundColor = ['#ff006e', '#8338ec', '#00ff88', '#00d4ff'][Math.floor(Math.random() * 4)];
-            
-            const angle = (Math.PI * 2 / 10) * i;
-            const distance = 50 + Math.random() * 50;
-            const tx = Math.cos(angle) * distance;
-            const ty = Math.sin(angle) * distance;
-            
-            particle.style.setProperty('--tx', tx + 'px');
-            particle.style.setProperty('--ty', ty + 'px');
-            particle.animate([
-                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
-            ], { duration: 800, easing: 'ease-out' });
-            
-            document.body.appendChild(particle);
-            setTimeout(() => particle.remove(), 800);
-        }
-    });
-});
+// Particle Explosion on Card Hover - DISABLED for performance
+// Removed heavy particle effects that were causing lag
 
-// Spotlight Effect Following Mouse
-document.querySelectorAll('.member-card, .skill-item, .achievement-content').forEach(el => {
-    el.classList.add('spotlight');
-    el.addEventListener('mousemove', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        this.style.setProperty('--mouse-x', x + '%');
-        this.style.setProperty('--mouse-y', y + '%');
-    });
-});
+// Spotlight Effect Following Mouse - DISABLED for performance
+// Removed heavy spotlight effects that were causing lag on member cards
 
 // Random Emoji Burst on Double Click
 document.addEventListener('dblclick', (e) => {
@@ -715,24 +798,7 @@ function initMatrixRain() {
 }
 initMatrixRain();
 
-// Tilt Effect on Cards (Enhanced)
-document.querySelectorAll('.member-card').forEach(card => {
-    card.addEventListener('mousemove', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = (y - centerY) / 10;
-        const rotateY = (centerX - x) / 10;
-        
-        this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
-    });
-    
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
-    });
-});
+// Tilt Effect on Cards - Already handled in initCardEffects, removed duplicate
 
 // Typing Sound Effect (Visual)
 const typewriter = document.querySelector('.typewriter');
@@ -1105,4 +1171,35 @@ function showToast(message) {
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 }
+
+/* ============================================
+   CALL POPUP MODAL
+   ============================================ */
+function showCallPopup() {
+    const popup = document.getElementById('call-popup-modal');
+    if (popup) {
+        popup.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
+}
+
+function closeCallPopup() {
+    const popup = document.getElementById('call-popup-modal');
+    if (popup) {
+        popup.classList.remove('show');
+        document.body.style.overflow = ''; // Restore scroll
+    }
+}
+
+// Close popup when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const popup = document.getElementById('call-popup-modal');
+    if (popup) {
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) {
+                closeCallPopup();
+            }
+        });
+    }
+});
 

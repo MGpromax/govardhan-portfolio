@@ -635,22 +635,22 @@
                     <div class="contact-item">
                         <i class="fas fa-phone"></i>
                         <div>
-                            <h4>Phone</h4>
-                            <p>ಯಾವಾಗ್ಲೂ silent / switch off</p>
+                            <h4>Phone 📱</h4>
+                            <button class="call-btn" onclick="showCallPopup()">Click Here to Call 📞</button>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-envelope"></i>
                         <div>
-                            <h4>Email</h4>
-                            <p>ವರ್ಷಕ್ಕೊಂದು ಸಲ check ಮಾಡ್ತೀವಿ</p>
+                            <h4>Email 📧</h4>
+                            <p>Inbox ಅಲ್ಲಿ 999+ unread emails ಇದೆ! Important emails ಯಾವಾಗ್ಲೂ spam folder ಅಲ್ಲಿ! Response time: ಈ ಜನ್ಮ ಅಥವಾ ಮುಂದಿನ ಜನ್ಮ! ✉️</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-map-marker-alt"></i>
                         <div>
-                            <h4>Location</h4>
-                            <p>ಮಂಚದ ಮೇಲೆ / Biryani ಇರೋ ಕಡೆ</p>
+                            <h4>Location 📍</h4>
+                            <p>GPS says "Location unavailable" - ನಮ್ಮ lifestyle ಅನ್ನು predict ಮಾಡೋಕೆ Google Maps ಕೂಡ give up ಮಾಡಿದೆ! 🏠</p>
                         </div>
                     </div>
                 </div>
@@ -688,6 +688,17 @@
     <div class="toast" id="toast">
         <i class="fas fa-check-circle"></i>
         <span id="toast-message">Message sent!</span>
+    </div>
+
+    <!-- Call Popup Modal -->
+    <div class="call-popup-modal" id="call-popup-modal">
+        <div class="call-popup-content">
+            <button class="close-call-popup" onclick="closeCallPopup()">&times;</button>
+            <div class="popup-icon">🤣</div>
+            <h2>ಗಾಂಡುಗಳ ಜೊತೆ ಮಾತಾಡ್ತೀರಾ? 😂</h2>
+            <p>ಗಾಂಡು ಆಗೋದು ನಿಮಗೆ ಬೇಕ? T.Muchkondu ಹೋಗೋ ಬ್ಯಾವರ್ಸಿ! 🤪</p>
+            <button class="popup-close-btn" onclick="closeCallPopup()">ಹೂಂ ಗೊತ್ತು, ಮುಚ್ಚು! 😂</button>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
