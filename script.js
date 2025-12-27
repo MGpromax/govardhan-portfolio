@@ -399,14 +399,14 @@ function initCardEffects() {
     cards.forEach(card => {
         card.addEventListener('mousemove', (e) => {
             throttleUpdate(card, () => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
                 const rotateX = (y - centerY) / 25; // Reduced intensity
                 const rotateY = (centerX - x) / 25;
-                
+            
                 card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
             });
         });
@@ -1016,7 +1016,7 @@ function showLoginForm() {
 }
 
 /* ============================================
-   MEDIA UPLOADS & FIREBASE STORAGE
+   MEDIA UPLOADS & CLOUDINARY
    ============================================ */
 function initMediaUploads() {
     const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
@@ -1064,9 +1064,9 @@ function initMediaUploads() {
                     openCloudinaryUpload(member, 'music');
                 } else {
                     showToast('⚠️ Only admin can upload!');
-                }
-            });
-        }
+            }
+        });
+    }
     });
 
 }
@@ -1109,7 +1109,7 @@ function initPFPUploads() {
                 if (isAdmin) {
                     openCloudinaryPFPUpload(member);
                 } else {
-                    showToast('⚠️ Only admin can upload!');
+        showToast('⚠️ Only admin can upload!');
                 }
             });
         }
@@ -1188,9 +1188,9 @@ function initPFPPopup() {
 function openCloudinaryUpload(member, type) {
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
         showToast('❌ Cloudinary widget not loaded! Please check configuration.');
-        return;
-    }
-    
+                return;
+            }
+
     const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
     const folder = `members/${member}/${type}`;
     
@@ -1209,9 +1209,9 @@ function openCloudinaryUpload(member, type) {
         if (error) {
             console.error('Cloudinary upload error:', error);
             showToast('❌ Upload error: ' + error.message);
-            return;
-        }
-        
+                return;
+            }
+
         if (result.event === 'success') {
             const url = result.info.secure_url;
             const publicId = result.info.public_id;
@@ -1563,9 +1563,9 @@ function loadAllMemberMedia() {
 }
 
 function applyPFP(member, url) {
-    const avatar = document.getElementById(`avatar-${member}`);
+        const avatar = document.getElementById(`avatar-${member}`);
     const pfp = document.getElementById(`pfp-${member}`);
-    const photo = document.getElementById(`photo-${member}`);
+        const photo = document.getElementById(`photo-${member}`);
     const video = document.getElementById(`video-${member}`);
     
     if (pfp) {
@@ -1578,14 +1578,14 @@ function applyPFP(member, url) {
 }
 
 function applyPhoto(member, url) {
-    const avatar = document.getElementById(`avatar-${member}`);
+        const avatar = document.getElementById(`avatar-${member}`);
     const pfp = document.getElementById(`pfp-${member}`);
-    const photo = document.getElementById(`photo-${member}`);
-    const video = document.getElementById(`video-${member}`);
+        const photo = document.getElementById(`photo-${member}`);
+        const video = document.getElementById(`video-${member}`);
     
     // Only show photo if no PFP is set
     if (photo && (!pfp || !pfp.src || pfp.style.display === 'none')) {
-        if (avatar) avatar.style.display = 'none';
+            if (avatar) avatar.style.display = 'none';
         if (video) video.style.display = 'none';
         photo.src = url;
         photo.style.display = 'block';
@@ -1593,33 +1593,33 @@ function applyPhoto(member, url) {
 }
 
 function applyMusic(member, url) {
-    let audio = document.getElementById(`audio-${member}`);
-    if (!audio) {
-        audio = document.createElement('audio');
-        audio.id = `audio-${member}`;
-        audio.loop = true;
-        document.body.appendChild(audio);
-    }
+        let audio = document.getElementById(`audio-${member}`);
+        if (!audio) {
+            audio = document.createElement('audio');
+            audio.id = `audio-${member}`;
+            audio.loop = true;
+            document.body.appendChild(audio);
+        }
     audio.src = url;
-    
-    const card = document.querySelector(`.member-card[data-member="${member}"]`);
-    if (card && !card.querySelector('.music-indicator')) {
-        const musicIndicator = document.createElement('div');
-        musicIndicator.className = 'music-indicator';
-        musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
-        musicIndicator.style.cssText = 'position:absolute;bottom:10px;right:10px;background:var(--neon-green);color:var(--dark-bg);padding:5px 10px;border-radius:20px;font-size:0.8rem;cursor:pointer;';
-        musicIndicator.onclick = () => {
-            if (audio.paused) {
-                document.querySelectorAll('audio').forEach(a => a.pause());
-                audio.play();
-                musicIndicator.innerHTML = '<i class="fas fa-pause"></i> Playing';
-            } else {
-                audio.pause();
-                musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
-            }
-        };
-        card.style.position = 'relative';
-        card.appendChild(musicIndicator);
+        
+        const card = document.querySelector(`.member-card[data-member="${member}"]`);
+        if (card && !card.querySelector('.music-indicator')) {
+            const musicIndicator = document.createElement('div');
+            musicIndicator.className = 'music-indicator';
+            musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+            musicIndicator.style.cssText = 'position:absolute;bottom:10px;right:10px;background:var(--neon-green);color:var(--dark-bg);padding:5px 10px;border-radius:20px;font-size:0.8rem;cursor:pointer;';
+            musicIndicator.onclick = () => {
+                if (audio.paused) {
+                    document.querySelectorAll('audio').forEach(a => a.pause());
+                    audio.play();
+                    musicIndicator.innerHTML = '<i class="fas fa-pause"></i> Playing';
+        } else {
+                    audio.pause();
+                    musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+                }
+            };
+            card.style.position = 'relative';
+            card.appendChild(musicIndicator);
     }
 }
 
