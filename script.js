@@ -19,7 +19,7 @@ const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 
 // Cloudinary Configuration
 const CLOUDINARY_CLOUD_NAME = "dldfOuldk"; // Your Cloudinary cloud name
-const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Default preset, change if needed
+const CLOUDINARY_UPLOAD_PRESET = "govardhan-uploads"; // Your upload preset name
 
 // Global state
 let isAdmin = false;
