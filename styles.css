@@ -2747,6 +2747,19 @@ body.admin-mode .member-card {
     color: var(--dark-bg);
 }
 
+.upload-pfp-btn {
+    top: 10px;
+    right: 10px;
+    background: var(--neon-green);
+    color: var(--dark-bg);
+}
+
+.upload-photo-btn {
+    top: 10px;
+    right: 50px;
+    background: var(--primary);
+}
+
 /* Member Media Styles */
 .member-profile-media {
     position: relative;
@@ -3183,5 +3196,167 @@ body.admin-mode .upload-profile-picture {
     .gallery-btn {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* ============================================
+   PROFILE PICTURE (PFP) STYLES
+   ============================================ */
+.member-pfp {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+}
+
+.upload-pfp-btn {
+    top: 10px;
+    right: 10px;
+    background: var(--neon-green);
+    color: var(--dark-bg);
+}
+
+.upload-photo-btn {
+    top: 10px;
+    right: 50px;
+    background: var(--primary);
+}
+
+/* PFP Popup Modal */
+.pfp-popup-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 10003;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pfp-popup-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.pfp-popup-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.close-pfp-popup {
+    position: absolute;
+    top: -60px;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 2.5rem;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.close-pfp-popup:hover {
+    background: rgba(255, 0, 110, 0.2);
+    color: var(--primary);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.pfp-rotating-circle {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid var(--primary);
+    box-shadow: 0 0 50px rgba(255, 0, 110, 0.5);
+    position: relative;
+    animation: rotatePFP 20s linear infinite;
+}
+
+.pfp-rotating-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes rotatePFP {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pfp-popup-modal.show .pfp-rotating-circle {
+    animation-play-state: running;
+}
+
+.pfp-music-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pfp-music-toggle {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(255, 0, 110, 0.4);
+}
+
+.pfp-music-toggle:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(255, 0, 110, 0.6);
+}
+
+.pfp-music-toggle.playing {
+    background: linear-gradient(135deg, var(--neon-green), #00aa55);
+}
+
+.pfp-music-toggle.playing span::after {
+    content: 'ing';
+}
+
+@media (max-width: 768px) {
+    .pfp-rotating-circle {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .upload-pfp-btn,
+    .upload-photo-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+    
+    .upload-photo-btn {
+        right: 45px;
     }
 }

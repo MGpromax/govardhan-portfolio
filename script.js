@@ -1100,26 +1100,260 @@ function initGalleryButtons() {
     }
 }
 
-function initProfilePictureUploads() {
+function initPFPUploads() {
     const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
     
     members.forEach(member => {
-        const imageWrapper = document.querySelector(`.member-card[data-member="${member}"] .member-image-wrapper`);
-        if (imageWrapper && !imageWrapper.querySelector('.upload-profile-picture')) {
-            const uploadBtn = document.createElement('button');
-            uploadBtn.className = 'upload-profile-picture';
-            uploadBtn.innerHTML = '<i class="fas fa-camera"></i>';
-            uploadBtn.title = 'Upload Profile Picture';
-            uploadBtn.addEventListener('click', () => {
+        // PFP Upload Button (Profile Picture - circular crop)
+        const pfpBtn = document.querySelector(`.upload-pfp-btn[data-member="${member}"]`);
+        if (pfpBtn) {
+            pfpBtn.addEventListener('click', () => {
                 if (isAdmin) {
-                    openCloudinaryProfileUpload(member);
+                    openCloudinaryPFPUpload(member);
                 } else {
                     showToast('⚠️ Only admin can upload!');
                 }
             });
-            imageWrapper.appendChild(uploadBtn);
+        }
+        
+        // Photo Upload Button (regular photo - no crop)
+        const photoBtn = document.querySelector(`.upload-photo-btn[data-member="${member}"]`);
+        if (photoBtn) {
+            photoBtn.addEventListener('click', () => {
+                if (isAdmin) {
+                    openCloudinaryPhotoUpload(member);
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+        }
+        
+        // Make PFP clickable to open popup
+        const pfpImg = document.getElementById(`pfp-${member}`);
+        if (pfpImg) {
+            pfpImg.addEventListener('click', () => {
+                openPFPPopup(member);
+            });
         }
     });
+}
+
+function initPFPPopup() {
+    const closeBtn = document.getElementById('close-pfp-popup');
+    const popupModal = document.getElementById('pfp-popup-modal');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePFPPopup);
+    }
+    
+    if (popupModal) {
+        popupModal.addEventListener('click', (e) => {
+            if (e.target === popupModal) {
+                closePFPPopup();
+            }
+        });
+    }
+    
+    if (musicToggle) {
+        musicToggle.addEventListener('click', () => {
+            const audio = document.getElementById('pfp-popup-audio');
+            if (audio) {
+                if (audio.paused) {
+                    audio.play();
+                    musicToggle.classList.add('playing');
+                    musicToggle.querySelector('span').textContent = 'Playing Music';
+                } else {
+                    audio.pause();
+                    musicToggle.classList.remove('playing');
+                    musicToggle.querySelector('span').textContent = 'Play Music';
+                }
+            }
+        });
+    }
+}
+
+function openCloudinaryUpload(member, type) {
+    if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
+        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        return;
+    }
+    
+    const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
+    const folder = `members/${member}/${type}`;
+    
+    const uploadWidget = cloudinary.createUploadWidget({
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        resourceType: resourceType,
+        folder: folder,
+        multiple: type !== 'music', // Allow multiple for photos/videos, single for music
+        maxFileSize: type === 'photos' ? 10000000 : 100000000, // 10MB for images, 100MB for videos/audio
+        clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
+                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a'] : 
+                             ['mp4', 'webm', 'mov', 'avi']
+    }, (error, result) => {
+        if (error) {
+            console.error('Cloudinary upload error:', error);
+            showToast('❌ Upload error: ' + error.message);
+            return;
+        }
+        
+        if (result.event === 'success') {
+            const url = result.info.secure_url;
+            const publicId = result.info.public_id;
+            
+            if (type === 'music') {
+                // Single music file
+                saveMediaToFirebase(member, 'music', url, publicId);
+            } else {
+                // Multiple photos/videos for gallery
+                saveMediaToFirebaseGallery(member, type, url, publicId);
+            }
+        }
+    });
+    
+    uploadWidget.open();
+}
+
+function openCloudinaryPFPUpload(member) {
+    if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
+        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        return;
+    }
+    
+    const uploadWidget = cloudinary.createUploadWidget({
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        resourceType: 'image',
+        folder: `members/${member}/pfp`,
+        multiple: false,
+        maxFileSize: 10000000, // 10MB
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        cropping: true,
+        croppingAspectRatio: 1, // Square/circular for profile pictures
+        croppingDefaultSelectionRatio: 1,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: 'custom' // Allows manual positioning
+    }, (error, result) => {
+        if (error) {
+            console.error('Cloudinary upload error:', error);
+            showToast('❌ Upload error: ' + error.message);
+            return;
+        }
+        
+        if (result.event === 'success') {
+            // Get the cropped circular image URL
+            const url = result.info.secure_url;
+            // Apply circular transformation using Cloudinary
+            const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
+            const publicId = result.info.public_id;
+            savePFPToFirebase(member, circularUrl, publicId);
+        }
+    });
+    
+    uploadWidget.open();
+}
+
+function openCloudinaryPhotoUpload(member) {
+    if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
+        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        return;
+    }
+    
+    const uploadWidget = cloudinary.createUploadWidget({
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        resourceType: 'image',
+        folder: `members/${member}/photo`,
+        multiple: false,
+        maxFileSize: 10000000, // 10MB
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    }, (error, result) => {
+        if (error) {
+            console.error('Cloudinary upload error:', error);
+            showToast('❌ Upload error: ' + error.message);
+            return;
+        }
+        
+        if (result.event === 'success') {
+            const url = result.info.secure_url;
+            const publicId = result.info.public_id;
+            savePhotoToFirebase(member, url, publicId);
+        }
+    });
+    
+    uploadWidget.open();
+}
+
+function openPFPPopup(member) {
+    const popupModal = document.getElementById('pfp-popup-modal');
+    const popupImage = document.getElementById('pfp-popup-image');
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const musicControl = document.getElementById('pfp-music-control');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (!popupModal || !popupImage) return;
+    
+    const db = firebase.database();
+    const pfpRef = db.ref(`members/${member}/pfp`);
+    
+    pfpRef.once('value', (snapshot) => {
+        const pfpData = snapshot.val();
+        if (pfpData && pfpData.url) {
+            popupImage.src = pfpData.url;
+            popupModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Load and play music if available
+            const musicRef = db.ref(`members/${member}/music`);
+            musicRef.once('value', (musicSnapshot) => {
+                const musicData = musicSnapshot.val();
+                if (musicData && musicData.url && popupAudio) {
+                    popupAudio.src = musicData.url;
+                    musicControl.style.display = 'flex';
+                    // Auto-play music
+                    popupAudio.play().then(() => {
+                        musicToggle.classList.add('playing');
+                        musicToggle.querySelector('span').textContent = 'Playing Music';
+                    }).catch(err => {
+                        console.log('Autoplay prevented:', err);
+                        musicToggle.classList.remove('playing');
+                        musicToggle.querySelector('span').textContent = 'Play Music';
+                    });
+                } else {
+                    musicControl.style.display = 'none';
+                }
+            });
+        } else {
+            showToast('No profile picture found');
+        }
+    });
+}
+
+function closePFPPopup() {
+    const popupModal = document.getElementById('pfp-popup-modal');
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (popupModal) {
+        popupModal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    
+    if (popupAudio) {
+        popupAudio.pause();
+        popupAudio.currentTime = 0;
+    }
+    
+    if (musicToggle) {
+        musicToggle.classList.remove('playing');
+        const span = musicToggle.querySelector('span');
+        if (span) span.textContent = 'Play Music';
+    }
 }
 
 function saveMediaToFirebaseGallery(member, type, url, publicId) {
@@ -1163,18 +1397,33 @@ function saveMediaToFirebase(member, type, url, publicId) {
     });
 }
 
-function saveProfilePictureToFirebase(member, url, publicId) {
+function savePFPToFirebase(member, url, publicId) {
     const db = firebase.database();
-    const profileRef = db.ref(`members/${member}/profilePicture`);
+    const pfpRef = db.ref(`members/${member}/pfp`);
     
-    profileRef.set({
+    pfpRef.set({
         url: url,
         publicId: publicId,
         updatedAt: Date.now(),
         updatedBy: currentUser.email
     }).then(() => {
         showToast('✅ Profile picture uploaded!');
-        applyProfilePicture(member, url);
+        applyPFP(member, url);
+    });
+}
+
+function savePhotoToFirebase(member, url, publicId) {
+    const db = firebase.database();
+    const photoRef = db.ref(`members/${member}/photo`);
+    
+    photoRef.set({
+        url: url,
+        publicId: publicId,
+        updatedAt: Date.now(),
+        updatedBy: currentUser.email
+    }).then(() => {
+        showToast('✅ Photo uploaded!');
+        applyPhoto(member, url);
     });
 }
 
@@ -1279,19 +1528,17 @@ function loadAllMemberMedia() {
             Object.keys(data).forEach(member => {
                 const memberData = data[member];
                 
-                // Load profile picture
-                if (memberData.profilePicture && memberData.profilePicture.url) {
-                    applyProfilePicture(member, memberData.profilePicture.url);
+                // Load PFP (Profile Picture) - priority
+                if (memberData.pfp && memberData.pfp.url) {
+                    applyPFP(member, memberData.pfp.url);
                 }
-                
-                // Load first photo as main photo (for backward compatibility)
-                if (memberData.photos && memberData.photos.length > 0 && memberData.photos[0].url) {
-                    applyMainPhoto(member, memberData.photos[0].url);
+                // Fallback to old profilePicture field
+                else if (memberData.profilePicture && memberData.profilePicture.url) {
+                    applyPFP(member, memberData.profilePicture.url);
                 }
-                
-                // Load first video as main video (for backward compatibility)
-                if (memberData.videos && memberData.videos.length > 0 && memberData.videos[0].url) {
-                    applyMainVideo(member, memberData.videos[0].url);
+                // Fallback to photo if no PFP
+                else if (memberData.photo && memberData.photo.url) {
+                    applyPhoto(member, memberData.photo.url);
                 }
                 
                 // Load music
@@ -1303,38 +1550,33 @@ function loadAllMemberMedia() {
     });
 }
 
-function applyProfilePicture(member, url) {
+function applyPFP(member, url) {
     const avatar = document.getElementById(`avatar-${member}`);
+    const pfp = document.getElementById(`pfp-${member}`);
     const photo = document.getElementById(`photo-${member}`);
-    if (avatar && photo) {
-        avatar.style.display = 'none';
-        photo.src = url;
-        photo.style.display = 'block';
+    const video = document.getElementById(`video-${member}`);
+    
+    if (pfp) {
+        if (avatar) avatar.style.display = 'none';
+        if (photo) photo.style.display = 'none';
+        if (video) video.style.display = 'none';
+        pfp.src = url;
+        pfp.style.display = 'block';
     }
 }
 
-function applyMainPhoto(member, url) {
+function applyPhoto(member, url) {
     const avatar = document.getElementById(`avatar-${member}`);
+    const pfp = document.getElementById(`pfp-${member}`);
     const photo = document.getElementById(`photo-${member}`);
     const video = document.getElementById(`video-${member}`);
-    if (photo) {
+    
+    // Only show photo if no PFP is set
+    if (photo && (!pfp || !pfp.src || pfp.style.display === 'none')) {
         if (avatar) avatar.style.display = 'none';
         if (video) video.style.display = 'none';
         photo.src = url;
         photo.style.display = 'block';
-    }
-}
-
-function applyMainVideo(member, url) {
-    const avatar = document.getElementById(`avatar-${member}`);
-    const photo = document.getElementById(`photo-${member}`);
-    const video = document.getElementById(`video-${member}`);
-    if (video) {
-        if (avatar) avatar.style.display = 'none';
-        if (photo) photo.style.display = 'none';
-        video.src = url;
-        video.style.display = 'block';
-        video.play().catch(() => {});
     }
 }
 
