@@ -1199,37 +1199,60 @@ function openCloudinaryUpload(member, type) {
     
     const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
     
-    const uploadWidget = cloudinary.createUploadWidget({
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-        sources: ['local', 'camera'],
-        resourceType: resourceType,
-        // Let the preset handle the base folder, use publicIdPrefix for subfolders
-        publicIdPrefix: `members/${member}/${type}/`,
-        multiple: type !== 'music', // Allow multiple for photos/videos, single for music
-        maxFileSize: type === 'photos' ? 10000000 : 100000000, // 10MB for images, 100MB for videos/audio
-        clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
-                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a'] : 
-                             ['mp4', 'webm', 'mov', 'avi']
-    }, (error, result) => {
-        if (error) {
-            console.error('Cloudinary upload error:', error);
-            showToast('❌ Upload error: ' + error.message);
+    // Ensure preset name is a string and not undefined
+    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
+    
+    if (!presetName) {
+        showToast('❌ Upload preset not configured!');
                 return;
             }
 
-        if (result.event === 'success') {
-            const url = result.info.secure_url;
-            const publicId = result.info.public_id;
-            
-            if (type === 'music') {
-                // Single music file
-                saveMediaToFirebase(member, 'music', url, publicId);
-            } else {
-                // Multiple photos/videos for gallery
-                saveMediaToFirebaseGallery(member, type, url, publicId);
+    console.log('Creating widget with preset:', presetName);
+    
+    // Create config object with explicit string values
+    const widgetOptions = {
+        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
+        uploadPreset: presetName,
+        sources: ['local', 'camera'],
+        resourceType: resourceType,
+        publicIdPrefix: `members/${member}/${type}/`,
+        multiple: type !== 'music',
+        maxFileSize: type === 'photos' ? 10000000 : 100000000,
+        clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
+                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a'] : 
+                             ['mp4', 'webm', 'mov', 'avi']
+    };
+    
+    console.log('Widget options:', JSON.stringify(widgetOptions, null, 2));
+    
+    try {
+        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
+                let errorMsg = '❌ Upload failed!';
+                if (error.status === 401) {
+                    errorMsg = '❌ Unauthorized! Check your Cloudinary cloud name and upload preset.';
+                } else if (error.status === 400) {
+                    errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
+                } else if (error.message) {
+                    errorMsg = '❌ ' + error.message;
+                }
+                showToast(errorMsg);
+                return;
             }
-        }
+
+            if (result.event === 'success') {
+                const url = result.info.secure_url;
+                const publicId = result.info.public_id;
+                
+                if (type === 'music') {
+                    // Single music file
+                    saveMediaToFirebase(member, 'music', url, publicId);
+                } else {
+                    // Multiple photos/videos for gallery
+                    saveMediaToFirebaseGallery(member, type, url, publicId);
+                }
+            }
         });
         
         uploadWidget.open();
