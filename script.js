@@ -17,8 +17,8 @@ const firebaseConfig = {
 // Authorized Admin Email
 const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 
-// Cloudinary Configuration - ADD YOUR CLOUDINARY CLOUD NAME HERE
-const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME"; // Replace with your Cloudinary cloud name
+// Cloudinary Configuration
+const CLOUDINARY_CLOUD_NAME = "dldfOuldk"; // Your Cloudinary cloud name
 const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Default preset, change if needed
 
 // Global state
