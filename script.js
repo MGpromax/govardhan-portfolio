@@ -17,6 +17,10 @@ const firebaseConfig = {
 // Authorized Admin Email
 const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 
+// Cloudinary Configuration - ADD YOUR CLOUDINARY CLOUD NAME HERE
+const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME"; // Replace with your Cloudinary cloud name
+const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Default preset, change if needed
+
 // Global state
 let isAdmin = false;
 let currentUser = null;
@@ -1098,8 +1102,6 @@ function initGalleryButtons() {
 
 function initProfilePictureUploads() {
     const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
-    const profileInput = document.getElementById('profile-picture-input');
-    let currentMember = null;
     
     members.forEach(member => {
         const imageWrapper = document.querySelector(`.member-card[data-member="${member}"] .member-image-wrapper`);
@@ -1110,165 +1112,70 @@ function initProfilePictureUploads() {
             uploadBtn.title = 'Upload Profile Picture';
             uploadBtn.addEventListener('click', () => {
                 if (isAdmin) {
-                    currentMember = member;
-                    profileInput.click();
+                    openCloudinaryProfileUpload(member);
+                } else {
+                    showToast('⚠️ Only admin can upload!');
                 }
             });
             imageWrapper.appendChild(uploadBtn);
         }
     });
+}
+
+function saveMediaToFirebaseGallery(member, type, url, publicId) {
+    const db = firebase.database();
+    const mediaRef = db.ref(`members/${member}/${type}`);
     
-    if (profileInput) {
-        profileInput.addEventListener('change', (e) => {
-            if (currentMember && e.target.files[0]) {
-                handleProfilePictureUpload(e, currentMember);
-                currentMember = null;
-                e.target.value = ''; // Reset input
+    mediaRef.once('value', (snapshot) => {
+        const existingMedia = snapshot.val() || [];
+        const newMedia = [...existingMedia, {
+            url: url,
+            publicId: publicId,
+            uploadedAt: Date.now(),
+            uploadedBy: currentUser.email
+        }];
+        mediaRef.set(newMedia).then(() => {
+            showToast(`✅ ${type === 'photos' ? 'Photo' : 'Video'} added to gallery!`);
+            // Reload gallery if it's open
+            const galleryModal = document.getElementById('gallery-modal');
+            if (galleryModal && galleryModal.classList.contains('show')) {
+                const currentType = document.getElementById('gallery-modal-title').textContent.includes('Photos') ? 'photos' : 'videos';
+                if (currentType === type) {
+                    openGallery(member, type);
+                }
             }
         });
-    }
+    });
 }
 
-function handleGalleryUpload(event, member, type) {
-    if (!isAdmin) {
-        showToast('⚠️ Only admin can upload!');
-        return;
-    }
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Check file size (max 10MB for images, 50MB for videos)
-    const maxSize = type === 'photos' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showToast(`❌ File too large! Max ${type === 'photos' ? '10MB' : '50MB'}`);
-        return;
-    }
-
-    showToast('📤 Uploading to gallery...');
-    const storage = firebase.storage();
+function saveMediaToFirebase(member, type, url, publicId) {
     const db = firebase.database();
+    const mediaRef = db.ref(`members/${member}/${type}`);
     
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const storageRef = storage.ref(`members/${member}/${type}/${timestamp}.${fileExtension}`);
-    
-    storageRef.put(file).then((snapshot) => {
-        return snapshot.ref.getDownloadURL();
-    }).then((downloadURL) => {
-        // Save URL to database
-        const mediaRef = db.ref(`members/${member}/${type}`);
-        mediaRef.once('value', (snapshot) => {
-            const existingMedia = snapshot.val() || [];
-            const newMedia = [...existingMedia, {
-                url: downloadURL,
-                uploadedAt: timestamp,
-                uploadedBy: currentUser.email
-            }];
-            mediaRef.set(newMedia).then(() => {
-                showToast(`✅ ${type === 'photos' ? 'Photo' : 'Video'} added to gallery!`);
-                // Reload gallery if it's open
-                const galleryModal = document.getElementById('gallery-modal');
-                if (galleryModal && galleryModal.classList.contains('show')) {
-                    const currentType = document.getElementById('gallery-modal-title').textContent.includes('Photos') ? 'photos' : 'videos';
-                    if (currentType === type) {
-                        openGallery(member, type);
-                    }
-                }
-            });
-        });
-    }).catch((error) => {
-        console.error('Upload error:', error);
-        showToast('❌ Upload failed: ' + error.message);
+    mediaRef.set({
+        url: url,
+        publicId: publicId,
+        updatedAt: Date.now(),
+        updatedBy: currentUser.email
+    }).then(() => {
+        showToast('✅ Music uploaded!');
+        applyMusic(member, url);
     });
-    
-    event.target.value = ''; // Reset input
 }
 
-function handleProfilePictureUpload(event, member) {
-    if (!isAdmin) {
-        showToast('⚠️ Only admin can upload!');
-        return;
-    }
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Check file size (max 5MB for profile pictures)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showToast('❌ File too large! Max 5MB');
-        return;
-    }
-
-    showToast('📤 Uploading profile picture...');
-    const storage = firebase.storage();
+function saveProfilePictureToFirebase(member, url, publicId) {
     const db = firebase.database();
+    const profileRef = db.ref(`members/${member}/profilePicture`);
     
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const storageRef = storage.ref(`members/${member}/profile/${timestamp}.${fileExtension}`);
-    
-    storageRef.put(file).then((snapshot) => {
-        return snapshot.ref.getDownloadURL();
-    }).then((downloadURL) => {
-        // Save URL to database
-        const profileRef = db.ref(`members/${member}/profilePicture`);
-        profileRef.set({
-            url: downloadURL,
-            updatedAt: timestamp,
-            updatedBy: currentUser.email
-        }).then(() => {
-            showToast('✅ Profile picture uploaded!');
-            applyProfilePicture(member, downloadURL);
-        });
-    }).catch((error) => {
-        console.error('Upload error:', error);
-        showToast('❌ Upload failed: ' + error.message);
+    profileRef.set({
+        url: url,
+        publicId: publicId,
+        updatedAt: Date.now(),
+        updatedBy: currentUser.email
+    }).then(() => {
+        showToast('✅ Profile picture uploaded!');
+        applyProfilePicture(member, url);
     });
-}
-
-function handleFileUpload(event, member, type, storage, db) {
-    if (!isAdmin) {
-        showToast('⚠️ Only admin can upload!');
-        return;
-    }
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Check file size (max 20MB for music)
-    const maxSize = 20 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showToast('❌ File too large! Max 20MB');
-        return;
-    }
-
-    showToast('📤 Uploading...');
-    
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const storageRef = storage.ref(`members/${member}/music/${timestamp}.${fileExtension}`);
-    
-    storageRef.put(file).then((snapshot) => {
-        return snapshot.ref.getDownloadURL();
-    }).then((downloadURL) => {
-        // Save URL to database
-        const musicRef = db.ref(`members/${member}/music`);
-        musicRef.set({
-            url: downloadURL,
-            updatedAt: timestamp,
-            updatedBy: currentUser.email
-        }).then(() => {
-            showToast('✅ Music uploaded!');
-            applyMusic(member, downloadURL);
-        });
-    }).catch((error) => {
-        console.error('Upload error:', error);
-        showToast('❌ Upload failed: ' + error.message);
-    });
-    
-    event.target.value = ''; // Reset input
 }
 
 function openGallery(member, type) {
@@ -1329,7 +1236,7 @@ function openGallery(member, type) {
                 deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteMediaItem(member, type, index, item.url);
+                    deleteMediaItem(member, type, index, item.url, item.publicId);
                 });
                 galleryItem.appendChild(deleteBtn);
             }
@@ -1339,7 +1246,7 @@ function openGallery(member, type) {
     });
 }
 
-function deleteMediaItem(member, type, index, url) {
+function deleteMediaItem(member, type, index, url, publicId) {
     if (!isAdmin || !confirm(`Delete this ${type === 'photos' ? 'photo' : 'video'}?`)) return;
     
     showToast('🗑️ Deleting...');
@@ -1352,10 +1259,9 @@ function deleteMediaItem(member, type, index, url) {
         mediaRef.set(media).then(() => {
             showToast('✅ Deleted!');
             
-            // Delete from storage
-            const storage = firebase.storage();
-            const storageRef = storage.refFromURL(url);
-            storageRef.delete().catch(err => console.error('Storage delete error:', err));
+            // Note: To delete from Cloudinary, you would need to use Cloudinary Admin API
+            // For now, we just remove from Firebase database
+            // The file will remain in Cloudinary but won't be displayed
             
             // Reload gallery
             openGallery(member, type);
