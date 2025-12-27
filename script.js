@@ -1306,21 +1306,22 @@ function openCloudinaryPFPUpload(member) {
     
     console.log('PFP Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-        if (error) {
-            console.error('Cloudinary upload error:', error);
-            showToast('❌ Upload error: ' + error.message);
-            return;
-        }
-        
-        if (result.event === 'success') {
-            // Get the cropped circular image URL
-            const url = result.info.secure_url;
-            // Apply circular transformation using Cloudinary
-            const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
-            const publicId = result.info.public_id;
-            savePFPToFirebase(member, circularUrl, publicId);
-        }
+    try {
+        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
+                showToast('❌ Upload error: ' + error.message);
+                return;
+            }
+            
+            if (result.event === 'success') {
+                // Get the cropped circular image URL
+                const url = result.info.secure_url;
+                // Apply circular transformation using Cloudinary
+                const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
+                const publicId = result.info.public_id;
+                savePFPToFirebase(member, circularUrl, publicId);
+            }
         });
         
         uploadWidget.open();
