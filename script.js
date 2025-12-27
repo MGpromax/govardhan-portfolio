@@ -1253,13 +1253,14 @@ function openCloudinaryUpload(member, type) {
                     saveMediaToFirebaseGallery(member, type, url, publicId);
                 }
             }
-        });
-        
-        uploadWidget.open();
-    } catch (err) {
-        console.error('Error creating upload widget:', err);
-        showToast('❌ Failed to create upload widget: ' + err.message);
-    }
+            });
+            
+            uploadWidget.open();
+        } catch (err) {
+            console.error('Error creating upload widget:', err);
+            showToast('❌ Failed to create upload widget: ' + err.message);
+        }
+    }, 100); // 100ms delay
 }
 
 function openCloudinaryPFPUpload(member) {
@@ -1322,13 +1323,14 @@ function openCloudinaryPFPUpload(member) {
                 const publicId = result.info.public_id;
                 savePFPToFirebase(member, circularUrl, publicId);
             }
-        });
-        
-        uploadWidget.open();
-    } catch (err) {
-        console.error('Error creating upload widget:', err);
-        showToast('❌ Failed to create upload widget: ' + err.message);
-    }
+            });
+            
+            uploadWidget.open();
+        } catch (err) {
+            console.error('Error creating upload widget:', err);
+            showToast('❌ Failed to create upload widget: ' + err.message);
+        }
+    }, 100); // 100ms delay
 }
 
 function openCloudinaryPhotoUpload(member) {
@@ -1374,8 +1376,10 @@ function openCloudinaryPhotoUpload(member) {
     console.log('Preset value:', widgetOptions.uploadPreset);
     console.log('Photo Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    try {
-        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+    // Small delay to ensure Cloudinary widget is fully ready
+    setTimeout(() => {
+        try {
+            const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
             if (error) {
                 console.error('Cloudinary upload error:', error);
                 showToast('❌ Upload error: ' + error.message);
@@ -1387,13 +1391,14 @@ function openCloudinaryPhotoUpload(member) {
                 const publicId = result.info.public_id;
                 savePhotoToFirebase(member, url, publicId);
             }
-        });
-        
-        uploadWidget.open();
-    } catch (err) {
-        console.error('Error creating upload widget:', err);
-        showToast('❌ Failed to create upload widget: ' + err.message);
-    }
+            });
+            
+            uploadWidget.open();
+        } catch (err) {
+            console.error('Error creating upload widget:', err);
+            showToast('❌ Failed to create upload widget: ' + err.message);
+        }
+    }, 100); // 100ms delay
 }
 
 function openPFPPopup(member) {
