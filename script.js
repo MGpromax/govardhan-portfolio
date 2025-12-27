@@ -1256,17 +1256,21 @@ function openCloudinaryPFPUpload(member) {
         return;
     }
     
-    console.log('Opening Cloudinary PFP upload with:', {
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET
-    });
+    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
     
-    const uploadWidget = cloudinary.createUploadWidget({
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    if (!presetName) {
+        showToast('❌ Upload preset not configured!');
+        return;
+    }
+    
+    console.log('Opening Cloudinary PFP upload with preset:', presetName);
+    
+    const widgetOptions = {
+        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
+        uploadPreset: presetName,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        // Remove publicIdPrefix to avoid conflicts
+        publicIdPrefix: `members/${member}/pfp/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
@@ -1275,7 +1279,11 @@ function openCloudinaryPFPUpload(member) {
         croppingDefaultSelectionRatio: 1,
         croppingShowDimensions: true,
         croppingCoordinatesMode: 'custom' // Allows manual positioning
-    }, (error, result) => {
+    };
+    
+    console.log('PFP Widget options:', JSON.stringify(widgetOptions, null, 2));
+    
+    const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
         if (error) {
             console.error('Cloudinary upload error:', error);
             showToast('❌ Upload error: ' + error.message);
@@ -1316,30 +1324,29 @@ function openCloudinaryPhotoUpload(member) {
         return;
     }
     
-    console.log('Opening Cloudinary photo upload with:', {
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET
-    });
+    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
     
-    // Build widget config object
-    const widgetConfig = {
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    if (!presetName) {
+        showToast('❌ Upload preset not configured!');
+        return;
+    }
+    
+    console.log('Opening Cloudinary photo upload with preset:', presetName);
+    
+    const widgetOptions = {
+        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
+        uploadPreset: presetName,
         sources: ['local', 'camera'],
         resourceType: 'image',
+        publicIdPrefix: `members/${member}/photo/`,
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
     };
     
-    // Only add publicIdPrefix if preset allows it
-    if (CLOUDINARY_UPLOAD_PRESET) {
-        widgetConfig.publicIdPrefix = `members/${member}/photo/`;
-    }
+    console.log('Photo Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    console.log('Widget config:', widgetConfig);
-    
-    const uploadWidget = cloudinary.createUploadWidget(widgetConfig, (error, result) => {
+    const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
         if (error) {
             console.error('Cloudinary upload error:', error);
             showToast('❌ Upload error: ' + error.message);
