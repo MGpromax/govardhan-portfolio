@@ -1012,81 +1012,354 @@ function showLoginForm() {
 }
 
 /* ============================================
-   MEDIA UPLOADS & FIREBASE DATABASE
+   MEDIA UPLOADS & FIREBASE STORAGE
    ============================================ */
 function initMediaUploads() {
     const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
+    const storage = firebase.storage();
+    const db = firebase.database();
+    
+    // Initialize gallery buttons
+    initGalleryButtons();
+    
+    // Initialize profile picture upload buttons
+    initProfilePictureUploads();
     
     members.forEach(member => {
-        // Photo upload
+        // Photo upload (for gallery)
         const photoBtn = document.querySelector(`.upload-photo[data-member="${member}"]`);
         const photoInput = document.getElementById(`file-${member}-photo`);
         if (photoBtn && photoInput) {
-            photoBtn.addEventListener('click', () => photoInput.click());
-            photoInput.addEventListener('change', (e) => handleFileUpload(e, member, 'photo'));
+            photoBtn.addEventListener('click', () => {
+                if (isAdmin) {
+                    photoInput.click();
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+            photoInput.addEventListener('change', (e) => handleGalleryUpload(e, member, 'photos'));
         }
 
-        // Video upload
+        // Video upload (for gallery)
         const videoBtn = document.querySelector(`.upload-video[data-member="${member}"]`);
         const videoInput = document.getElementById(`file-${member}-video`);
         if (videoBtn && videoInput) {
-            videoBtn.addEventListener('click', () => videoInput.click());
-            videoInput.addEventListener('change', (e) => handleFileUpload(e, member, 'video'));
+            videoBtn.addEventListener('click', () => {
+                if (isAdmin) {
+                    videoInput.click();
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+            videoInput.addEventListener('change', (e) => handleGalleryUpload(e, member, 'videos'));
         }
 
         // Music upload
         const musicBtn = document.querySelector(`.upload-music[data-member="${member}"]`);
         const musicInput = document.getElementById(`file-${member}-music`);
         if (musicBtn && musicInput) {
-            musicBtn.addEventListener('click', () => musicInput.click());
-            musicInput.addEventListener('change', (e) => handleFileUpload(e, member, 'music'));
+            musicBtn.addEventListener('click', () => {
+                if (isAdmin) {
+                    musicInput.click();
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+            musicInput.addEventListener('change', (e) => handleFileUpload(e, member, 'music', storage, db));
+        }
+    });
+}
+
+function initGalleryButtons() {
+    document.querySelectorAll('.gallery-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const member = this.getAttribute('data-member');
+            const type = this.getAttribute('data-type');
+            openGallery(member, type);
+        });
+    });
+    
+    // Close gallery modal
+    const closeBtn = document.getElementById('close-gallery-modal');
+    const galleryModal = document.getElementById('gallery-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (galleryModal) galleryModal.classList.remove('show');
+        });
+    }
+    if (galleryModal) {
+        galleryModal.addEventListener('click', (e) => {
+            if (e.target === galleryModal) {
+                galleryModal.classList.remove('show');
             }
         });
     }
+}
 
-function handleFileUpload(event, member, type) {
+function initProfilePictureUploads() {
+    const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
+    const profileInput = document.getElementById('profile-picture-input');
+    let currentMember = null;
+    
+    members.forEach(member => {
+        const imageWrapper = document.querySelector(`.member-card[data-member="${member}"] .member-image-wrapper`);
+        if (imageWrapper && !imageWrapper.querySelector('.upload-profile-picture')) {
+            const uploadBtn = document.createElement('button');
+            uploadBtn.className = 'upload-profile-picture';
+            uploadBtn.innerHTML = '<i class="fas fa-camera"></i>';
+            uploadBtn.title = 'Upload Profile Picture';
+            uploadBtn.addEventListener('click', () => {
+                if (isAdmin) {
+                    currentMember = member;
+                    profileInput.click();
+                }
+            });
+            imageWrapper.appendChild(uploadBtn);
+        }
+    });
+    
+    if (profileInput) {
+        profileInput.addEventListener('change', (e) => {
+            if (currentMember && e.target.files[0]) {
+                handleProfilePictureUpload(e, currentMember);
+                currentMember = null;
+                e.target.value = ''; // Reset input
+            }
+        });
+    }
+}
+
+function handleGalleryUpload(event, member, type) {
     if (!isAdmin) {
         showToast('⚠️ Only admin can upload!');
-                return;
-            }
+        return;
+    }
 
     const file = event.target.files[0];
     if (!file) return;
 
-    // Check file size (max 5MB for images, 20MB for videos/music)
-    const maxSize = type === 'photo' ? 5 * 1024 * 1024 : 20 * 1024 * 1024;
+    // Check file size (max 10MB for images, 50MB for videos)
+    const maxSize = type === 'photos' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
-        showToast(`❌ File too large! Max ${type === 'photo' ? '5MB' : '20MB'}`);
-                return;
-            }
+        showToast(`❌ File too large! Max ${type === 'photos' ? '10MB' : '50MB'}`);
+        return;
+    }
 
-    showToast('📤 Uploading...');
-
-    // Convert to base64 and save to Firebase
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64Data = e.target.result;
-        saveMediaToFirebase(member, type, base64Data);
-    };
-    reader.readAsDataURL(file);
+    showToast('📤 Uploading to gallery...');
+    const storage = firebase.storage();
+    const db = firebase.database();
+    
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const storageRef = storage.ref(`members/${member}/${type}/${timestamp}.${fileExtension}`);
+    
+    storageRef.put(file).then((snapshot) => {
+        return snapshot.ref.getDownloadURL();
+    }).then((downloadURL) => {
+        // Save URL to database
+        const mediaRef = db.ref(`members/${member}/${type}`);
+        mediaRef.once('value', (snapshot) => {
+            const existingMedia = snapshot.val() || [];
+            const newMedia = [...existingMedia, {
+                url: downloadURL,
+                uploadedAt: timestamp,
+                uploadedBy: currentUser.email
+            }];
+            mediaRef.set(newMedia).then(() => {
+                showToast(`✅ ${type === 'photos' ? 'Photo' : 'Video'} added to gallery!`);
+                // Reload gallery if it's open
+                const galleryModal = document.getElementById('gallery-modal');
+                if (galleryModal && galleryModal.classList.contains('show')) {
+                    const currentType = document.getElementById('gallery-modal-title').textContent.includes('Photos') ? 'photos' : 'videos';
+                    if (currentType === type) {
+                        openGallery(member, type);
+                    }
+                }
+            });
+        });
+    }).catch((error) => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed: ' + error.message);
+    });
+    
+    event.target.value = ''; // Reset input
 }
 
-function saveMediaToFirebase(member, type, data) {
+function handleProfilePictureUpload(event, member) {
+    if (!isAdmin) {
+        showToast('⚠️ Only admin can upload!');
+        return;
+    }
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB for profile pictures)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showToast('❌ File too large! Max 5MB');
+        return;
+    }
+
+    showToast('📤 Uploading profile picture...');
+    const storage = firebase.storage();
+    const db = firebase.database();
+    
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const storageRef = storage.ref(`members/${member}/profile/${timestamp}.${fileExtension}`);
+    
+    storageRef.put(file).then((snapshot) => {
+        return snapshot.ref.getDownloadURL();
+    }).then((downloadURL) => {
+        // Save URL to database
+        const profileRef = db.ref(`members/${member}/profilePicture`);
+        profileRef.set({
+            url: downloadURL,
+            updatedAt: timestamp,
+            updatedBy: currentUser.email
+        }).then(() => {
+            showToast('✅ Profile picture uploaded!');
+            applyProfilePicture(member, downloadURL);
+        });
+    }).catch((error) => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed: ' + error.message);
+    });
+}
+
+function handleFileUpload(event, member, type, storage, db) {
+    if (!isAdmin) {
+        showToast('⚠️ Only admin can upload!');
+        return;
+    }
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 20MB for music)
+    const maxSize = 20 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showToast('❌ File too large! Max 20MB');
+        return;
+    }
+
+    showToast('📤 Uploading...');
+    
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const storageRef = storage.ref(`members/${member}/music/${timestamp}.${fileExtension}`);
+    
+    storageRef.put(file).then((snapshot) => {
+        return snapshot.ref.getDownloadURL();
+    }).then((downloadURL) => {
+        // Save URL to database
+        const musicRef = db.ref(`members/${member}/music`);
+        musicRef.set({
+            url: downloadURL,
+            updatedAt: timestamp,
+            updatedBy: currentUser.email
+        }).then(() => {
+            showToast('✅ Music uploaded!');
+            applyMusic(member, downloadURL);
+        });
+    }).catch((error) => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed: ' + error.message);
+    });
+    
+    event.target.value = ''; // Reset input
+}
+
+function openGallery(member, type) {
+    const galleryModal = document.getElementById('gallery-modal');
+    const galleryTitle = document.getElementById('gallery-modal-title');
+    const galleryGrid = document.getElementById('gallery-grid');
+    const galleryEmpty = document.getElementById('gallery-empty');
+    
+    if (!galleryModal || !galleryTitle || !galleryGrid) return;
+    
+    const memberNames = {
+        'govardhan': 'Govardhan',
+        'gowtham': 'Gowtham',
+        'varun': 'Varun',
+        'gahan': 'Gahan',
+        'pruthvi': 'Pruthvi',
+        'likhith': 'Likhith'
+    };
+    
+    galleryTitle.textContent = `${memberNames[member]}'s ${type === 'photos' ? 'Photos' : 'Videos'}`;
+    galleryGrid.innerHTML = '';
+    galleryEmpty.style.display = 'none';
+    galleryModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
     const db = firebase.database();
     const mediaRef = db.ref(`members/${member}/${type}`);
     
-    mediaRef.set({
-        data: data,
-        updatedAt: Date.now(),
-        updatedBy: currentUser.email
-    })
-    .then(() => {
-        showToast(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} uploaded!`);
-        applyMedia(member, type, data);
-    })
-    .catch((error) => {
-        console.error('Upload error:', error);
-        showToast('❌ Upload failed: ' + error.message);
+    mediaRef.once('value', (snapshot) => {
+        const media = snapshot.val() || [];
+        
+        if (media.length === 0) {
+            galleryEmpty.style.display = 'block';
+            return;
+        }
+        
+        media.forEach((item, index) => {
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            
+            if (type === 'photos') {
+                const img = document.createElement('img');
+                img.src = item.url;
+                img.alt = `Photo ${index + 1}`;
+                galleryItem.appendChild(img);
+            } else {
+                const video = document.createElement('video');
+                video.src = item.url;
+                video.controls = true;
+                video.muted = true;
+                galleryItem.appendChild(video);
+            }
+            
+            // Delete button (admin only)
+            if (isAdmin) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'gallery-item-delete';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteMediaItem(member, type, index, item.url);
+                });
+                galleryItem.appendChild(deleteBtn);
+            }
+            
+            galleryGrid.appendChild(galleryItem);
+        });
+    });
+}
+
+function deleteMediaItem(member, type, index, url) {
+    if (!isAdmin || !confirm(`Delete this ${type === 'photos' ? 'photo' : 'video'}?`)) return;
+    
+    showToast('🗑️ Deleting...');
+    const db = firebase.database();
+    const mediaRef = db.ref(`members/${member}/${type}`);
+    
+    mediaRef.once('value', (snapshot) => {
+        const media = snapshot.val() || [];
+        media.splice(index, 1);
+        mediaRef.set(media).then(() => {
+            showToast('✅ Deleted!');
+            
+            // Delete from storage
+            const storage = firebase.storage();
+            const storageRef = storage.refFromURL(url);
+            storageRef.delete().catch(err => console.error('Storage delete error:', err));
+            
+            // Reload gallery
+            openGallery(member, type);
+        });
     });
 }
 
@@ -1099,66 +1372,94 @@ function loadAllMemberMedia() {
         if (data) {
             Object.keys(data).forEach(member => {
                 const memberData = data[member];
-                if (memberData.photo) applyMedia(member, 'photo', memberData.photo.data);
-                if (memberData.video) applyMedia(member, 'video', memberData.video.data);
-                if (memberData.music) applyMedia(member, 'music', memberData.music.data);
+                
+                // Load profile picture
+                if (memberData.profilePicture && memberData.profilePicture.url) {
+                    applyProfilePicture(member, memberData.profilePicture.url);
+                }
+                
+                // Load first photo as main photo (for backward compatibility)
+                if (memberData.photos && memberData.photos.length > 0 && memberData.photos[0].url) {
+                    applyMainPhoto(member, memberData.photos[0].url);
+                }
+                
+                // Load first video as main video (for backward compatibility)
+                if (memberData.videos && memberData.videos.length > 0 && memberData.videos[0].url) {
+                    applyMainVideo(member, memberData.videos[0].url);
+                }
+                
+                // Load music
+                if (memberData.music && memberData.music.url) {
+                    applyMusic(member, memberData.music.url);
+                }
             });
         }
     });
 }
 
-function applyMedia(member, type, data) {
-    if (type === 'photo') {
-        const avatar = document.getElementById(`avatar-${member}`);
-        const photo = document.getElementById(`photo-${member}`);
-        if (avatar && photo) {
-            avatar.style.display = 'none';
-            photo.src = data;
-            photo.style.display = 'block';
-        }
-    } else if (type === 'video') {
-        const avatar = document.getElementById(`avatar-${member}`);
-        const photo = document.getElementById(`photo-${member}`);
-        const video = document.getElementById(`video-${member}`);
-        if (video) {
-            if (avatar) avatar.style.display = 'none';
-            if (photo) photo.style.display = 'none';
-            video.src = data;
-            video.style.display = 'block';
-            video.play().catch(() => {}); // Auto-play (muted)
-        }
-    } else if (type === 'music') {
-        // Create or update audio element for the member
-        let audio = document.getElementById(`audio-${member}`);
-        if (!audio) {
-            audio = document.createElement('audio');
-            audio.id = `audio-${member}`;
-            audio.loop = true;
-            document.body.appendChild(audio);
-        }
-        audio.src = data;
-        
-        // Add music indicator to member card
-        const card = document.querySelector(`.member-card[data-member="${member}"]`);
-        if (card && !card.querySelector('.music-indicator')) {
-            const musicIndicator = document.createElement('div');
-            musicIndicator.className = 'music-indicator';
-            musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
-            musicIndicator.style.cssText = 'position:absolute;bottom:10px;right:10px;background:var(--neon-green);color:var(--dark-bg);padding:5px 10px;border-radius:20px;font-size:0.8rem;cursor:pointer;';
-            musicIndicator.onclick = () => {
-                if (audio.paused) {
-                    // Pause all other audios first
-                    document.querySelectorAll('audio').forEach(a => a.pause());
-                    audio.play();
-                    musicIndicator.innerHTML = '<i class="fas fa-pause"></i> Playing';
-        } else {
-                    audio.pause();
-                    musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
-                }
-            };
-            card.style.position = 'relative';
-            card.appendChild(musicIndicator);
-        }
+function applyProfilePicture(member, url) {
+    const avatar = document.getElementById(`avatar-${member}`);
+    const photo = document.getElementById(`photo-${member}`);
+    if (avatar && photo) {
+        avatar.style.display = 'none';
+        photo.src = url;
+        photo.style.display = 'block';
+    }
+}
+
+function applyMainPhoto(member, url) {
+    const avatar = document.getElementById(`avatar-${member}`);
+    const photo = document.getElementById(`photo-${member}`);
+    const video = document.getElementById(`video-${member}`);
+    if (photo) {
+        if (avatar) avatar.style.display = 'none';
+        if (video) video.style.display = 'none';
+        photo.src = url;
+        photo.style.display = 'block';
+    }
+}
+
+function applyMainVideo(member, url) {
+    const avatar = document.getElementById(`avatar-${member}`);
+    const photo = document.getElementById(`photo-${member}`);
+    const video = document.getElementById(`video-${member}`);
+    if (video) {
+        if (avatar) avatar.style.display = 'none';
+        if (photo) photo.style.display = 'none';
+        video.src = url;
+        video.style.display = 'block';
+        video.play().catch(() => {});
+    }
+}
+
+function applyMusic(member, url) {
+    let audio = document.getElementById(`audio-${member}`);
+    if (!audio) {
+        audio = document.createElement('audio');
+        audio.id = `audio-${member}`;
+        audio.loop = true;
+        document.body.appendChild(audio);
+    }
+    audio.src = url;
+    
+    const card = document.querySelector(`.member-card[data-member="${member}"]`);
+    if (card && !card.querySelector('.music-indicator')) {
+        const musicIndicator = document.createElement('div');
+        musicIndicator.className = 'music-indicator';
+        musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+        musicIndicator.style.cssText = 'position:absolute;bottom:10px;right:10px;background:var(--neon-green);color:var(--dark-bg);padding:5px 10px;border-radius:20px;font-size:0.8rem;cursor:pointer;';
+        musicIndicator.onclick = () => {
+            if (audio.paused) {
+                document.querySelectorAll('audio').forEach(a => a.pause());
+                audio.play();
+                musicIndicator.innerHTML = '<i class="fas fa-pause"></i> Playing';
+            } else {
+                audio.pause();
+                musicIndicator.innerHTML = '<i class="fas fa-music"></i> 🎵';
+            }
+        };
+        card.style.position = 'relative';
+        card.appendChild(musicIndicator);
     }
 }
 
