@@ -1247,12 +1247,22 @@ function openCloudinaryPFPUpload(member) {
         return;
     }
     
+    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === "ml_default") {
+        showToast('❌ Please configure Cloudinary upload preset in script.js (line 22)');
+        return;
+    }
+    
+    console.log('Opening Cloudinary PFP upload with:', {
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET
+    });
+    
     const uploadWidget = cloudinary.createUploadWidget({
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        publicIdPrefix: `members/${member}/pfp/`,
+        // Remove publicIdPrefix to avoid conflicts
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
@@ -1293,12 +1303,22 @@ function openCloudinaryPhotoUpload(member) {
         return;
     }
     
+    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === "ml_default") {
+        showToast('❌ Please configure Cloudinary upload preset in script.js (line 22)');
+        return;
+    }
+    
+    console.log('Opening Cloudinary photo upload with:', {
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET
+    });
+    
     const uploadWidget = cloudinary.createUploadWidget({
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         sources: ['local', 'camera'],
         resourceType: 'image',
-        publicIdPrefix: `members/${member}/photo/`,
+        // Remove publicIdPrefix to avoid conflicts
         multiple: false,
         maxFileSize: 10000000, // 10MB
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp']
