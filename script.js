@@ -1231,7 +1231,7 @@ function showLoginForm() {
     const adminPanel = document.getElementById('admin-panel');
 
     if (loginForm) loginForm.style.display = 'block';
-    if (adminPanel) adminPanel.style.display = 'none';
+                                                                                                                                                if (adminPanel) adminPanel.style.display = 'none';
 }
 
 /* ============================================
@@ -2632,6 +2632,153 @@ function drawWaveform() {
     ctx.strokeStyle = 'var(--neon-green)';
     ctx.lineWidth = 1;
     ctx.stroke();
+    
+    // Initialize trim handles after drawing waveform
+    initTrimHandles();
+}
+
+// Track which handle is being dragged
+let isDraggingStart = false;
+let isDraggingEnd = false;
+
+function initTrimHandles() {
+    const waveformContainer = document.getElementById('trimmer-waveform');
+    const startHandle = document.getElementById('trim-start');
+    const endHandle = document.getElementById('trim-end');
+    const selection = document.getElementById('trim-selection');
+    
+    if (!waveformContainer || !startHandle || !endHandle || !selection || !audioBuffer) {
+        console.log('Trim handles not ready');
+        return;
+    }
+    
+    const duration = audioBuffer.duration;
+    const containerWidth = waveformContainer.offsetWidth;
+    
+    console.log('🎵 Initializing trim handles, duration:', duration);
+    
+    // Update visual positions
+    updateTrimVisuals();
+    
+    // Start handle drag
+    startHandle.onmousedown = function(e) {
+        e.preventDefault();
+        isDraggingStart = true;
+        document.body.style.cursor = 'ew-resize';
+    };
+    
+    // End handle drag
+    endHandle.onmousedown = function(e) {
+        e.preventDefault();
+        isDraggingEnd = true;
+        document.body.style.cursor = 'ew-resize';
+    };
+    
+    // Mouse move on document
+    document.onmousemove = function(e) {
+        if (!isDraggingStart && !isDraggingEnd) return;
+        
+        const rect = waveformContainer.getBoundingClientRect();
+        const x = Math.max(0, Math.min(containerWidth, e.clientX - rect.left));
+        const timePos = (x / containerWidth) * duration;
+        
+        if (isDraggingStart) {
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1)); // Min 1 second gap
+            updateTrimVisuals();
+            updateTrimDisplay();
+        } else if (isDraggingEnd) {
+            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration)); // Min 1 second gap
+            updateTrimVisuals();
+            updateTrimDisplay();
+        }
+    };
+    
+    // Mouse up on document
+    document.onmouseup = function() {
+        if (isDraggingStart || isDraggingEnd) {
+            isDraggingStart = false;
+            isDraggingEnd = false;
+            document.body.style.cursor = '';
+            console.log('🎵 Trim updated:', trimStartTime.toFixed(1), 'to', trimEndTime.toFixed(1));
+        }
+    };
+    
+    // Touch support for mobile
+    startHandle.ontouchstart = function(e) {
+        e.preventDefault();
+        isDraggingStart = true;
+    };
+    
+    endHandle.ontouchstart = function(e) {
+        e.preventDefault();
+        isDraggingEnd = true;
+    };
+    
+    document.ontouchmove = function(e) {
+        if (!isDraggingStart && !isDraggingEnd) return;
+        
+        const touch = e.touches[0];
+        const rect = waveformContainer.getBoundingClientRect();
+        const x = Math.max(0, Math.min(containerWidth, touch.clientX - rect.left));
+        const timePos = (x / containerWidth) * duration;
+        
+        if (isDraggingStart) {
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1));
+            updateTrimVisuals();
+            updateTrimDisplay();
+        } else if (isDraggingEnd) {
+            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration));
+            updateTrimVisuals();
+            updateTrimDisplay();
+        }
+    };
+    
+    document.ontouchend = function() {
+        isDraggingStart = false;
+        isDraggingEnd = false;
+    };
+    
+    // Click on waveform to set position
+    waveformContainer.onclick = function(e) {
+        if (isDraggingStart || isDraggingEnd) return;
+        
+        const rect = waveformContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const timePos = (x / containerWidth) * duration;
+        
+        // Set the nearest handle
+        const distToStart = Math.abs(timePos - trimStartTime);
+        const distToEnd = Math.abs(timePos - trimEndTime);
+        
+        if (distToStart < distToEnd) {
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1));
+        } else {
+            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration));
+        }
+        
+        updateTrimVisuals();
+        updateTrimDisplay();
+    };
+}
+
+function updateTrimVisuals() {
+    const waveformContainer = document.getElementById('trimmer-waveform');
+    const startHandle = document.getElementById('trim-start');
+    const endHandle = document.getElementById('trim-end');
+    const selection = document.getElementById('trim-selection');
+    
+    if (!waveformContainer || !startHandle || !endHandle || !selection || !audioBuffer) return;
+    
+    const duration = audioBuffer.duration;
+    const containerWidth = waveformContainer.offsetWidth;
+    
+    const startPercent = (trimStartTime / duration) * 100;
+    const endPercent = (trimEndTime / duration) * 100;
+    
+    startHandle.style.left = startPercent + '%';
+    endHandle.style.left = endPercent + '%';
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
 }
 
 function updateTrimDisplay() {

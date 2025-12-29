@@ -4310,46 +4310,58 @@ body.admin-mode .upload-profile-picture {
 
 .trim-handle {
     position: absolute;
-    top: 0;
-    width: 12px;
-    height: 100%;
-    background: var(--neon-green);
+    top: -5px;
+    width: 16px;
+    height: calc(100% + 10px);
+    background: linear-gradient(180deg, var(--neon-green), var(--primary));
     cursor: ew-resize;
     pointer-events: auto;
-    z-index: 3;
+    z-index: 10;
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--neon-green), 0 0 20px rgba(0, 255, 136, 0.3);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.trim-handle:hover {
+    box-shadow: 0 0 15px var(--neon-green), 0 0 30px rgba(0, 255, 136, 0.5);
+}
+
+.trim-handle:active {
+    box-shadow: 0 0 20px var(--neon-green), 0 0 40px rgba(0, 255, 136, 0.7);
 }
 
 .trim-handle::after {
-    content: '|||';
+    content: '⋮';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 8px;
+    font-size: 14px;
     color: var(--dark-bg);
-    letter-spacing: 1px;
+    font-weight: bold;
 }
 
 .trim-start {
     left: 0;
-    border-radius: 6px 0 0 6px;
+    border-radius: 6px;
 }
 
 .trim-end {
-    right: 0;
-    border-radius: 0 6px 6px 0;
+    left: 100%;
+    border-radius: 6px;
 }
 
 .trim-selection {
     position: absolute;
     top: 0;
     height: 100%;
-    background: rgba(0, 255, 136, 0.2);
-    border-top: 2px solid var(--neon-green);
-    border-bottom: 2px solid var(--neon-green);
-    left: 12px;
-    right: 12px;
+    background: rgba(0, 255, 136, 0.3);
+    border-top: 3px solid var(--neon-green);
+    border-bottom: 3px solid var(--neon-green);
+    left: 0;
+    width: 100%;
     pointer-events: none;
+    z-index: 1;
 }
 
 .trim-playhead {
