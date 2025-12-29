@@ -2934,6 +2934,12 @@ section {
     margin-bottom: 1rem;
 }
 
+.admin-feature-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 280px;
+    margin: 0 auto 1rem auto;
+}
+
 .admin-feature-item {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
