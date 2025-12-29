@@ -2927,11 +2927,7 @@ function initPremiumPFPPopup() {
         });
     }
     
-    // Music toggle
-    const musicToggle = document.getElementById('pfp-music-toggle');
-    if (musicToggle) {
-        musicToggle.addEventListener('click', togglePFPMusic);
-    }
+    // Music auto-plays - no toggle button needed
 }
 
 // Playlist player state
@@ -2947,7 +2943,6 @@ function openPremiumPFPPopup(member, memberName) {
     const musicControl = document.getElementById('pfp-music-control');
     const noMusicEl = document.getElementById('pfp-no-music');
     const rotatingContainer = document.getElementById('pfp-rotating-container');
-    const musicToggle = document.getElementById('pfp-music-toggle');
     
     if (!popupModal || !popupImage) return;
     
@@ -2955,11 +2950,10 @@ function openPremiumPFPPopup(member, memberName) {
     currentPlaylist = [];
     currentSongIndex = 0;
     isPlaylistPlaying = false;
-    rotatingContainer.classList.remove('playing');
-    if (musicToggle) {
-        musicToggle.classList.remove('playing');
-        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
-    }
+    if (rotatingContainer) rotatingContainer.classList.remove('playing');
+    
+    // Hide music control button - auto-play only
+    if (musicControl) musicControl.style.display = 'none';
     
     // Set member name
     if (memberNameEl) memberNameEl.textContent = memberName;
@@ -2984,27 +2978,27 @@ function openPremiumPFPPopup(member, memberName) {
                         // Playlist format
                         currentPlaylist = musicData.playlist.sort((a, b) => a.order - b.order);
                         if (currentPlaylist.length > 0) {
-                            popupAudio.src = currentPlaylist[0].url;
-                            musicControl.style.display = 'block';
                             if (noMusicEl) noMusicEl.style.display = 'none';
-                            
-                            // Update button text to show playlist
-                            if (musicToggle) {
-                                musicToggle.innerHTML = `<i class="fas fa-play"></i><span>Play (${currentPlaylist.length} songs)</span>`;
-                            }
+                            // Auto-play the playlist
+                            playPlaylist(member);
+                        } else {
+                            if (noMusicEl) noMusicEl.style.display = 'block';
                         }
                     } else if (musicData.url) {
                         // Single song format (backwards compatible)
-                        currentPlaylist = [{ url: musicData.url, name: 'Song' }];
-                        popupAudio.src = musicData.url;
-                        musicControl.style.display = 'block';
+                        currentPlaylist = [{ 
+                            url: musicData.url, 
+                            name: 'Song',
+                            trimStart: 0,
+                            trimEnd: 0
+                        }];
                         if (noMusicEl) noMusicEl.style.display = 'none';
+                        // Auto-play single song
+                        playPlaylist(member);
                     } else {
-                        musicControl.style.display = 'none';
                         if (noMusicEl) noMusicEl.style.display = 'block';
                     }
                 } else {
-                    musicControl.style.display = 'none';
                     if (noMusicEl) noMusicEl.style.display = 'block';
                 }
             });
@@ -3012,16 +3006,111 @@ function openPremiumPFPPopup(member, memberName) {
             showToast('No profile picture found');
         }
     });
+}
+
+// Play playlist automatically
+function playPlaylist(member) {
+    if (currentPlaylist.length === 0) {
+        console.log('No songs in playlist');
+        return;
+    }
     
-    // Setup playlist autoplay
-    if (popupAudio) {
-        popupAudio.onended = () => {
-            if (isPlaylistPlaying && currentPlaylist.length > 0) {
-                // Move to next song (seamless loop)
-                currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
-                popupAudio.src = currentPlaylist[currentSongIndex].url;
-                popupAudio.play().catch(err => console.log('Autoplay error:', err));
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const rotatingContainer = document.getElementById('pfp-rotating-container');
+    
+    if (!popupAudio) return;
+    
+    // Start from first song
+    currentSongIndex = 0;
+    playNextSongInPlaylist();
+}
+
+function playNextSongInPlaylist() {
+    if (currentPlaylist.length === 0) return;
+    
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const rotatingContainer = document.getElementById('pfp-rotating-container');
+    
+    if (!popupAudio) return;
+    
+    // Get current song (before incrementing)
+    const song = currentPlaylist[currentSongIndex];
+    if (!song) {
+        // Loop back to start
+        currentSongIndex = 0;
+        playNextSongInPlaylist();
+        return;
+    }
+    
+    console.log(`🎵 Playing song ${currentSongIndex + 1}/${currentPlaylist.length}:`, song.name);
+    console.log('🎵 Trim:', song.trimStart || 0, 'to', song.trimEnd || 'end');
+    
+    // Load the song
+    popupAudio.src = song.url;
+    
+    // Wait for metadata, then set trim start
+    popupAudio.addEventListener('loadedmetadata', function onLoaded() {
+        if (song.trimStart && song.trimStart > 0) {
+            popupAudio.currentTime = song.trimStart;
+        }
+        
+        // Auto-play after setting currentTime
+        const playPromise = popupAudio.play().catch(err => {
+            console.error('❌ Autoplay prevented or error:', err);
+            // Try again after user interaction hint
+            if (rotatingContainer) {
+                rotatingContainer.style.cursor = 'pointer';
+                rotatingContainer.onclick = function onClick() {
+                    popupAudio.play().then(() => {
+                        isPlaylistPlaying = true;
+                        rotatingContainer.classList.add('playing');
+                        rotatingContainer.style.cursor = '';
+                        rotatingContainer.removeEventListener('click', onClick);
+                        
+                        // Set up trim check after manual play
+                        setupTrimCheck(song, popupAudio);
+                    });
+                };
             }
+        });
+        
+        if (playPromise) {
+            playPromise.then(() => {
+                isPlaylistPlaying = true;
+                if (rotatingContainer) rotatingContainer.classList.add('playing');
+                console.log('🎵 Music started, rotation should begin');
+                
+                // Set up trim check after playback starts
+                setupTrimCheck(song, popupAudio);
+            });
+        }
+        
+        popupAudio.removeEventListener('loadedmetadata', onLoaded);
+    }, { once: true });
+}
+
+// Helper function to set up trim end checking
+function setupTrimCheck(song, popupAudio) {
+    // Clear any existing handlers
+    popupAudio.onended = null;
+    
+    if (song.trimEnd && song.trimEnd > (song.trimStart || 0)) {
+        // Use timeupdate to check for trim end
+        const trimCheckHandler = () => {
+            if (popupAudio.currentTime >= song.trimEnd) {
+                popupAudio.pause();
+                popupAudio.removeEventListener('timeupdate', trimCheckHandler);
+                // Move to next song
+                currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
+                setTimeout(() => playNextSongInPlaylist(), 50);
+            }
+        };
+        popupAudio.addEventListener('timeupdate', trimCheckHandler);
+    } else {
+        // No trim end, use ended event
+        popupAudio.onended = () => {
+            currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
+            playNextSongInPlaylist();
         };
     }
 }
@@ -3067,7 +3156,6 @@ function closePremiumPFPPopup() {
     const popupModal = document.getElementById('pfp-popup-modal');
     const popupAudio = document.getElementById('pfp-popup-audio');
     const rotatingContainer = document.getElementById('pfp-rotating-container');
-    const musicToggle = document.getElementById('pfp-music-toggle');
     
     // Stop playlist
     isPlaylistPlaying = false;
@@ -3083,15 +3171,13 @@ function closePremiumPFPPopup() {
         popupAudio.pause();
         popupAudio.currentTime = 0;
         popupAudio.onended = null; // Remove listener
+        popupAudio.src = ''; // Clear source
     }
     
     if (rotatingContainer) {
         rotatingContainer.classList.remove('playing');
-    }
-    
-    if (musicToggle) {
-        musicToggle.classList.remove('playing');
-        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+        rotatingContainer.style.cursor = '';
+        rotatingContainer.onclick = null;
     }
 }
 
