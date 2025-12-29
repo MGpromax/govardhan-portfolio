@@ -17,12 +17,31 @@ const firebaseConfig = {
 // Authorized Admin Email
 const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 
-// Cloudinary Configuration
-const CLOUDINARY_CLOUD_NAME = "dldfOuldk"; // Your Cloudinary cloud name
-const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset"; // Upload preset name in Cloudinary
-// IMPORTANT: This preset must exist in your Cloudinary dashboard and be set to "Unsigned" mode
-// To create: Go to https://cloudinary.com/console/settings/upload
-// Click "Add upload preset" > Set name to "unsigned_preset" > Set Signing Mode to "Unsigned" > Save
+// ============================================
+// CLOUDINARY CONFIGURATION - FRESH SETUP
+// ============================================
+// COMPLETE SETUP GUIDE:
+//
+// 1. Go to: https://cloudinary.com/users/register_free
+// 2. Sign up for a FREE account (or login if you have one)
+// 3. After login, you'll see your Dashboard
+// 4. Find your "Cloud name" at the top (e.g., "my-cloud-name")
+// 5. Copy it and paste below in CLOUDINARY_CLOUD_NAME
+//
+// 6. Go to: Settings (gear icon) > Upload tab > Upload Presets section
+// 7. Click: "+ Add upload preset"
+// 8. Fill in ONLY these fields:
+//    - Upload preset name: "govardhan_upload"
+//    - Signing mode: Select "Unsigned" (VERY IMPORTANT!)
+//    - (Leave everything else as default)
+// 9. Click: "Save" button
+// 10. Wait 10 seconds for it to activate
+// 11. Update CLOUDINARY_UPLOAD_PRESET below if you used a different name
+//
+// 12. Save this file and refresh your website!
+
+const CLOUDINARY_CLOUD_NAME = ""; // ⬅️ PASTE YOUR CLOUD NAME HERE (e.g., "abc123xyz")
+const CLOUDINARY_UPLOAD_PRESET = "govardhan_upload"; // ⬅️ MUST match the preset name you created
 
 // Global state
 let isAdmin = false;
@@ -1211,37 +1230,39 @@ function initPFPPopup() {
 }
 
 function openCloudinaryUpload(member, type) {
+    // Check if Cloudinary is loaded
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
-        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
-                return;
-            }
+        showToast('❌ Cloudinary widget not loaded! Refresh the page.');
+        return;
+    }
 
-    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
-        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
-        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
+    // Validate configuration
+    if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease:\n1. Open script.js\n2. Find CLOUDINARY_CLOUD_NAME (around line 35)\n3. Paste your Cloudinary cloud name between the quotes\n4. Save and refresh');
+        showToast('❌ Cloudinary cloud name not set!');
         return;
     }
     
-    // Cloudinary uses 'raw' for audio files, 'video' for videos, 'image' for images
+    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET.trim() === '') {
+        alert('⚠️ Upload Preset Not Configured!\n\nPlease:\n1. Create a preset in Cloudinary dashboard\n2. Update CLOUDINARY_UPLOAD_PRESET in script.js');
+        showToast('❌ Upload preset not set!');
+        return;
+    }
+
+    // Determine resource type
     const resourceType = type === 'music' ? 'raw' : type === 'videos' ? 'video' : 'image';
     
-    // Ensure preset name is a string and not undefined
-    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
+    console.log('Opening upload widget for:', type);
+    console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
+    console.log('Preset:', CLOUDINARY_UPLOAD_PRESET);
+    console.log('Resource type:', resourceType);
     
-    if (!presetName) {
-        showToast('❌ Upload preset not configured!');
-        return;
-    }
-
-    console.log('Creating widget with preset:', presetName);
-    console.log('Resource type for', type, ':', resourceType);
-    
-    // Simplified widget options - only essential parameters
+    // MINIMAL widget options - just the essentials
     const widgetOptions = {
-        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
-        uploadPreset: presetName,
+        cloudName: CLOUDINARY_CLOUD_NAME.trim(),
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET.trim(),
         sources: ['local'],
-        multiple: type !== 'music',
+        multiple: false,
         resourceType: resourceType
     };
     
@@ -1297,35 +1318,31 @@ function openCloudinaryUpload(member, type) {
 }
 
 function openCloudinaryPFPUpload(member) {
+    // Check if Cloudinary is loaded
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
-        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        showToast('❌ Cloudinary widget not loaded! Refresh the page.');
+        return;
+    }
+
+    // Validate configuration
+    if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease set CLOUDINARY_CLOUD_NAME in script.js');
         return;
     }
     
-    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
-        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
-        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
+    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET.trim() === '') {
+        alert('⚠️ Upload Preset Not Configured!\n\nPlease set CLOUDINARY_UPLOAD_PRESET in script.js');
         return;
     }
     
-    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === "ml_default") {
-        showToast('❌ Please configure Cloudinary upload preset in script.js (line 22)');
-        return;
-    }
+    console.log('Opening PFP upload widget');
+    console.log('Cloud name:', CLOUDINARY_CLOUD_NAME);
+    console.log('Preset:', CLOUDINARY_UPLOAD_PRESET);
     
-    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
-    
-    if (!presetName) {
-        showToast('❌ Upload preset not configured!');
-        return;
-    }
-    
-    console.log('Opening Cloudinary PFP upload with preset:', presetName);
-    
-    // Simplified widget options - only essential parameters
+    // MINIMAL widget options for profile pictures
     const widgetOptions = {
-        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
-        uploadPreset: presetName,
+        cloudName: CLOUDINARY_CLOUD_NAME.trim(),
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET.trim(),
         sources: ['local'],
         multiple: false,
         cropping: true,
@@ -1377,35 +1394,29 @@ function openCloudinaryPFPUpload(member) {
 }
 
 function openCloudinaryPhotoUpload(member) {
+    // Check if Cloudinary is loaded
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
-        showToast('❌ Cloudinary widget not loaded! Please check configuration.');
+        showToast('❌ Cloudinary widget not loaded! Refresh the page.');
+        return;
+    }
+
+    // Validate configuration
+    if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
+        alert('⚠️ Cloudinary Not Configured!\n\nPlease set CLOUDINARY_CLOUD_NAME in script.js');
         return;
     }
     
-    if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME" || !CLOUDINARY_CLOUD_NAME) {
-        showToast('❌ Please configure Cloudinary cloud name in script.js (line 21)');
-        alert('⚠️ Cloudinary Not Configured!\n\nPlease set your Cloudinary cloud name in script.js:\n\n1. Go to https://cloudinary.com and sign up/login\n2. Get your cloud name from the dashboard\n3. Update line 21 in script.js:\n   const CLOUDINARY_CLOUD_NAME = "your-cloud-name";');
+    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET.trim() === '') {
+        alert('⚠️ Upload Preset Not Configured!\n\nPlease set CLOUDINARY_UPLOAD_PRESET in script.js');
         return;
     }
     
-    if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === "ml_default") {
-        showToast('❌ Please configure Cloudinary upload preset in script.js (line 22)');
-        return;
-    }
+    console.log('Opening photo upload widget');
     
-    const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
-    
-    if (!presetName) {
-        showToast('❌ Upload preset not configured!');
-        return;
-    }
-    
-    console.log('Opening Cloudinary photo upload with preset:', presetName);
-    
-    // Simplified widget options - only essential parameters
+    // MINIMAL widget options
     const widgetOptions = {
-        cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
-        uploadPreset: presetName,
+        cloudName: CLOUDINARY_CLOUD_NAME.trim(),
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET.trim(),
         sources: ['local'],
         multiple: false
     };
