@@ -2810,6 +2810,7 @@ section {
 
 .admin-user-avatar {
     position: relative;
+    display: none; /* Hide old avatar */
 }
 
 .admin-user-avatar img {
@@ -2818,6 +2819,24 @@ section {
     border-radius: 50%;
     border: 3px solid var(--neon-green);
     object-fit: cover;
+}
+
+/* New Admin Icon Circle */
+.admin-icon-circle {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #ff6b6b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.admin-icon-circle i {
+    font-size: 1.3rem;
+    color: white;
 }
 
 .online-indicator {
