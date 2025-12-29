@@ -1219,29 +1219,31 @@ function openCloudinaryUpload(member, type) {
         return;
     }
     
-    const resourceType = type === 'music' ? 'video' : type === 'videos' ? 'video' : 'image';
+    // Cloudinary uses 'raw' for audio files, 'video' for videos, 'image' for images
+    const resourceType = type === 'music' ? 'raw' : type === 'videos' ? 'video' : 'image';
     
     // Ensure preset name is a string and not undefined
     const presetName = String(CLOUDINARY_UPLOAD_PRESET || '').trim();
     
     if (!presetName) {
         showToast('❌ Upload preset not configured!');
-                return;
-            }
+        return;
+    }
 
     console.log('Creating widget with preset:', presetName);
+    console.log('Resource type for', type, ':', resourceType);
     
     // Create config object with explicit string values
     const widgetOptions = {
         cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
         uploadPreset: presetName,
-        sources: ['local', 'camera'],
+        sources: type === 'music' ? ['local'] : ['local', 'camera'], // No camera for music
         resourceType: resourceType,
         publicIdPrefix: `members/${member}/${type}/`,
         multiple: type !== 'music',
-        maxFileSize: type === 'photos' ? 10000000 : 100000000,
+        maxFileSize: type === 'photos' ? 10000000 : type === 'music' ? 50000000 : 100000000, // 50MB for music
         clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
-                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a'] : 
+                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'] : 
                              ['mp4', 'webm', 'mov', 'avi']
     };
     
@@ -1326,7 +1328,9 @@ function openCloudinaryPFPUpload(member) {
         croppingAspectRatio: 1, // Square/circular for profile pictures
         croppingDefaultSelectionRatio: 1,
         croppingShowDimensions: true,
-        croppingCoordinatesMode: 'custom' // Allows manual positioning
+        croppingCoordinatesMode: 'custom', // Allows manual positioning
+        showAdvancedOptions: false,
+        showCompletedButton: true
     };
     
     console.log('PFP Widget options:', JSON.stringify(widgetOptions, null, 2));
