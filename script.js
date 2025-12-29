@@ -2212,7 +2212,16 @@ function openAudioTrimmer(member) {
     document.body.style.overflow = 'hidden';
 }
 
+let audioTrimmerInitialized = false;
+let keyboardListenerAdded = false;
+
 function initAudioTrimmer() {
+    // Prevent multiple initializations
+    if (audioTrimmerInitialized) {
+        console.log('⚠️ Audio trimmer already initialized, skipping...');
+        return;
+    }
+    
     const fileInput = document.getElementById('music-file-input');
     const trimmerModal = document.getElementById('trimmer-modal');
     const trimmerClose = document.getElementById('trimmer-close');
@@ -2229,6 +2238,7 @@ function initAudioTrimmer() {
     
     if (!fileInput) {
         console.error('❌ music-file-input not found!');
+        setTimeout(initAudioTrimmer, 500);
         return;
     }
     
@@ -2343,38 +2353,56 @@ function initAudioTrimmer() {
         });
     }
     
-    // Play full audio with playhead tracking
+    // Clone buttons to remove old listeners, then add new ones
     if (trimmerPlay) {
-        trimmerPlay.addEventListener('click', () => {
-            if (trimmerAudio.paused) {
-                trimmerAudio.play();
-                trimmerPlay.innerHTML = '<i class="fas fa-pause"></i>';
-                trimmerPlay.classList.add('playing');
-                startPlayheadTracking();
-            } else {
-                trimmerAudio.pause();
-                trimmerPlay.innerHTML = '<i class="fas fa-play"></i>';
-                trimmerPlay.classList.remove('playing');
+        const newPlayBtn = trimmerPlay.cloneNode(true);
+        trimmerPlay.parentNode.replaceChild(newPlayBtn, trimmerPlay);
+        newPlayBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const audio = document.getElementById('trimmer-audio');
+            if (audio && !audio.paused) {
+                audio.pause();
+                newPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+                newPlayBtn.classList.remove('playing');
                 stopPlayheadTracking();
+            } else if (audio) {
+                audio.play().then(() => {
+                    newPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    newPlayBtn.classList.add('playing');
+                    startPlayheadTracking();
+                }).catch(err => {
+                    console.error('Play error:', err);
+                    showToast('❌ Could not play audio');
+                });
             }
         });
     }
     
     // Update playhead when audio time changes
-    if (trimmerAudio) {
-        trimmerAudio.addEventListener('timeupdate', updatePlayhead);
+    const currentTrimmerAudio = document.getElementById('trimmer-audio');
+    if (currentTrimmerAudio) {
+        currentTrimmerAudio.addEventListener('timeupdate', updatePlayhead);
     }
     
     // Preview trimmed section
     if (trimmerPreview) {
-        trimmerPreview.addEventListener('click', () => {
+        const newPreviewBtn = trimmerPreview.cloneNode(true);
+        trimmerPreview.parentNode.replaceChild(newPreviewBtn, trimmerPreview);
+        newPreviewBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             playTrimmedPreview();
         });
     }
     
     // Save trim for current song
     if (saveTrim) {
-        saveTrim.addEventListener('click', () => {
+        const newSaveBtn = saveTrim.cloneNode(true);
+        saveTrim.parentNode.replaceChild(newSaveBtn, saveTrim);
+        newSaveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (currentEditingIndex >= 0 && currentEditingIndex < playlist.length) {
                 playlist[currentEditingIndex].trimStart = trimStartTime;
                 playlist[currentEditingIndex].trimEnd = trimEndTime;
@@ -2397,68 +2425,57 @@ function initAudioTrimmer() {
     // Zoom controls will be initialized when editor opens
     // See initZoomControls() function
     
-    // Keyboard shortcuts for fine-tuning trim positions
-    let activeHandle = null; // 'start' or 'end'
-    
-    document.addEventListener('keydown', (e) => {
-        const isEditorOpen = document.getElementById('song-editor')?.style.display !== 'none';
-        if (!isEditorOpen || !audioBuffer) return;
+    // Keyboard shortcuts for fine-tuning trim positions (only add once)
+    if (!keyboardListenerAdded) {
+        let activeHandle = null; // 'start' or 'end'
         
-        const step = e.shiftKey ? 0.1 : 0.05; // Smaller steps with Shift
-        
-        // Arrow keys to fine-tune
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            e.preventDefault();
+        document.addEventListener('keydown', (e) => {
+            const isEditorOpen = document.getElementById('song-editor')?.style.display !== 'none';
+            if (!isEditorOpen || !audioBuffer) return;
             
-            // If no handle is active, activate based on which is closer
-            if (!activeHandle) {
-                const duration = audioBuffer.duration;
-                const trimmerAudio = document.getElementById('trimmer-audio');
-                const currentTime = trimmerAudio?.currentTime || 0;
-                const distToStart = Math.abs(currentTime - trimStartTime);
-                const distToEnd = Math.abs(currentTime - trimEndTime);
-                activeHandle = distToStart < distToEnd ? 'start' : 'end';
+            const step = e.shiftKey ? 0.1 : 0.05; // Smaller steps with Shift
+            
+            // Arrow keys to fine-tune
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                
+                // If no handle is active, activate based on which is closer
+                if (!activeHandle) {
+                    const duration = audioBuffer.duration;
+                    const trimmerAudio = document.getElementById('trimmer-audio');
+                    const currentTime = trimmerAudio?.currentTime || 0;
+                    const distToStart = Math.abs(currentTime - trimStartTime);
+                    const distToEnd = Math.abs(currentTime - trimEndTime);
+                    activeHandle = distToStart < distToEnd ? 'start' : 'end';
+                }
+                
+                const adjust = e.key === 'ArrowLeft' ? -step : step;
+                
+                if (activeHandle === 'start') {
+                    trimStartTime = Math.max(0, Math.min(trimStartTime + adjust, trimEndTime - 0.1));
+                } else {
+                    trimEndTime = Math.max(trimStartTime + 0.1, Math.min(trimEndTime + adjust, audioBuffer.duration));
+                }
+                
+                updateTrimVisuals();
+                updateTrimDisplay();
             }
             
-            const adjust = e.key === 'ArrowLeft' ? -step : step;
-            
-            if (activeHandle === 'start') {
-                trimStartTime = Math.max(0, Math.min(trimStartTime + adjust, trimEndTime - 0.1));
-            } else {
-                trimEndTime = Math.max(trimStartTime + 0.1, Math.min(trimEndTime + adjust, audioBuffer.duration));
+            // Space to toggle active handle
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                activeHandle = activeHandle === 'start' ? 'end' : 'start';
+                showToast(`🎯 Adjusting ${activeHandle === 'start' ? 'START' : 'END'} (← → arrows)`);
             }
-            
-            updateTrimVisuals();
-            updateTrimDisplay();
-        }
+        });
         
-        // Space to toggle active handle
-        if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-            e.preventDefault();
-            activeHandle = activeHandle === 'start' ? 'end' : 'start';
-            showToast(`🎯 Adjusting ${activeHandle === 'start' ? 'START' : 'END'} (← → arrows)`);
-        }
-    });
-    
-    // Visual feedback for active handle
-    const startHandleEl = document.getElementById('trim-start');
-    const endHandleEl = document.getElementById('trim-end');
-    
-    if (startHandleEl) {
-        startHandleEl.addEventListener('mousedown', () => {
-            activeHandle = 'start';
-            startHandleEl.style.transform = 'scaleX(1.3)';
-            endHandleEl.style.transform = '';
-        });
+        keyboardListenerAdded = true;
+        console.log('⌨️ Keyboard shortcuts initialized');
     }
     
-    if (endHandleEl) {
-        endHandleEl.addEventListener('mousedown', () => {
-            activeHandle = 'end';
-            endHandleEl.style.transform = 'scaleX(1.3)';
-            startHandleEl.style.transform = '';
-        });
-    }
+    // Mark as initialized
+    audioTrimmerInitialized = true;
+    console.log('✅ Audio trimmer initialization complete');
 }
 
 function renderPlaylist() {
@@ -2710,6 +2727,12 @@ function showPlaylistView() {
     // Reset initialization flags for next time editor opens
     trimHandlesInitialized = false;
     zoomControlsInitialized = false;
+    
+    // Cancel any pending animations
+    if (mouseMoveThrottle) {
+        cancelAnimationFrame(mouseMoveThrottle);
+        mouseMoveThrottle = null;
+    }
 }
 
 function removeSong(index) {
@@ -3099,8 +3122,13 @@ function drawWaveform() {
         ctx.fill();
     }
     
-    // Initialize trim handles after drawing waveform
-    initTrimHandles();
+    // Only initialize trim handles if not already initialized (prevents loops)
+    if (!trimHandlesInitialized) {
+        initTrimHandles();
+    } else {
+        // Just update positions if already initialized
+        updateTrimPositionsOnly();
+    }
     
     // Draw time ruler and grid
     drawTimeRuler();
@@ -3338,29 +3366,40 @@ function drawGrid() {
 let isDraggingStart = false;
 let isDraggingEnd = false;
 let trimHandlesInitialized = false;
+let mouseMoveThrottle = null;
+let documentMouseListenersAdded = false;
 
-// Global mouse move handler
+// Throttled mouse move handler to prevent performance issues
 function handleTrimMouseMove(e) {
     if (!isDraggingStart && !isDraggingEnd) return;
     
-    const waveformContainer = document.getElementById('trimmer-waveform');
-    if (!waveformContainer || !audioBuffer) return;
+    // Throttle updates to prevent lag
+    if (mouseMoveThrottle) return;
     
-    const rect = waveformContainer.getBoundingClientRect();
-    const containerWidth = waveformContainer.offsetWidth;
-    const duration = audioBuffer.duration;
-    const x = Math.max(0, Math.min(containerWidth, e.clientX - rect.left));
-    const timePos = (x / containerWidth) * duration;
-    
-    if (isDraggingStart) {
-        trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 0.1)); // Min 0.1 second gap
-        updateTrimVisuals();
+    mouseMoveThrottle = requestAnimationFrame(() => {
+        const waveformContainer = document.getElementById('trimmer-waveform');
+        if (!waveformContainer || !audioBuffer) {
+            mouseMoveThrottle = null;
+            return;
+        }
+        
+        const rect = waveformContainer.getBoundingClientRect();
+        const containerWidth = waveformContainer.offsetWidth;
+        const duration = audioBuffer.duration;
+        const x = Math.max(0, Math.min(containerWidth, e.clientX - rect.left));
+        const timePos = (x / containerWidth) * duration;
+        
+        if (isDraggingStart) {
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 0.1));
+        } else if (isDraggingEnd) {
+            trimEndTime = Math.max(trimStartTime + 0.1, Math.min(timePos, duration));
+        }
+        
+        // Update positions without redrawing (faster)
+        updateTrimPositionsOnly();
         updateTrimDisplay();
-    } else if (isDraggingEnd) {
-        trimEndTime = Math.max(trimStartTime + 0.1, Math.min(timePos, duration)); // Min 0.1 second gap
-        updateTrimVisuals();
-        updateTrimDisplay();
-    }
+        mouseMoveThrottle = null;
+    });
 }
 
 function handleTrimMouseUp() {
@@ -3368,7 +3407,49 @@ function handleTrimMouseUp() {
         isDraggingStart = false;
         isDraggingEnd = false;
         document.body.style.cursor = '';
+        mouseMoveThrottle = null;
+        
+        // Final redraw after dragging stops
+        requestAnimationFrame(() => {
+            drawWaveform();
+            drawTimeRuler();
+            drawGrid();
+        });
+        
         console.log('🎵 Trim updated:', trimStartTime.toFixed(2), 'to', trimEndTime.toFixed(2));
+    }
+}
+
+// Fast update that only changes positions, no redraw
+function updateTrimPositionsOnly() {
+    const startHandle = document.getElementById('trim-start');
+    const endHandle = document.getElementById('trim-end');
+    const selection = document.getElementById('trim-selection');
+    const startLabel = document.getElementById('trim-start-label');
+    const endLabel = document.getElementById('trim-end-label');
+    const selectionDuration = document.getElementById('selection-duration');
+    
+    if (!startHandle || !endHandle || !selection || !audioBuffer) return;
+    
+    const duration = audioBuffer.duration;
+    const startPercent = (trimStartTime / duration) * 100;
+    const endPercent = (trimEndTime / duration) * 100;
+    
+    startHandle.style.left = startPercent + '%';
+    endHandle.style.left = endPercent + '%';
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
+    
+    if (startLabel) {
+        const labelTime = startLabel.querySelector('.label-time');
+        if (labelTime) labelTime.textContent = formatTime(trimStartTime, true);
+    }
+    if (endLabel) {
+        const labelTime = endLabel.querySelector('.label-time');
+        if (labelTime) labelTime.textContent = formatTime(trimEndTime, true);
+    }
+    if (selectionDuration) {
+        selectionDuration.textContent = formatTime(trimEndTime - trimStartTime);
     }
 }
 
@@ -3393,8 +3474,8 @@ function initTrimHandles() {
     
     console.log('🎵 Initializing trim handles, duration:', duration);
     
-    // Update visual positions
-    updateTrimVisuals();
+    // Update visual positions (this will redraw once)
+    updateTrimPositionsOnly();
     
     // Remove existing listeners if any, then add new ones
     const startDragHandler = function(e) {
@@ -3423,9 +3504,13 @@ function initTrimHandles() {
     newStartHandle.addEventListener('mousedown', startDragHandler);
     newEndHandle.addEventListener('mousedown', endDragHandler);
     
-    // Document-level mouse handlers (only add once)
-    document.addEventListener('mousemove', handleTrimMouseMove);
-    document.addEventListener('mouseup', handleTrimMouseUp);
+    // Document-level mouse handlers (only add once globally)
+    if (!documentMouseListenersAdded) {
+        document.addEventListener('mousemove', handleTrimMouseMove, { passive: true });
+        document.addEventListener('mouseup', handleTrimMouseUp);
+        documentMouseListenersAdded = true;
+        console.log('📌 Document mouse listeners added');
+    }
     
     // Touch support for mobile
     newStartHandle.addEventListener('touchstart', function(e) {
@@ -3530,10 +3615,15 @@ function updateTrimVisuals() {
         selectionDuration.textContent = formatTime(trimEndTime - trimStartTime);
     }
     
-    // Redraw everything to show updated trim region
-    drawWaveform();
-    drawTimeRuler();
-    drawGrid();
+    // Only redraw if not currently dragging (to prevent infinite loop)
+    if (!isDraggingStart && !isDraggingEnd) {
+        // Use requestAnimationFrame to batch updates
+        requestAnimationFrame(() => {
+            drawWaveform();
+            drawTimeRuler();
+            drawGrid();
+        });
+    }
 }
 
 // Playhead tracking
