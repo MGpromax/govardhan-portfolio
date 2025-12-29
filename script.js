@@ -2596,6 +2596,14 @@ async function mergeSelectedSongs() {
             tempAudio.onloadedmetadata = resolve;
         });
         
+        // Calculate total trimmed duration
+        let totalTrimmedDuration = 0;
+        songsToMerge.forEach(song => {
+            const trimStart = song.trimStart || 0;
+            const trimEnd = song.trimEnd || song.duration;
+            totalTrimmedDuration += (trimEnd - trimStart);
+        });
+        
         playlist.splice(firstIndex, 0, {
             file: mergedAudio,
             name: mergedName,
@@ -2603,7 +2611,7 @@ async function mergeSelectedSongs() {
             duration: tempAudio.duration,
             trimStart: 0,
             trimEnd: tempAudio.duration,
-            trimmed: false,
+            trimmed: false, // Not trimmed anymore since we merged the trimmed portions
             merged: true
         });
         
@@ -2615,47 +2623,106 @@ async function mergeSelectedSongs() {
     }
 }
 
-// Merge multiple audio files into one
+// Merge multiple audio files into one, applying trim settings
 async function mergeAudioFiles(songs) {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const buffers = [];
+    const trimmedBuffers = [];
     
-    // Load all audio files
+    console.log('🔀 Merging songs with trim applied:', songs.map(s => ({
+        name: s.name,
+        trimStart: s.trimStart || 0,
+        trimEnd: s.trimEnd || s.duration
+    })));
+    
+    // Load all audio files and extract trimmed portions
     for (const song of songs) {
         try {
             const response = await fetch(song.url);
             const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            buffers.push(audioBuffer);
+            const fullAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Get trim settings (default to full audio if not set)
+            const trimStart = song.trimStart || 0;
+            const trimEnd = song.trimEnd || fullAudioBuffer.duration;
+            const trimDuration = trimEnd - trimStart;
+            
+            console.log(`✂️ Trimming ${song.name}: ${trimStart.toFixed(2)}s to ${trimEnd.toFixed(2)}s (${trimDuration.toFixed(2)}s)`);
+            
+            // Calculate sample positions
+            const sampleRate = fullAudioBuffer.sampleRate;
+            const startSample = Math.floor(trimStart * sampleRate);
+            const endSample = Math.floor(trimEnd * sampleRate);
+            const trimmedLength = endSample - startSample;
+            
+            // Create buffer for trimmed portion
+            const numberOfChannels = fullAudioBuffer.numberOfChannels;
+            const trimmedBuffer = audioContext.createBuffer(
+                numberOfChannels,
+                trimmedLength,
+                sampleRate
+            );
+            
+            // Copy only the trimmed portion
+            for (let channel = 0; channel < numberOfChannels; channel++) {
+                const sourceData = fullAudioBuffer.getChannelData(channel);
+                const trimmedData = trimmedBuffer.getChannelData(channel);
+                
+                // Copy from startSample to endSample
+                for (let i = 0; i < trimmedLength; i++) {
+                    const sourceIndex = startSample + i;
+                    if (sourceIndex < sourceData.length) {
+                        trimmedData[i] = sourceData[sourceIndex];
+                    }
+                }
+            }
+            
+            trimmedBuffers.push(trimmedBuffer);
+            console.log(`✅ Extracted ${trimmedLength} samples (${trimDuration.toFixed(2)}s) from ${song.name}`);
         } catch (err) {
-            console.error('Error loading audio:', err);
-            throw new Error(`Failed to load ${song.name}`);
+            console.error('Error loading/trimming audio:', err);
+            throw new Error(`Failed to process ${song.name}: ${err.message}`);
         }
+    }
+    
+    if (trimmedBuffers.length === 0) {
+        throw new Error('No audio buffers to merge');
     }
     
     // Get sample rate and channels (use first buffer's properties)
-    const sampleRate = buffers[0].sampleRate;
-    const numberOfChannels = buffers[0].numberOfChannels;
+    const sampleRate = trimmedBuffers[0].sampleRate;
+    const numberOfChannels = trimmedBuffers[0].numberOfChannels;
     
-    // Calculate total length
+    // Calculate total length of merged audio
     let totalLength = 0;
-    buffers.forEach(buffer => {
+    trimmedBuffers.forEach(buffer => {
         totalLength += buffer.length;
     });
     
-    // Create new buffer
+    console.log(`🔀 Creating merged buffer: ${totalLength} samples (${(totalLength / sampleRate).toFixed(2)}s)`);
+    
+    // Create new buffer for merged audio
     const mergedBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
     
-    // Copy data from all buffers
+    // Copy trimmed data from all buffers sequentially
     let offset = 0;
-    for (const buffer of buffers) {
+    for (let i = 0; i < trimmedBuffers.length; i++) {
+        const trimmedBuffer = trimmedBuffers[i];
+        
         for (let channel = 0; channel < numberOfChannels; channel++) {
-            const channelData = mergedBuffer.getChannelData(channel);
-            const sourceData = buffer.getChannelData(channel);
-            channelData.set(sourceData, offset);
+            const mergedChannelData = mergedBuffer.getChannelData(channel);
+            const sourceChannelData = trimmedBuffer.getChannelData(channel);
+            
+            // Copy the trimmed portion
+            for (let j = 0; j < trimmedBuffer.length; j++) {
+                mergedChannelData[offset + j] = sourceChannelData[j];
+            }
         }
-        offset += buffer.length;
+        
+        offset += trimmedBuffer.length;
+        console.log(`✅ Merged song ${i + 1}/${trimmedBuffers.length} (offset: ${offset})`);
     }
+    
+    console.log('🎉 Merge complete! Total duration:', (totalLength / sampleRate).toFixed(2), 'seconds');
     
     // Convert to WAV blob
     return audioBufferToWav(mergedBuffer);
