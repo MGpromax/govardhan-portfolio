@@ -19,7 +19,10 @@ const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 
 // Cloudinary Configuration
 const CLOUDINARY_CLOUD_NAME = "dldfOuldk"; // Your Cloudinary cloud name
-const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset"; // Create a new unsigned preset with this name in Cloudinary dashboard
+const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset"; // Upload preset name in Cloudinary
+// IMPORTANT: This preset must exist in your Cloudinary dashboard and be set to "Unsigned" mode
+// To create: Go to https://cloudinary.com/console/settings/upload
+// Click "Add upload preset" > Set name to "unsigned_preset" > Set Signing Mode to "Unsigned" > Save
 
 // Global state
 let isAdmin = false;
@@ -1256,18 +1259,23 @@ function openCloudinaryUpload(member, type) {
                 if (error) {
                     console.error('Cloudinary upload error:', error);
                     let errorMsg = '❌ Upload failed!';
-                    if (error.status === 401) {
-                        errorMsg = '❌ Unauthorized! Check your Cloudinary cloud name and upload preset.';
+                    if (error.status === 401 || error.status === 'Unknown API key ') {
+                        errorMsg = '❌ Upload preset not found or unauthorized!\n\nPlease check:\n1. Go to Cloudinary Dashboard > Settings > Upload\n2. Create an "unsigned_preset" or update the preset name in script.js\n3. Make sure it\'s set to "Unsigned" mode';
+                        alert(errorMsg);
+                        showToast('❌ Upload preset error - check console');
                     } else if (error.status === 400) {
                         errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
+                        showToast(errorMsg);
                     } else if (error.message) {
                         errorMsg = '❌ ' + error.message;
+                        showToast(errorMsg);
+                    } else {
+                        showToast(errorMsg);
                     }
-                    showToast(errorMsg);
                     return;
                 }
 
-                if (result.event === 'success') {
+                if (result && result.event === 'success') {
                     const url = result.info.secure_url;
                     const publicId = result.info.public_id;
                     
@@ -1278,6 +1286,10 @@ function openCloudinaryUpload(member, type) {
                         // Multiple photos/videos for gallery
                         saveMediaToFirebaseGallery(member, type, url, publicId);
                     }
+                } else if (result && result.event === 'close') {
+                    console.log('Upload widget closed');
+                } else if (result && result.event) {
+                    console.log('Upload widget event:', result.event);
                 }
             });
             
@@ -1341,17 +1353,31 @@ function openCloudinaryPFPUpload(member) {
             const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
                 if (error) {
                     console.error('Cloudinary upload error:', error);
-                    showToast('❌ Upload error: ' + error.message);
+                    let errorMsg = '❌ Upload failed!';
+                    if (error.status === 401 || error.status === 'Unknown API key ') {
+                        errorMsg = '❌ Upload preset not found or unauthorized!\n\nPlease check:\n1. Go to Cloudinary Dashboard > Settings > Upload\n2. Create an "unsigned_preset" or update the preset name in script.js\n3. Make sure it\'s set to "Unsigned" mode';
+                        alert(errorMsg);
+                        showToast('❌ Upload preset error - check console');
+                    } else if (error.message) {
+                        errorMsg = '❌ ' + error.message;
+                        showToast(errorMsg);
+                    } else {
+                        showToast(errorMsg);
+                    }
                     return;
                 }
                 
-                if (result.event === 'success') {
+                if (result && result.event === 'success') {
                     // Get the cropped circular image URL
                     const url = result.info.secure_url;
                     // Apply circular transformation using Cloudinary
                     const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
                     const publicId = result.info.public_id;
                     savePFPToFirebase(member, circularUrl, publicId);
+                } else if (result && result.event === 'close') {
+                    console.log('Upload widget closed');
+                } else if (result && result.event) {
+                    console.log('Upload widget event:', result.event);
                 }
             });
             
