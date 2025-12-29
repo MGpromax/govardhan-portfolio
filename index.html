@@ -15,7 +15,7 @@
     <title>ಗಾಂಡು ಚೂತಿಯಗಳು | The Legend Gang</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=4.0">
+    <link rel="stylesheet" href="styles.css?v=5.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Cropper.js for premium image cropping -->
@@ -867,52 +867,96 @@
         </div>
     </div>
     
-    <!-- Premium Audio Trimmer Modal -->
+    <!-- Premium Audio Playlist Manager Modal -->
     <div class="trimmer-modal" id="trimmer-modal">
-        <div class="trimmer-modal-content">
+        <div class="trimmer-modal-content playlist-modal">
             <div class="trimmer-header">
-                <h3><i class="fas fa-cut"></i> Trim Audio</h3>
+                <h3><i class="fas fa-music"></i> Music Playlist Manager</h3>
                 <button class="trimmer-close" id="trimmer-close">&times;</button>
             </div>
             
             <div class="trimmer-body">
-                <!-- Audio Waveform -->
-                <div class="trimmer-waveform" id="trimmer-waveform">
-                    <canvas id="waveform-canvas"></canvas>
-                    <div class="trim-handles">
-                        <div class="trim-handle trim-start" id="trim-start"></div>
-                        <div class="trim-selection" id="trim-selection"></div>
-                        <div class="trim-handle trim-end" id="trim-end"></div>
+                <!-- Playlist Section -->
+                <div class="playlist-section">
+                    <div class="playlist-header">
+                        <h4><i class="fas fa-list-ul"></i> Playlist <span id="playlist-count">(0 songs)</span></h4>
+                        <button class="add-song-btn" id="add-song-btn">
+                            <i class="fas fa-plus"></i> Add Song
+                        </button>
                     </div>
-                    <div class="trim-playhead" id="trim-playhead"></div>
+                    
+                    <!-- Playlist Items -->
+                    <div class="playlist-items" id="playlist-items">
+                        <div class="playlist-empty" id="playlist-empty">
+                            <i class="fas fa-music"></i>
+                            <p>No songs added yet</p>
+                            <p class="hint">Click "Add Song" to start building your playlist</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Playlist Info -->
+                    <div class="playlist-info" id="playlist-info" style="display: none;">
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Total Duration: <strong id="total-duration">0:00</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-infinity"></i>
+                            <span>Songs play seamlessly in loop</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Time Display -->
-                <div class="trimmer-time">
-                    <span id="trim-start-time">0:00</span>
-                    <span class="trim-duration" id="trim-duration">Duration: 0:00</span>
-                    <span id="trim-end-time">0:00</span>
+                <!-- Current Song Editor -->
+                <div class="song-editor" id="song-editor" style="display: none;">
+                    <div class="editor-header">
+                        <h4><i class="fas fa-cut"></i> Trim: <span id="current-song-name">Song</span></h4>
+                        <button class="editor-back" id="editor-back">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
+                    
+                    <!-- Audio Waveform -->
+                    <div class="trimmer-waveform" id="trimmer-waveform">
+                        <canvas id="waveform-canvas"></canvas>
+                        <div class="trim-handles">
+                            <div class="trim-handle trim-start" id="trim-start"></div>
+                            <div class="trim-selection" id="trim-selection"></div>
+                            <div class="trim-handle trim-end" id="trim-end"></div>
+                        </div>
+                        <div class="trim-playhead" id="trim-playhead"></div>
+                    </div>
+                    
+                    <!-- Time Display -->
+                    <div class="trimmer-time">
+                        <span id="trim-start-time">0:00</span>
+                        <span class="trim-duration" id="trim-duration">Duration: 0:00</span>
+                        <span id="trim-end-time">0:00</span>
+                    </div>
+                    
+                    <!-- Audio Controls -->
+                    <div class="trimmer-controls">
+                        <button class="trimmer-btn" id="trimmer-play">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="trimmer-btn" id="trimmer-preview" title="Preview Selection">
+                            <i class="fas fa-headphones"></i> Preview Trim
+                        </button>
+                        <button class="trimmer-btn save-trim-btn" id="save-trim">
+                            <i class="fas fa-check"></i> Save Trim
+                        </button>
+                    </div>
+                    
+                    <audio id="trimmer-audio" style="display: none;"></audio>
                 </div>
-                
-                <!-- Audio Controls -->
-                <div class="trimmer-controls">
-                    <button class="trimmer-btn" id="trimmer-play">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="trimmer-btn" id="trimmer-preview" title="Preview Selection">
-                        <i class="fas fa-headphones"></i> Preview
-                    </button>
-                </div>
-                
-                <audio id="trimmer-audio" style="display: none;"></audio>
             </div>
             
             <div class="trimmer-actions">
                 <button class="trimmer-cancel" id="trimmer-cancel">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button class="trimmer-confirm" id="trimmer-confirm">
-                    <i class="fas fa-check"></i> Apply & Upload
+                <button class="trimmer-confirm" id="trimmer-confirm" disabled>
+                    <i class="fas fa-cloud-upload-alt"></i> Upload Playlist
                 </button>
             </div>
             
@@ -1042,6 +1086,6 @@
         <i class="fas fa-cog"></i>
     </button>
 
-    <script src="script.js?v=4.0"></script>
+    <script src="script.js?v=5.0"></script>
 </body>
 </html>

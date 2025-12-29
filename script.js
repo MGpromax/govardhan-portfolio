@@ -2180,7 +2180,7 @@ function uploadBlobToCloudinary(blob, member, type) {
 }
 
 /* ============================================
-   PREMIUM AUDIO TRIMMER
+   PREMIUM PLAYLIST MANAGER
    ============================================ */
 let audioContext = null;
 let audioBuffer = null;
@@ -2190,10 +2190,26 @@ let currentTrimmerMember = null;
 let isPlayingPreview = false;
 let audioSource = null;
 
+// Playlist state
+let playlist = [];
+let currentEditingIndex = -1;
+
 function openAudioTrimmer(member) {
     currentTrimmerMember = member;
-    const fileInput = document.getElementById('music-file-input');
-    fileInput.click();
+    playlist = []; // Reset playlist
+    currentEditingIndex = -1;
+    
+    const trimmerModal = document.getElementById('trimmer-modal');
+    const playlistSection = document.querySelector('.playlist-section');
+    const songEditor = document.getElementById('song-editor');
+    
+    // Reset UI
+    renderPlaylist();
+    if (playlistSection) playlistSection.style.display = 'block';
+    if (songEditor) songEditor.style.display = 'none';
+    
+    trimmerModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
 }
 
 function initAudioTrimmer() {
@@ -2205,10 +2221,20 @@ function initAudioTrimmer() {
     const trimmerPlay = document.getElementById('trimmer-play');
     const trimmerPreview = document.getElementById('trimmer-preview');
     const trimmerAudio = document.getElementById('trimmer-audio');
+    const addSongBtn = document.getElementById('add-song-btn');
+    const editorBack = document.getElementById('editor-back');
+    const saveTrim = document.getElementById('save-trim');
     
     if (!fileInput) return;
     
-    // File selection
+    // Add Song button
+    if (addSongBtn) {
+        addSongBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+    }
+    
+    // File selection - add to playlist
     fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -2216,35 +2242,42 @@ function initAudioTrimmer() {
         // Validate file
         if (!file.type.startsWith('audio/')) {
             showToast('❌ Please select an audio file!');
+            fileInput.value = '';
             return;
         }
         
         if (file.size > 50 * 1024 * 1024) {
             showToast('❌ Audio must be less than 50MB!');
+            fileInput.value = '';
             return;
         }
         
-        trimmerModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        
-        // Load audio for preview
-        const audioUrl = URL.createObjectURL(file);
-        trimmerAudio.src = audioUrl;
-        
-        // Initialize AudioContext for waveform
+        // Add to playlist
         try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const arrayBuffer = await file.arrayBuffer();
-            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            const audioUrl = URL.createObjectURL(file);
+            const tempAudio = new Audio(audioUrl);
             
-            trimStartTime = 0;
-            trimEndTime = Math.min(audioBuffer.duration, 30); // Max 30 seconds
-            
-            drawWaveform();
-            updateTrimDisplay();
+            tempAudio.addEventListener('loadedmetadata', () => {
+                const duration = tempAudio.duration;
+                
+                playlist.push({
+                    file: file,
+                    name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+                    url: audioUrl,
+                    duration: duration,
+                    trimStart: 0,
+                    trimEnd: Math.min(duration, 60), // Max 60 seconds per song
+                    trimmed: false
+                });
+                
+                renderPlaylist();
+                showToast(`✅ Added: ${file.name}`);
+                fileInput.value = '';
+            });
         } catch (err) {
             console.error('Audio processing error:', err);
             showToast('❌ Could not process audio!');
+            fileInput.value = '';
         }
     });
     
@@ -2253,8 +2286,10 @@ function initAudioTrimmer() {
         trimmerModal.classList.remove('show');
         document.body.style.overflow = '';
         stopAudioPreview();
+        if (trimmerAudio) trimmerAudio.pause();
         fileInput.value = '';
-        audioBuffer = null;
+        playlist = [];
+        currentEditingIndex = -1;
     };
     
     if (trimmerClose) trimmerClose.addEventListener('click', closeTrimmer);
@@ -2264,6 +2299,13 @@ function initAudioTrimmer() {
     trimmerModal.addEventListener('click', (e) => {
         if (e.target === trimmerModal) closeTrimmer();
     });
+    
+    // Back to playlist view
+    if (editorBack) {
+        editorBack.addEventListener('click', () => {
+            showPlaylistView();
+        });
+    }
     
     // Play full audio
     if (trimmerPlay) {
@@ -2287,21 +2329,239 @@ function initAudioTrimmer() {
         });
     }
     
-    // Confirm and upload
+    // Save trim for current song
+    if (saveTrim) {
+        saveTrim.addEventListener('click', () => {
+            if (currentEditingIndex >= 0 && currentEditingIndex < playlist.length) {
+                playlist[currentEditingIndex].trimStart = trimStartTime;
+                playlist[currentEditingIndex].trimEnd = trimEndTime;
+                playlist[currentEditingIndex].trimmed = true;
+                showToast('✅ Trim saved!');
+                showPlaylistView();
+            }
+        });
+    }
+    
+    // Upload playlist
     if (trimmerConfirm) {
         trimmerConfirm.addEventListener('click', () => {
-            if (!currentTrimmerMember) return;
-            
-            // For now, upload full audio (trimming requires server-side processing)
-            const fileInput = document.getElementById('music-file-input');
-            const file = fileInput.files[0];
-            
-            if (file) {
-                uploadAudioToCloudinary(file, currentTrimmerMember);
-            }
+            if (!currentTrimmerMember || playlist.length === 0) return;
+            uploadPlaylist();
             closeTrimmer();
         });
     }
+}
+
+function renderPlaylist() {
+    const itemsContainer = document.getElementById('playlist-items');
+    const emptyEl = document.getElementById('playlist-empty');
+    const infoEl = document.getElementById('playlist-info');
+    const countEl = document.getElementById('playlist-count');
+    const confirmBtn = document.getElementById('trimmer-confirm');
+    const totalDurationEl = document.getElementById('total-duration');
+    
+    if (!itemsContainer) return;
+    
+    // Update count
+    if (countEl) countEl.textContent = `(${playlist.length} song${playlist.length !== 1 ? 's' : ''})`;
+    
+    // Show/hide elements
+    if (playlist.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        if (infoEl) infoEl.style.display = 'none';
+        if (confirmBtn) confirmBtn.disabled = true;
+        itemsContainer.innerHTML = '';
+        itemsContainer.appendChild(emptyEl);
+        return;
+    }
+    
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (infoEl) infoEl.style.display = 'flex';
+    if (confirmBtn) confirmBtn.disabled = false;
+    
+    // Calculate total duration
+    let totalDuration = 0;
+    playlist.forEach(song => {
+        totalDuration += (song.trimEnd - song.trimStart);
+    });
+    if (totalDurationEl) totalDurationEl.textContent = formatTime(totalDuration);
+    
+    // Render items
+    itemsContainer.innerHTML = playlist.map((song, index) => `
+        <div class="playlist-item" data-index="${index}">
+            <div class="song-number">${index + 1}</div>
+            <div class="song-info">
+                <div class="song-name">${song.name}</div>
+                <div class="song-duration">
+                    <i class="fas fa-clock"></i>
+                    ${formatTime(song.trimEnd - song.trimStart)}
+                    ${song.trimmed ? '<span class="trimmed">(trimmed)</span>' : ''}
+                </div>
+            </div>
+            <div class="song-actions">
+                <button class="song-action-btn edit" onclick="editSong(${index})" title="Edit/Trim">
+                    <i class="fas fa-cut"></i>
+                </button>
+                <button class="song-action-btn delete" onclick="removeSong(${index})" title="Remove">
+                    <i class="fas fa-trash"></i>
+                </button>
+                ${index > 0 ? `<button class="song-action-btn move" onclick="moveSong(${index}, -1)" title="Move Up">
+                    <i class="fas fa-arrow-up"></i>
+                </button>` : ''}
+                ${index < playlist.length - 1 ? `<button class="song-action-btn move" onclick="moveSong(${index}, 1)" title="Move Down">
+                    <i class="fas fa-arrow-down"></i>
+                </button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function editSong(index) {
+    if (index < 0 || index >= playlist.length) return;
+    
+    currentEditingIndex = index;
+    const song = playlist[index];
+    
+    // Show editor
+    const playlistSection = document.querySelector('.playlist-section');
+    const songEditor = document.getElementById('song-editor');
+    const songNameEl = document.getElementById('current-song-name');
+    const trimmerAudio = document.getElementById('trimmer-audio');
+    
+    if (playlistSection) playlistSection.style.display = 'none';
+    if (songEditor) songEditor.style.display = 'block';
+    if (songNameEl) songNameEl.textContent = song.name;
+    if (trimmerAudio) trimmerAudio.src = song.url;
+    
+    // Load waveform
+    loadSongWaveform(song);
+}
+
+async function loadSongWaveform(song) {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch(song.url);
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        trimStartTime = song.trimStart;
+        trimEndTime = song.trimEnd;
+        
+        drawWaveform();
+        updateTrimDisplay();
+    } catch (err) {
+        console.error('Waveform error:', err);
+    }
+}
+
+function showPlaylistView() {
+    const playlistSection = document.querySelector('.playlist-section');
+    const songEditor = document.getElementById('song-editor');
+    const trimmerAudio = document.getElementById('trimmer-audio');
+    
+    if (playlistSection) playlistSection.style.display = 'block';
+    if (songEditor) songEditor.style.display = 'none';
+    if (trimmerAudio) trimmerAudio.pause();
+    
+    stopAudioPreview();
+    renderPlaylist();
+    currentEditingIndex = -1;
+}
+
+function removeSong(index) {
+    if (index < 0 || index >= playlist.length) return;
+    
+    const song = playlist[index];
+    URL.revokeObjectURL(song.url); // Clean up
+    playlist.splice(index, 1);
+    renderPlaylist();
+    showToast('🗑️ Song removed');
+}
+
+function moveSong(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= playlist.length) return;
+    
+    // Swap
+    [playlist[index], playlist[newIndex]] = [playlist[newIndex], playlist[index]];
+    renderPlaylist();
+}
+
+async function uploadPlaylist() {
+    if (playlist.length === 0 || !currentTrimmerMember) return;
+    
+    showToast('⏳ Uploading playlist...');
+    
+    const uploadedSongs = [];
+    
+    for (let i = 0; i < playlist.length; i++) {
+        const song = playlist[i];
+        showToast(`⏳ Uploading song ${i + 1}/${playlist.length}...`);
+        
+        try {
+            const uploadedUrl = await uploadSingleAudio(song.file, currentTrimmerMember, i);
+            if (uploadedUrl) {
+                uploadedSongs.push({
+                    url: uploadedUrl,
+                    name: song.name,
+                    duration: song.trimEnd - song.trimStart,
+                    trimStart: song.trimStart,
+                    trimEnd: song.trimEnd,
+                    order: i
+                });
+            }
+        } catch (err) {
+            console.error('Upload error for song', i, err);
+        }
+    }
+    
+    if (uploadedSongs.length > 0) {
+        savePlaylistToFirebase(currentTrimmerMember, uploadedSongs);
+        showToast(`✅ Uploaded ${uploadedSongs.length} song(s)!`);
+    } else {
+        showToast('❌ Upload failed!');
+    }
+}
+
+function uploadSingleAudio(file, member, index) {
+    return new Promise((resolve, reject) => {
+        if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+            reject('Cloudinary not configured');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('folder', `members/${member}/music`);
+        formData.append('resource_type', 'auto');
+        
+        fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.secure_url) {
+                resolve(data.secure_url);
+            } else {
+                reject('No URL in response');
+            }
+        })
+        .catch(reject);
+    });
+}
+
+function savePlaylistToFirebase(member, songs) {
+    const db = firebase.database();
+    db.ref(`members/${member}/music`).set({
+        playlist: songs,
+        updatedAt: Date.now()
+    }).then(() => {
+        console.log('Playlist saved to Firebase');
+    }).catch(err => {
+        console.error('Firebase save error:', err);
+    });
 }
 
 function drawWaveform() {
@@ -2497,6 +2757,11 @@ function initPremiumPFPPopup() {
     }
 }
 
+// Playlist player state
+let currentPlaylist = [];
+let currentSongIndex = 0;
+let isPlaylistPlaying = false;
+
 function openPremiumPFPPopup(member, memberName) {
     const popupModal = document.getElementById('pfp-popup-modal');
     const popupImage = document.getElementById('pfp-popup-image');
@@ -2510,6 +2775,9 @@ function openPremiumPFPPopup(member, memberName) {
     if (!popupModal || !popupImage) return;
     
     // Reset state
+    currentPlaylist = [];
+    currentSongIndex = 0;
+    isPlaylistPlaying = false;
     rotatingContainer.classList.remove('playing');
     if (musicToggle) {
         musicToggle.classList.remove('playing');
@@ -2529,13 +2797,35 @@ function openPremiumPFPPopup(member, memberName) {
             popupModal.classList.add('show');
             document.body.style.overflow = 'hidden';
             
-            // Load music
+            // Load music (supports both single song and playlist)
             db.ref(`members/${member}/music`).once('value', (musicSnapshot) => {
                 const musicData = musicSnapshot.val();
-                if (musicData && musicData.url) {
-                    popupAudio.src = musicData.url;
-                    musicControl.style.display = 'block';
-                    if (noMusicEl) noMusicEl.style.display = 'none';
+                
+                if (musicData) {
+                    // Check if it's a playlist or single song
+                    if (musicData.playlist && Array.isArray(musicData.playlist)) {
+                        // Playlist format
+                        currentPlaylist = musicData.playlist.sort((a, b) => a.order - b.order);
+                        if (currentPlaylist.length > 0) {
+                            popupAudio.src = currentPlaylist[0].url;
+                            musicControl.style.display = 'block';
+                            if (noMusicEl) noMusicEl.style.display = 'none';
+                            
+                            // Update button text to show playlist
+                            if (musicToggle) {
+                                musicToggle.innerHTML = `<i class="fas fa-play"></i><span>Play (${currentPlaylist.length} songs)</span>`;
+                            }
+                        }
+                    } else if (musicData.url) {
+                        // Single song format (backwards compatible)
+                        currentPlaylist = [{ url: musicData.url, name: 'Song' }];
+                        popupAudio.src = musicData.url;
+                        musicControl.style.display = 'block';
+                        if (noMusicEl) noMusicEl.style.display = 'none';
+                    } else {
+                        musicControl.style.display = 'none';
+                        if (noMusicEl) noMusicEl.style.display = 'block';
+                    }
                 } else {
                     musicControl.style.display = 'none';
                     if (noMusicEl) noMusicEl.style.display = 'block';
@@ -2545,6 +2835,18 @@ function openPremiumPFPPopup(member, memberName) {
             showToast('No profile picture found');
         }
     });
+    
+    // Setup playlist autoplay
+    if (popupAudio) {
+        popupAudio.onended = () => {
+            if (isPlaylistPlaying && currentPlaylist.length > 0) {
+                // Move to next song (seamless loop)
+                currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
+                popupAudio.src = currentPlaylist[currentSongIndex].url;
+                popupAudio.play().catch(err => console.log('Autoplay error:', err));
+            }
+        };
+    }
 }
 
 function togglePFPMusic() {
@@ -2556,18 +2858,31 @@ function togglePFPMusic() {
     
     if (popupAudio.paused) {
         popupAudio.play().then(() => {
+            isPlaylistPlaying = true;
             rotatingContainer.classList.add('playing');
             musicToggle.classList.add('playing');
-            musicToggle.innerHTML = '<i class="fas fa-pause"></i><span>Pause Music</span>';
+            
+            // Show current song info if playlist
+            if (currentPlaylist.length > 1) {
+                musicToggle.innerHTML = `<i class="fas fa-pause"></i><span>Playing ${currentSongIndex + 1}/${currentPlaylist.length}</span>`;
+            } else {
+                musicToggle.innerHTML = '<i class="fas fa-pause"></i><span>Pause Music</span>';
+            }
         }).catch(err => {
             console.log('Playback error:', err);
             showToast('❌ Could not play audio');
         });
     } else {
         popupAudio.pause();
+        isPlaylistPlaying = false;
         rotatingContainer.classList.remove('playing');
         musicToggle.classList.remove('playing');
-        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+        
+        if (currentPlaylist.length > 1) {
+            musicToggle.innerHTML = `<i class="fas fa-play"></i><span>Play (${currentPlaylist.length} songs)</span>`;
+        } else {
+            musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+        }
     }
 }
 
@@ -2577,6 +2892,11 @@ function closePremiumPFPPopup() {
     const rotatingContainer = document.getElementById('pfp-rotating-container');
     const musicToggle = document.getElementById('pfp-music-toggle');
     
+    // Stop playlist
+    isPlaylistPlaying = false;
+    currentPlaylist = [];
+    currentSongIndex = 0;
+    
     if (popupModal) {
         popupModal.classList.remove('show');
         document.body.style.overflow = '';
@@ -2585,6 +2905,7 @@ function closePremiumPFPPopup() {
     if (popupAudio) {
         popupAudio.pause();
         popupAudio.currentTime = 0;
+        popupAudio.onended = null; // Remove listener
     }
     
     if (rotatingContainer) {
