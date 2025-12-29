@@ -100,13 +100,13 @@ function initMobileMenu() {
    ============================================ */
 function initTypewriter() {
     try {
-    const typedText = document.getElementById('typed-text');
+        const typedText = document.getElementById('typed-text');
         if (!typedText) {
             console.error('Typewriter element not found');
             return;
         }
 
-    const phrases = [
+        const phrases = [
             'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
             'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
             'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
@@ -118,20 +118,20 @@ function initTypewriter() {
             'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
             'Best Friends Forever! ❤️',
             'Pruthvi vs Gowtham = ∞ Roasts! 😈'
-    ];
+        ];
 
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
         let typingSpeed = 100;
 
         function type() {
             try {
-        const currentPhrase = phrases[phraseIndex];
+                const currentPhrase = phrases[phraseIndex];
 
                 if (isDeleting) {
-                charIndex--;
-                typedText.textContent = currentPhrase.substring(0, charIndex);
+                    charIndex--;
+                    typedText.textContent = currentPhrase.substring(0, charIndex);
                     typingSpeed = 50;
                 } else {
                     charIndex++;
@@ -154,9 +154,13 @@ function initTypewriter() {
             }
         }
 
-        // Start typing
-        setTimeout(type, 1000);
-        console.log('Typewriter initialized');
+        // Start typing after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            if (typedText && phrases.length > 0) {
+                type();
+                console.log('Typewriter initialized and started');
+            }
+        }, 1000);
     } catch (e) {
         console.error('Typewriter init error:', e);
     }
