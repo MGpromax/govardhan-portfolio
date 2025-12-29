@@ -2245,6 +2245,12 @@ function initAudioTrimmer() {
         console.error('❌ add-song-btn not found!');
     }
     
+    // Merge Songs button
+    const mergeBtn = document.getElementById('merge-songs-btn');
+    if (mergeBtn) {
+        mergeBtn.addEventListener('click', mergeSelectedSongs);
+    }
+    
     // File selection - add to playlist
     fileInput.onchange = async function(e) {
         console.log('🎵 File selected!', e.target.files);
@@ -2337,19 +2343,26 @@ function initAudioTrimmer() {
         });
     }
     
-    // Play full audio
+    // Play full audio with playhead tracking
     if (trimmerPlay) {
         trimmerPlay.addEventListener('click', () => {
             if (trimmerAudio.paused) {
                 trimmerAudio.play();
                 trimmerPlay.innerHTML = '<i class="fas fa-pause"></i>';
                 trimmerPlay.classList.add('playing');
+                startPlayheadTracking();
             } else {
                 trimmerAudio.pause();
                 trimmerPlay.innerHTML = '<i class="fas fa-play"></i>';
                 trimmerPlay.classList.remove('playing');
+                stopPlayheadTracking();
             }
         });
+    }
+    
+    // Update playhead when audio time changes
+    if (trimmerAudio) {
+        trimmerAudio.addEventListener('timeupdate', updatePlayhead);
     }
     
     // Preview trimmed section
@@ -2416,9 +2429,10 @@ function renderPlaylist() {
     });
     if (totalDurationEl) totalDurationEl.textContent = formatTime(totalDuration);
     
-    // Render items
+    // Render items with merge checkboxes
     itemsContainer.innerHTML = playlist.map((song, index) => `
         <div class="playlist-item" data-index="${index}">
+            <input type="checkbox" class="song-select-checkbox" data-index="${index}" onchange="updateMergeButton()">
             <div class="song-number">${index + 1}</div>
             <div class="song-info">
                 <div class="song-name">${song.name}</div>
@@ -2444,7 +2458,129 @@ function renderPlaylist() {
             </div>
         </div>
     `).join('');
+    
+    // Update merge button visibility
+    updateMergeButton();
 }
+
+// Update merge button based on selected songs
+function updateMergeButton() {
+    const mergeBtn = document.getElementById('merge-songs-btn');
+    const checkboxes = document.querySelectorAll('.song-select-checkbox:checked');
+    
+    if (mergeBtn) {
+        if (checkboxes.length >= 2) {
+            mergeBtn.style.display = 'inline-flex';
+            mergeBtn.textContent = `Merge ${checkboxes.length} Songs`;
+        } else {
+            mergeBtn.style.display = 'none';
+        }
+    }
+}
+
+// Merge selected songs into one
+async function mergeSelectedSongs() {
+    const checkboxes = Array.from(document.querySelectorAll('.song-select-checkbox:checked'))
+        .map(cb => parseInt(cb.dataset.index))
+        .sort((a, b) => a - b);
+    
+    if (checkboxes.length < 2) {
+        showToast('❌ Select at least 2 songs to merge!');
+        return;
+    }
+    
+    showToast('⏳ Merging songs...');
+    
+    try {
+        const songsToMerge = checkboxes.map(idx => playlist[idx]);
+        const mergedAudio = await mergeAudioFiles(songsToMerge);
+        
+        // Remove merged songs from playlist
+        for (let i = checkboxes.length - 1; i >= 0; i--) {
+            const idx = checkboxes[i];
+            URL.revokeObjectURL(playlist[idx].url);
+            playlist.splice(idx, 1);
+        }
+        
+        // Add merged song at the position of first selected song
+        const firstIndex = checkboxes[0];
+        const mergedName = songsToMerge.map(s => s.name).join(' + ');
+        const mergedUrl = URL.createObjectURL(mergedAudio);
+        
+        // Get duration from merged audio
+        const tempAudio = new Audio(mergedUrl);
+        await new Promise((resolve) => {
+            tempAudio.onloadedmetadata = resolve;
+        });
+        
+        playlist.splice(firstIndex, 0, {
+            file: mergedAudio,
+            name: mergedName,
+            url: mergedUrl,
+            duration: tempAudio.duration,
+            trimStart: 0,
+            trimEnd: tempAudio.duration,
+            trimmed: false,
+            merged: true
+        });
+        
+        renderPlaylist();
+        showToast(`✅ Merged ${checkboxes.length} songs into one!`);
+    } catch (err) {
+        console.error('Merge error:', err);
+        showToast('❌ Failed to merge songs!');
+    }
+}
+
+// Merge multiple audio files into one
+async function mergeAudioFiles(songs) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const buffers = [];
+    
+    // Load all audio files
+    for (const song of songs) {
+        try {
+            const response = await fetch(song.url);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            buffers.push(audioBuffer);
+        } catch (err) {
+            console.error('Error loading audio:', err);
+            throw new Error(`Failed to load ${song.name}`);
+        }
+    }
+    
+    // Get sample rate and channels (use first buffer's properties)
+    const sampleRate = buffers[0].sampleRate;
+    const numberOfChannels = buffers[0].numberOfChannels;
+    
+    // Calculate total length
+    let totalLength = 0;
+    buffers.forEach(buffer => {
+        totalLength += buffer.length;
+    });
+    
+    // Create new buffer
+    const mergedBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+    
+    // Copy data from all buffers
+    let offset = 0;
+    for (const buffer of buffers) {
+        for (let channel = 0; channel < numberOfChannels; channel++) {
+            const channelData = mergedBuffer.getChannelData(channel);
+            const sourceData = buffer.getChannelData(channel);
+            channelData.set(sourceData, offset);
+        }
+        offset += buffer.length;
+    }
+    
+    // Convert to WAV blob
+    return audioBufferToWav(mergedBuffer);
+}
+
+// Make functions globally accessible for onclick handlers
+window.updateMergeButton = updateMergeButton;
+window.mergeSelectedSongs = mergeSelectedSongs;
 
 function editSong(index) {
     if (index < 0 || index >= playlist.length) return;
@@ -2515,6 +2651,150 @@ function moveSong(index, direction) {
     // Swap
     [playlist[index], playlist[newIndex]] = [playlist[newIndex], playlist[index]];
     renderPlaylist();
+}
+
+// Merge two audio files
+async function mergeSongs(index1, index2) {
+    if (index1 < 0 || index2 < 0 || index1 >= playlist.length || index2 >= playlist.length) return;
+    if (index1 === index2) return;
+    
+    const song1 = playlist[index1];
+    const song2 = playlist[index2];
+    
+    if (!song1 || !song2) return;
+    
+    showToast('⏳ Merging audio files...');
+    
+    try {
+        // Create audio context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Load both audio files
+        const [arrayBuffer1, arrayBuffer2] = await Promise.all([
+            fetch(song1.url).then(r => r.arrayBuffer()),
+            fetch(song2.url).then(r => r.arrayBuffer())
+        ]);
+        
+        const [audioBuffer1, audioBuffer2] = await Promise.all([
+            audioContext.decodeAudioData(arrayBuffer1),
+            audioContext.decodeAudioData(arrayBuffer2)
+        ]);
+        
+        // Calculate trim ranges
+        const start1 = (song1.trimStart || 0) * audioBuffer1.sampleRate;
+        const end1 = Math.min((song1.trimEnd || audioBuffer1.duration) * audioBuffer1.sampleRate, audioBuffer1.length);
+        const length1 = Math.floor(end1 - start1);
+        
+        const start2 = (song2.trimStart || 0) * audioBuffer2.sampleRate;
+        const end2 = Math.min((song2.trimEnd || audioBuffer2.duration) * audioBuffer2.sampleRate, audioBuffer2.length);
+        const length2 = Math.floor(end2 - start2);
+        
+        // Create merged buffer
+        const totalLength = length1 + length2;
+        const mergedBuffer = audioContext.createBuffer(
+            Math.max(audioBuffer1.numberOfChannels, audioBuffer2.numberOfChannels),
+            totalLength,
+            audioContext.sampleRate
+        );
+        
+        // Copy first audio (trimmed)
+        for (let channel = 0; channel < audioBuffer1.numberOfChannels; channel++) {
+            const channelData = mergedBuffer.getChannelData(channel);
+            const sourceData = audioBuffer1.getChannelData(channel);
+            for (let i = 0; i < length1; i++) {
+                channelData[i] = sourceData[start1 + i];
+            }
+        }
+        
+        // Copy second audio (trimmed) after first
+        for (let channel = 0; channel < audioBuffer2.numberOfChannels; channel++) {
+            const channelData = mergedBuffer.getChannelData(channel);
+            const sourceData = audioBuffer2.getChannelData(channel);
+            for (let i = 0; i < length2; i++) {
+                channelData[length1 + i] = sourceData[start2 + i];
+            }
+        }
+        
+        // Convert buffer to blob
+        const wavBlob = await audioBufferToWav(mergedBuffer);
+        const mergedUrl = URL.createObjectURL(wavBlob);
+        
+        // Create File from blob
+        const mergedFile = new File([wavBlob], `${song1.name}_merged_${song2.name}.wav`, { type: 'audio/wav' });
+        
+        // Create merged song entry
+        const mergedSong = {
+            file: mergedFile,
+            name: `${song1.name} + ${song2.name}`,
+            url: mergedUrl,
+            duration: mergedBuffer.duration,
+            trimStart: 0,
+            trimEnd: mergedBuffer.duration,
+            trimmed: false
+        };
+        
+        // Remove both original songs
+        URL.revokeObjectURL(song1.url);
+        URL.revokeObjectURL(song2.url);
+        playlist.splice(Math.max(index1, index2), 1); // Remove higher index first
+        playlist.splice(Math.min(index1, index2), 1); // Then remove lower index
+        
+        // Insert merged song at position
+        playlist.splice(Math.min(index1, index2), 0, mergedSong);
+        
+        renderPlaylist();
+        showToast(`✅ Merged: ${song1.name} + ${song2.name}`);
+        
+        audioContext.close();
+    } catch (err) {
+        console.error('Merge error:', err);
+        showToast('❌ Failed to merge audio files!');
+    }
+}
+
+// Convert AudioBuffer to WAV blob
+function audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    
+    const length = buffer.length;
+    const arrayBuffer = new ArrayBuffer(44 + length * numChannels * 2);
+    const view = new DataView(arrayBuffer);
+    const samples = new Int16Array(arrayBuffer, 44);
+    
+    // WAV header
+    const writeString = (offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * numChannels * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * numChannels * 2, true);
+    
+    // Convert to 16-bit PCM
+    for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = buffer.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+            const sample = Math.max(-1, Math.min(1, channelData[i]));
+            samples[i * numChannels + channel] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        }
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
 }
 
 async function uploadPlaylist() {
@@ -2608,10 +2888,29 @@ function drawWaveform() {
     const data = audioBuffer.getChannelData(0);
     const step = Math.ceil(data.length / width);
     const amp = height / 2;
+    const duration = audioBuffer.duration;
     
-    ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
+    // Background
+    ctx.fillStyle = 'rgba(20, 20, 30, 0.8)';
     ctx.fillRect(0, 0, width, height);
     
+    // Draw trim region highlight first (behind waveform)
+    if (trimStartTime >= 0 && trimEndTime > trimStartTime) {
+        const startX = (trimStartTime / duration) * width;
+        const endX = (trimEndTime / duration) * width;
+        const regionWidth = endX - startX;
+        
+        // Highlight selected region
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
+        ctx.fillRect(startX, 0, regionWidth, height);
+        
+        // Border for selected region
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(startX, 0, regionWidth, height);
+    }
+    
+    // Draw full waveform
     ctx.beginPath();
     ctx.moveTo(0, amp);
     
@@ -2629,9 +2928,98 @@ function drawWaveform() {
         ctx.lineTo(i, (1 + max) * amp);
     }
     
-    ctx.strokeStyle = 'var(--neon-green)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // Draw waveform in different colors for selected/unselected regions
+    if (trimStartTime >= 0 && trimEndTime > trimStartTime) {
+        const startX = (trimStartTime / duration) * width;
+        const endX = (trimEndTime / duration) * width;
+        
+        // Unselected region (before trim start) - dim
+        ctx.strokeStyle = 'rgba(100, 100, 120, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Selected region - bright
+        ctx.beginPath();
+        ctx.moveTo(startX, amp);
+        for (let i = Math.floor(startX); i < Math.ceil(endX); i++) {
+            if (i >= 0 && i < width) {
+                let min = 1.0;
+                let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const datum = data[(i * step) + j];
+                    if (datum < min) min = datum;
+                    if (datum > max) max = datum;
+                }
+                ctx.lineTo(i, (1 + min) * amp);
+                ctx.lineTo(i, (1 + max) * amp);
+            }
+        }
+        ctx.strokeStyle = 'var(--neon-green)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Unselected region (after trim end) - dim
+        ctx.beginPath();
+        ctx.moveTo(endX, amp);
+        for (let i = Math.ceil(endX); i < width; i++) {
+            let min = 1.0;
+            let max = -1.0;
+            for (let j = 0; j < step; j++) {
+                const datum = data[(i * step) + j];
+                if (datum < min) min = datum;
+                if (datum > max) max = datum;
+            }
+            ctx.lineTo(i, (1 + min) * amp);
+            ctx.lineTo(i, (1 + max) * amp);
+        }
+        ctx.strokeStyle = 'rgba(100, 100, 120, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    } else {
+        // No trim set, draw full waveform normally
+        ctx.strokeStyle = 'var(--neon-green)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+    
+    // Draw trim start/end markers on waveform
+    if (trimStartTime >= 0) {
+        const startX = (trimStartTime / duration) * width;
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startX, 0);
+        ctx.lineTo(startX, height);
+        ctx.stroke();
+        
+        // Arrow indicator
+        ctx.fillStyle = '#00ff88';
+        ctx.beginPath();
+        ctx.moveTo(startX, 0);
+        ctx.lineTo(startX - 8, 12);
+        ctx.lineTo(startX + 8, 12);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    if (trimEndTime > trimStartTime) {
+        const endX = (trimEndTime / duration) * width;
+        ctx.strokeStyle = '#ff006e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(endX, 0);
+        ctx.lineTo(endX, height);
+        ctx.stroke();
+        
+        // Arrow indicator
+        ctx.fillStyle = '#ff006e';
+        ctx.beginPath();
+        ctx.moveTo(endX, height);
+        ctx.lineTo(endX - 8, height - 12);
+        ctx.lineTo(endX + 8, height - 12);
+        ctx.closePath();
+        ctx.fill();
+    }
     
     // Initialize trim handles after drawing waveform
     initTrimHandles();
@@ -2766,6 +3154,8 @@ function updateTrimVisuals() {
     const startHandle = document.getElementById('trim-start');
     const endHandle = document.getElementById('trim-end');
     const selection = document.getElementById('trim-selection');
+    const startLabel = document.getElementById('trim-start-label');
+    const endLabel = document.getElementById('trim-end-label');
     
     if (!waveformContainer || !startHandle || !endHandle || !selection || !audioBuffer) return;
     
@@ -2779,6 +3169,65 @@ function updateTrimVisuals() {
     endHandle.style.left = endPercent + '%';
     selection.style.left = startPercent + '%';
     selection.style.width = (endPercent - startPercent) + '%';
+    
+    // Update labels with better positioning
+    if (startLabel) {
+        startLabel.style.left = startPercent + '%';
+        startLabel.textContent = formatTime(trimStartTime);
+        startLabel.style.display = 'block';
+    }
+    if (endLabel) {
+        endLabel.style.left = endPercent + '%';
+        endLabel.textContent = formatTime(trimEndTime);
+        endLabel.style.display = 'block';
+    }
+    
+    // Redraw waveform to show updated trim region
+    drawWaveform();
+}
+
+// Playhead tracking
+let playheadInterval = null;
+
+function startPlayheadTracking() {
+    if (playheadInterval) clearInterval(playheadInterval);
+    playheadInterval = setInterval(updatePlayhead, 100);
+}
+
+function stopPlayheadTracking() {
+    if (playheadInterval) {
+        clearInterval(playheadInterval);
+        playheadInterval = null;
+    }
+}
+
+function updatePlayhead() {
+    const trimmerAudio = document.getElementById('trimmer-audio');
+    const playhead = document.getElementById('trim-playhead');
+    const waveformContainer = document.getElementById('trimmer-waveform');
+    
+    if (!trimmerAudio || !playhead || !audioBuffer || trimmerAudio.paused) {
+        if (playhead) playhead.style.display = 'none';
+        return;
+    }
+    
+    const duration = audioBuffer.duration;
+    const currentTime = trimmerAudio.currentTime;
+    const percent = (currentTime / duration) * 100;
+    
+    playhead.style.left = percent + '%';
+    playhead.style.display = 'block';
+    
+    // Check if reached trim end
+    if (currentTime >= trimEndTime) {
+        trimmerAudio.pause();
+        stopPlayheadTracking();
+        const trimmerPlay = document.getElementById('trimmer-play');
+        if (trimmerPlay) {
+            trimmerPlay.innerHTML = '<i class="fas fa-play"></i>';
+            trimmerPlay.classList.remove('playing');
+        }
+    }
 }
 
 function updateTrimDisplay() {

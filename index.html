@@ -880,9 +880,14 @@
                 <div class="playlist-section">
                     <div class="playlist-header">
                         <h4><i class="fas fa-list-ul"></i> Playlist <span id="playlist-count">(0 songs)</span></h4>
-                        <button class="add-song-btn" id="add-song-btn">
-                            <i class="fas fa-plus"></i> Add Song
-                        </button>
+                        <div class="playlist-actions">
+                            <button class="add-song-btn" id="add-song-btn">
+                                <i class="fas fa-plus"></i> Add Song
+                            </button>
+                            <button class="merge-songs-btn" id="merge-songs-btn" title="Merge selected songs into one" style="display: none;">
+                                <i class="fas fa-compress-arrows-alt"></i> Merge Songs
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Playlist Items -->
@@ -920,11 +925,17 @@
                     <div class="trimmer-waveform" id="trimmer-waveform">
                         <canvas id="waveform-canvas"></canvas>
                         <div class="trim-handles">
-                            <div class="trim-handle trim-start" id="trim-start"></div>
+                            <div class="trim-handle trim-start" id="trim-start">
+                                <div class="trim-label" id="trim-start-label">0:00</div>
+                            </div>
                             <div class="trim-selection" id="trim-selection"></div>
-                            <div class="trim-handle trim-end" id="trim-end"></div>
+                            <div class="trim-handle trim-end" id="trim-end">
+                                <div class="trim-label" id="trim-end-label">0:00</div>
+                            </div>
                         </div>
-                        <div class="trim-playhead" id="trim-playhead"></div>
+                        <div class="trim-playhead" id="trim-playhead">
+                            <div class="playhead-dot"></div>
+                        </div>
                     </div>
                     
                     <!-- Time Display -->
@@ -1086,6 +1097,6 @@
         <i class="fas fa-cog"></i>
     </button>
 
-    <script src="script.js?v=5.4"></script>
+    <script src="script.js?v=5.5"></script>
 </body>
 </html>
