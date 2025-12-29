@@ -4655,22 +4655,53 @@ body.admin-mode .upload-profile-picture {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.trimmer-btn i {
+    font-size: 1rem;
+}
+
+.trimmer-btn span {
+    font-size: 0.85rem;
 }
 
 .trimmer-btn:hover {
     background: rgba(0, 255, 136, 0.2);
     border-color: var(--neon-green);
     color: var(--neon-green);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+}
+
+.trimmer-btn:active {
+    transform: translateY(0);
 }
 
 .trimmer-btn.playing {
     background: var(--neon-green);
     color: var(--dark-bg);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+}
+
+.save-trim-btn {
+    background: linear-gradient(135deg, var(--neon-green), #00aa55);
+    color: var(--dark-bg);
+    border: none;
+    font-weight: 700;
+}
+
+.save-trim-btn:hover {
+    background: linear-gradient(135deg, #00ff88, var(--neon-green));
+    box-shadow: 0 5px 20px rgba(0, 255, 136, 0.5);
 }
 
 /* Trimmer Actions */

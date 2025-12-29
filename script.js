@@ -2353,24 +2353,23 @@ function initAudioTrimmer() {
         });
     }
     
-    // Clone buttons to remove old listeners, then add new ones
+    // Play/Pause buttons
+    const trimmerPause = document.getElementById('trimmer-pause');
+    
     if (trimmerPlay) {
         const newPlayBtn = trimmerPlay.cloneNode(true);
         trimmerPlay.parentNode.replaceChild(newPlayBtn, trimmerPlay);
+        
         newPlayBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const audio = document.getElementById('trimmer-audio');
-            if (audio && !audio.paused) {
-                audio.pause();
-                newPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
-                newPlayBtn.classList.remove('playing');
-                stopPlayheadTracking();
-            } else if (audio) {
+            if (audio) {
                 audio.play().then(() => {
-                    newPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    newPlayBtn.classList.add('playing');
+                    newPlayBtn.style.display = 'none';
+                    if (trimmerPause) trimmerPause.style.display = 'inline-flex';
                     startPlayheadTracking();
+                    showToast('▶️ Playing full audio');
                 }).catch(err => {
                     console.error('Play error:', err);
                     showToast('❌ Could not play audio');
@@ -2379,20 +2378,75 @@ function initAudioTrimmer() {
         });
     }
     
-    // Update playhead when audio time changes
+    if (trimmerPause) {
+        const newPauseBtn = trimmerPause.cloneNode(true);
+        trimmerPause.parentNode.replaceChild(newPauseBtn, trimmerPause);
+        
+        newPauseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const audio = document.getElementById('trimmer-audio');
+            if (audio) {
+                audio.pause();
+                newPauseBtn.style.display = 'none';
+                if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+                stopPlayheadTracking();
+                showToast('⏸️ Paused');
+            }
+        });
+    }
+    
+    // Update button states when audio ends
     const currentTrimmerAudio = document.getElementById('trimmer-audio');
+    if (currentTrimmerAudio) {
+        currentTrimmerAudio.addEventListener('ended', () => {
+            if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+            if (trimmerPause) trimmerPause.style.display = 'none';
+            stopPlayheadTracking();
+        });
+    }
+    
+    // Update playhead when audio time changes
     if (currentTrimmerAudio) {
         currentTrimmerAudio.addEventListener('timeupdate', updatePlayhead);
     }
     
-    // Preview trimmed section
+    // Preview trimmed section with stop button
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+    
     if (trimmerPreview) {
         const newPreviewBtn = trimmerPreview.cloneNode(true);
         trimmerPreview.parentNode.replaceChild(newPreviewBtn, trimmerPreview);
+        
         newPreviewBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            playTrimmedPreview();
+            
+            if (isPlayingPreview) {
+                // If already playing, stop it
+                stopAudioPreview();
+                newPreviewBtn.style.display = 'inline-flex';
+                if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+            } else {
+                // Start preview
+                playTrimmedPreview();
+                newPreviewBtn.style.display = 'none';
+                if (trimmerStopPreview) trimmerStopPreview.style.display = 'inline-flex';
+            }
+        });
+    }
+    
+    if (trimmerStopPreview) {
+        const newStopBtn = trimmerStopPreview.cloneNode(true);
+        trimmerStopPreview.parentNode.replaceChild(newStopBtn, trimmerStopPreview);
+        
+        newStopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            stopAudioPreview();
+            newStopBtn.style.display = 'none';
+            if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+            showToast('⏹️ Preview stopped');
         });
     }
     
@@ -3759,9 +3813,15 @@ function formatTime(seconds, precise = false) {
 }
 
 function playTrimmedPreview() {
-    if (!audioContext || !audioBuffer) return;
+    if (!audioContext || !audioBuffer) {
+        showToast('❌ No audio loaded');
+        return;
+    }
     
     stopAudioPreview();
+    
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
     
     audioSource = audioContext.createBufferSource();
     audioSource.buffer = audioBuffer;
@@ -3769,10 +3829,18 @@ function playTrimmedPreview() {
     audioSource.start(0, trimStartTime, trimEndTime - trimStartTime);
     
     isPlayingPreview = true;
-    showToast('🎵 Playing preview...');
+    
+    // Update button states
+    if (trimmerPreview) trimmerPreview.style.display = 'none';
+    if (trimmerStopPreview) trimmerStopPreview.style.display = 'inline-flex';
+    
+    const duration = (trimEndTime - trimStartTime).toFixed(1);
+    showToast(`🎵 Playing preview (${duration}s)...`);
     
     audioSource.onended = () => {
         isPlayingPreview = false;
+        if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+        if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
     };
 }
 
@@ -3780,10 +3848,18 @@ function stopAudioPreview() {
     if (audioSource) {
         try {
             audioSource.stop();
-        } catch (e) {}
+        } catch (e) {
+            // Already stopped or not started
+        }
         audioSource = null;
     }
     isPlayingPreview = false;
+    
+    // Update button states
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+    if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+    if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
 }
 
 // Upload audio to Cloudinary

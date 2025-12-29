@@ -978,14 +978,25 @@
                     
                     <!-- Audio Controls -->
                     <div class="trimmer-controls">
-                        <button class="trimmer-btn" id="trimmer-play">
+                        <button class="trimmer-btn" id="trimmer-play" title="Play Full Audio">
                             <i class="fas fa-play"></i>
+                            <span>Play</span>
                         </button>
-                        <button class="trimmer-btn" id="trimmer-preview" title="Preview Selection">
-                            <i class="fas fa-headphones"></i> Preview Trim
+                        <button class="trimmer-btn" id="trimmer-pause" title="Pause" style="display: none;">
+                            <i class="fas fa-pause"></i>
+                            <span>Pause</span>
+                        </button>
+                        <button class="trimmer-btn" id="trimmer-preview" title="Preview Trimmed Selection">
+                            <i class="fas fa-headphones"></i>
+                            <span>Preview</span>
+                        </button>
+                        <button class="trimmer-btn" id="trimmer-stop-preview" title="Stop Preview" style="display: none;">
+                            <i class="fas fa-stop"></i>
+                            <span>Stop</span>
                         </button>
                         <button class="trimmer-btn save-trim-btn" id="save-trim">
-                            <i class="fas fa-check"></i> Save Trim
+                            <i class="fas fa-check"></i>
+                            <span>Save Trim</span>
                         </button>
                     </div>
                     
@@ -1128,6 +1139,6 @@
         <i class="fas fa-cog"></i>
     </button>
 
-    <script src="script.js?v=6.3"></script>
+    <script src="script.js?v=6.4"></script>
 </body>
 </html>
