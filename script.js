@@ -2394,41 +2394,8 @@ function initAudioTrimmer() {
         });
     }
     
-    // Zoom controls
-    const zoomInBtn = document.getElementById('zoom-in-btn');
-    const zoomOutBtn = document.getElementById('zoom-out-btn');
-    const zoomSlider = document.getElementById('zoom-slider');
-    const zoomLevelEl = document.getElementById('zoom-level');
-    
-    function updateZoom() {
-        if (zoomLevelEl) zoomLevelEl.textContent = zoomLevel.toFixed(1) + 'x';
-        if (zoomSlider) zoomSlider.value = zoomLevel;
-        drawWaveform();
-        drawTimeRuler();
-        drawGrid();
-        updateTrimVisuals();
-    }
-    
-    if (zoomInBtn) {
-        zoomInBtn.addEventListener('click', () => {
-            zoomLevel = Math.min(10, zoomLevel + 0.5);
-            updateZoom();
-        });
-    }
-    
-    if (zoomOutBtn) {
-        zoomOutBtn.addEventListener('click', () => {
-            zoomLevel = Math.max(1, zoomLevel - 0.5);
-            updateZoom();
-        });
-    }
-    
-    if (zoomSlider) {
-        zoomSlider.addEventListener('input', (e) => {
-            zoomLevel = parseFloat(e.target.value);
-            updateZoom();
-        });
-    }
+    // Zoom controls will be initialized when editor opens
+    // See initZoomControls() function
     
     // Keyboard shortcuts for fine-tuning trim positions
     let activeHandle = null; // 'start' or 'end'
@@ -2698,8 +2665,16 @@ function editSong(index) {
     if (songNameEl) songNameEl.textContent = song.name;
     if (trimmerAudio) trimmerAudio.src = song.url;
     
+    // Reset trim handles initialization flag when opening editor
+    trimHandlesInitialized = false;
+    
     // Load waveform
     loadSongWaveform(song);
+    
+    // Initialize zoom controls when editor opens
+    setTimeout(() => {
+        initZoomControls();
+    }, 100);
 }
 
 async function loadSongWaveform(song) {
@@ -2731,6 +2706,10 @@ function showPlaylistView() {
     stopAudioPreview();
     renderPlaylist();
     currentEditingIndex = -1;
+    
+    // Reset initialization flags for next time editor opens
+    trimHandlesInitialized = false;
+    zoomControlsInitialized = false;
 }
 
 function removeSong(index) {
@@ -3131,6 +3110,84 @@ function drawWaveform() {
 // Zoom level (1x = no zoom)
 let zoomLevel = 1;
 let zoomOffset = 0;
+let zoomControlsInitialized = false;
+
+function initZoomControls() {
+    // Avoid duplicate initialization
+    if (zoomControlsInitialized) return;
+    
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomLevelEl = document.getElementById('zoom-level');
+    
+    if (!zoomInBtn || !zoomOutBtn || !zoomSlider || !zoomLevelEl) {
+        console.log('Zoom controls not found, retrying...');
+        setTimeout(initZoomControls, 200);
+        return;
+    }
+    
+    console.log('🎚️ Initializing zoom controls');
+    
+    function updateZoom() {
+        if (zoomLevelEl) zoomLevelEl.textContent = zoomLevel.toFixed(1) + 'x';
+        if (zoomSlider) zoomSlider.value = zoomLevel;
+        drawWaveform();
+        drawTimeRuler();
+        drawGrid();
+        updateTrimVisuals();
+    }
+    
+    // Remove old event listeners
+    const newZoomInBtn = zoomInBtn.cloneNode(true);
+    const newZoomOutBtn = zoomOutBtn.cloneNode(true);
+    const newZoomSlider = zoomSlider.cloneNode(true);
+    
+    zoomInBtn.parentNode.replaceChild(newZoomInBtn, zoomInBtn);
+    zoomOutBtn.parentNode.replaceChild(newZoomOutBtn, zoomOutBtn);
+    zoomSlider.parentNode.replaceChild(newZoomSlider, zoomSlider);
+    
+    // Define updateZoom before using it
+    function updateZoom() {
+        const zoomLevelEl = document.getElementById('zoom-level');
+        const zoomSliderEl = document.getElementById('zoom-slider');
+        if (zoomLevelEl) zoomLevelEl.textContent = zoomLevel.toFixed(1) + 'x';
+        if (zoomSliderEl) zoomSliderEl.value = zoomLevel;
+        if (audioBuffer) {
+            drawWaveform();
+            drawTimeRuler();
+            drawGrid();
+            updateTrimVisuals();
+        }
+    }
+    
+    newZoomInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomLevel = Math.min(10, zoomLevel + 0.5);
+        updateZoom();
+        console.log('🔍 Zoom in:', zoomLevel);
+    });
+    
+    newZoomOutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomLevel = Math.max(1, zoomLevel - 0.5);
+        updateZoom();
+        console.log('🔍 Zoom out:', zoomLevel);
+    });
+    
+    newZoomSlider.addEventListener('input', (e) => {
+        zoomLevel = parseFloat(e.target.value);
+        updateZoom();
+        console.log('🔍 Zoom slider:', zoomLevel);
+    });
+    
+    // Initialize display
+    updateZoom();
+    
+    zoomControlsInitialized = true;
+}
 
 function drawTimeRuler() {
     const canvas = document.getElementById('time-ruler-canvas');
@@ -3280,6 +3337,40 @@ function drawGrid() {
 // Track which handle is being dragged
 let isDraggingStart = false;
 let isDraggingEnd = false;
+let trimHandlesInitialized = false;
+
+// Global mouse move handler
+function handleTrimMouseMove(e) {
+    if (!isDraggingStart && !isDraggingEnd) return;
+    
+    const waveformContainer = document.getElementById('trimmer-waveform');
+    if (!waveformContainer || !audioBuffer) return;
+    
+    const rect = waveformContainer.getBoundingClientRect();
+    const containerWidth = waveformContainer.offsetWidth;
+    const duration = audioBuffer.duration;
+    const x = Math.max(0, Math.min(containerWidth, e.clientX - rect.left));
+    const timePos = (x / containerWidth) * duration;
+    
+    if (isDraggingStart) {
+        trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 0.1)); // Min 0.1 second gap
+        updateTrimVisuals();
+        updateTrimDisplay();
+    } else if (isDraggingEnd) {
+        trimEndTime = Math.max(trimStartTime + 0.1, Math.min(timePos, duration)); // Min 0.1 second gap
+        updateTrimVisuals();
+        updateTrimDisplay();
+    }
+}
+
+function handleTrimMouseUp() {
+    if (isDraggingStart || isDraggingEnd) {
+        isDraggingStart = false;
+        isDraggingEnd = false;
+        document.body.style.cursor = '';
+        console.log('🎵 Trim updated:', trimStartTime.toFixed(2), 'to', trimEndTime.toFixed(2));
+    }
+}
 
 function initTrimHandles() {
     const waveformContainer = document.getElementById('trimmer-waveform');
@@ -3292,97 +3383,96 @@ function initTrimHandles() {
         return;
     }
     
+    // Only initialize once to avoid duplicate event listeners
+    if (trimHandlesInitialized) {
+        updateTrimVisuals();
+        return;
+    }
+    
     const duration = audioBuffer.duration;
-    const containerWidth = waveformContainer.offsetWidth;
     
     console.log('🎵 Initializing trim handles, duration:', duration);
     
     // Update visual positions
     updateTrimVisuals();
     
-    // Start handle drag
-    startHandle.onmousedown = function(e) {
+    // Remove existing listeners if any, then add new ones
+    const startDragHandler = function(e) {
         e.preventDefault();
+        e.stopPropagation();
         isDraggingStart = true;
         document.body.style.cursor = 'ew-resize';
+        console.log('🎵 Start dragging START handle');
     };
     
-    // End handle drag
-    endHandle.onmousedown = function(e) {
+    const endDragHandler = function(e) {
         e.preventDefault();
+        e.stopPropagation();
         isDraggingEnd = true;
         document.body.style.cursor = 'ew-resize';
+        console.log('🎵 Start dragging END handle');
     };
     
-    // Mouse move on document
-    document.onmousemove = function(e) {
-        if (!isDraggingStart && !isDraggingEnd) return;
-        
-        const rect = waveformContainer.getBoundingClientRect();
-        const x = Math.max(0, Math.min(containerWidth, e.clientX - rect.left));
-        const timePos = (x / containerWidth) * duration;
-        
-        if (isDraggingStart) {
-            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1)); // Min 1 second gap
-            updateTrimVisuals();
-            updateTrimDisplay();
-        } else if (isDraggingEnd) {
-            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration)); // Min 1 second gap
-            updateTrimVisuals();
-            updateTrimDisplay();
-        }
-    };
+    // Remove old listeners and add new ones
+    startHandle.replaceWith(startHandle.cloneNode(true));
+    endHandle.replaceWith(endHandle.cloneNode(true));
     
-    // Mouse up on document
-    document.onmouseup = function() {
-        if (isDraggingStart || isDraggingEnd) {
-            isDraggingStart = false;
-            isDraggingEnd = false;
-            document.body.style.cursor = '';
-            console.log('🎵 Trim updated:', trimStartTime.toFixed(1), 'to', trimEndTime.toFixed(1));
-        }
-    };
+    const newStartHandle = document.getElementById('trim-start');
+    const newEndHandle = document.getElementById('trim-end');
+    
+    newStartHandle.addEventListener('mousedown', startDragHandler);
+    newEndHandle.addEventListener('mousedown', endDragHandler);
+    
+    // Document-level mouse handlers (only add once)
+    document.addEventListener('mousemove', handleTrimMouseMove);
+    document.addEventListener('mouseup', handleTrimMouseUp);
     
     // Touch support for mobile
-    startHandle.ontouchstart = function(e) {
+    newStartHandle.addEventListener('touchstart', function(e) {
         e.preventDefault();
         isDraggingStart = true;
-    };
+    }, { passive: false });
     
-    endHandle.ontouchstart = function(e) {
+    newEndHandle.addEventListener('touchstart', function(e) {
         e.preventDefault();
         isDraggingEnd = true;
-    };
+    }, { passive: false });
     
-    document.ontouchmove = function(e) {
+    document.addEventListener('touchmove', function(e) {
         if (!isDraggingStart && !isDraggingEnd) return;
         
         const touch = e.touches[0];
         const rect = waveformContainer.getBoundingClientRect();
+        const containerWidth = waveformContainer.offsetWidth;
+        const duration = audioBuffer.duration;
         const x = Math.max(0, Math.min(containerWidth, touch.clientX - rect.left));
         const timePos = (x / containerWidth) * duration;
         
         if (isDraggingStart) {
-            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1));
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 0.1));
             updateTrimVisuals();
             updateTrimDisplay();
         } else if (isDraggingEnd) {
-            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration));
+            trimEndTime = Math.max(trimStartTime + 0.1, Math.min(timePos, duration));
             updateTrimVisuals();
             updateTrimDisplay();
         }
-    };
+    }, { passive: false });
     
-    document.ontouchend = function() {
+    document.addEventListener('touchend', function() {
         isDraggingStart = false;
         isDraggingEnd = false;
-    };
+    });
     
     // Click on waveform to set position
-    waveformContainer.onclick = function(e) {
+    waveformContainer.addEventListener('click', function(e) {
         if (isDraggingStart || isDraggingEnd) return;
+        if (e.target === newStartHandle || e.target === newEndHandle || 
+            e.target.closest('.trim-handle')) return;
         
         const rect = waveformContainer.getBoundingClientRect();
+        const containerWidth = waveformContainer.offsetWidth;
+        const duration = audioBuffer.duration;
         const x = e.clientX - rect.left;
         const timePos = (x / containerWidth) * duration;
         
@@ -3391,14 +3481,16 @@ function initTrimHandles() {
         const distToEnd = Math.abs(timePos - trimEndTime);
         
         if (distToStart < distToEnd) {
-            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 1));
+            trimStartTime = Math.max(0, Math.min(timePos, trimEndTime - 0.1));
         } else {
-            trimEndTime = Math.max(trimStartTime + 1, Math.min(timePos, duration));
+            trimEndTime = Math.max(trimStartTime + 0.1, Math.min(timePos, duration));
         }
         
         updateTrimVisuals();
         updateTrimDisplay();
-    };
+    });
+    
+    trimHandlesInitialized = true;
 }
 
 function updateTrimVisuals() {
