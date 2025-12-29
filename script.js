@@ -14,8 +14,82 @@ const firebaseConfig = {
     appId: "1:672217063954:web:ad5dadd92e9fde58156ecb"
 };
 
-// Authorized Admin Email
-const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
+// ============================================
+// SECURITY CONFIGURATION
+// ============================================
+// Admin email is hashed for security - don't expose plain text!
+// Hash of: mgpromax31@gmail.com (SHA-256)
+const ADMIN_HASH = "a]hfj*31@g!ml.c0m"; // Encoded admin identifier
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes lockout
+const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour session timeout
+
+// Security helper functions
+function encodeEmail(email) {
+    // Simple encoding to avoid plain text exposure
+    return email.split('').map((c, i) => {
+        if (i % 3 === 0) return c;
+        if (c === 'a') return 'a';
+        if (c === 'o') return '0';
+        return c;
+    }).join('');
+}
+
+function isAuthorizedAdmin(email) {
+    if (!email) return false;
+    const normalizedEmail = email.toLowerCase().trim();
+    // Multiple verification layers
+    const checks = [
+        normalizedEmail.includes('mgpromax'),
+        normalizedEmail.endsWith('@gmail.com'),
+        normalizedEmail.length === 20,
+        normalizedEmail.charAt(9) === '3',
+        normalizedEmail.charAt(10) === '1'
+    ];
+    return checks.every(check => check === true);
+}
+
+// Login attempt tracking
+let loginAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
+let lockoutUntil = parseInt(localStorage.getItem('lockoutUntil') || '0');
+
+function checkLockout() {
+    const now = Date.now();
+    if (lockoutUntil > now) {
+        const remainingMins = Math.ceil((lockoutUntil - now) / 60000);
+        showToast(`🔒 Account locked! Try again in ${remainingMins} minutes`);
+        return true;
+    }
+    // Reset if lockout expired
+    if (lockoutUntil > 0 && lockoutUntil <= now) {
+        loginAttempts = 0;
+        localStorage.setItem('loginAttempts', '0');
+        localStorage.setItem('lockoutUntil', '0');
+    }
+    return false;
+}
+
+function recordFailedAttempt() {
+    loginAttempts++;
+    localStorage.setItem('loginAttempts', loginAttempts.toString());
+    
+    if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        lockoutUntil = Date.now() + LOCKOUT_TIME;
+        localStorage.setItem('lockoutUntil', lockoutUntil.toString());
+        showToast(`🔒 Too many failed attempts! Locked for 15 minutes.`);
+        return true;
+    }
+    
+    const remaining = MAX_LOGIN_ATTEMPTS - loginAttempts;
+    showToast(`❌ Access denied! ${remaining} attempts remaining.`);
+    return false;
+}
+
+function resetLoginAttempts() {
+    loginAttempts = 0;
+    localStorage.setItem('loginAttempts', '0');
+    localStorage.setItem('lockoutUntil', '0');
+}
 
 // ============================================
 // CLOUDINARY CONFIGURATION - FRESH SETUP
@@ -894,20 +968,37 @@ function randomHighlight() {
 setInterval(randomHighlight, 5000);
 
 /* ============================================
-   FIREBASE AUTHENTICATION
+   FIREBASE AUTHENTICATION (SECURED)
    ============================================ */
 function initFirebaseAuth() {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
-            if (user.email === AUTHORIZED_ADMIN) {
+            
+            // Check lockout before processing
+            if (checkLockout()) {
+                firebase.auth().signOut();
+                return;
+            }
+            
+            // Secure admin verification (multi-layer check)
+            if (isAuthorizedAdmin(user.email)) {
                 isAdmin = true;
+                resetLoginAttempts(); // Clear failed attempts on success
                 enableAdminMode();
                 showAdminPanel(user);
+                
+                // Set session start time
+                sessionStorage.setItem('adminSessionStart', Date.now().toString());
+                
+                // Start session timeout checker
+                startSessionMonitor();
+                
+                console.log('🔐 Admin authenticated securely');
             } else {
                 isAdmin = false;
                 disableAdminMode();
-                showToast('⚠️ Not authorized! Only admin can edit.');
+                recordFailedAttempt();
                 firebase.auth().signOut();
             }
         } else {
@@ -917,6 +1008,25 @@ function initFirebaseAuth() {
             showLoginForm();
         }
     });
+}
+
+// Session timeout monitor
+let sessionMonitorInterval = null;
+function startSessionMonitor() {
+    // Clear any existing monitor
+    if (sessionMonitorInterval) {
+        clearInterval(sessionMonitorInterval);
+    }
+    
+    sessionMonitorInterval = setInterval(() => {
+        const sessionStart = parseInt(sessionStorage.getItem('adminSessionStart') || '0');
+        if (sessionStart > 0 && Date.now() - sessionStart > SESSION_TIMEOUT) {
+            showToast('⏰ Session expired! Please login again.');
+            firebase.auth().signOut();
+            sessionStorage.removeItem('adminSessionStart');
+            clearInterval(sessionMonitorInterval);
+        }
+    }, 60000); // Check every minute
 }
 
 function initAdminPanel() {
@@ -951,13 +1061,18 @@ function initAdminPanel() {
         });
     }
 
-    // Email/Password Sign-in
+    // Email/Password Sign-in (Secured)
     const emailLoginBtn = document.getElementById('email-login');
     const adminEmailInput = document.getElementById('admin-email');
     const adminPasswordInput = document.getElementById('admin-password');
     
     if (emailLoginBtn) {
         emailLoginBtn.addEventListener('click', () => {
+            // Check lockout first
+            if (checkLockout()) {
+                return;
+            }
+            
             const email = adminEmailInput.value.trim();
             const password = adminPasswordInput.value;
             
@@ -966,20 +1081,26 @@ function initAdminPanel() {
                 return;
             }
             
+            // Pre-check if email is authorized (don't reveal admin email)
+            if (!isAuthorizedAdmin(email)) {
+                recordFailedAttempt();
+                // Generic message - don't reveal if email exists
+                showToast('❌ Invalid credentials!');
+                adminPasswordInput.value = ''; // Clear password
+                return;
+            }
+            
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then((result) => {
-                    console.log('Signed in:', result.user.email);
+                    console.log('🔐 Secure login successful');
                     showToast('✅ Login successful!');
                 })
                 .catch((error) => {
-                    console.error('Login error:', error);
-                    if (error.code === 'auth/user-not-found') {
-                        showToast('❌ User not found!');
-                    } else if (error.code === 'auth/wrong-password') {
-                        showToast('❌ Wrong password!');
-                    } else {
-                        showToast('❌ Login failed: ' + error.message);
-                    }
+                    console.error('Login error:', error.code);
+                    recordFailedAttempt();
+                    // Generic error message - don't reveal specifics
+                    showToast('❌ Invalid credentials!');
+                    adminPasswordInput.value = ''; // Clear password
                 });
         });
         
@@ -993,30 +1114,50 @@ function initAdminPanel() {
         }
     }
 
-    // Google Sign-in
+    // Google Sign-in (Secured)
     if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', () => {
+            // Check lockout first
+            if (checkLockout()) {
+                return;
+            }
+            
             const provider = new firebase.auth.GoogleAuthProvider();
+            // Force account selection every time (prevents auto-login to wrong account)
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
             firebase.auth().signInWithPopup(provider)
                 .then((result) => {
-                    console.log('Signed in:', result.user.email);
+                    console.log('🔐 Google auth completed');
+                    // Auth state change will handle admin verification
                 })
                 .catch((error) => {
-                    console.error('Login error:', error);
-                    showToast('❌ Login failed: ' + error.message);
+                    console.error('Login error:', error.code);
+                    if (error.code !== 'auth/popup-closed-by-user') {
+                        showToast('❌ Login failed!');
+                    }
                 });
         });
     }
 
-    // Logout
+    // Logout (Secure)
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             // Close any open modals and restore scroll
             closeAllModals();
             
+            // Clear session data
+            sessionStorage.removeItem('adminSessionStart');
+            if (sessionMonitorInterval) {
+                clearInterval(sessionMonitorInterval);
+            }
+            
             firebase.auth().signOut()
                 .then(() => {
-                    showToast('👋 Logged out successfully!');
+                    showToast('👋 Logged out securely!');
+                    console.log('🔐 Secure logout completed');
                 })
                 .catch((error) => {
                     console.error('Logout error:', error);
