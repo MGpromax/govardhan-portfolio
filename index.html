@@ -921,21 +921,52 @@
                         </button>
                     </div>
                     
+                    <!-- Time Ruler -->
+                    <div class="time-ruler-container">
+                        <canvas id="time-ruler-canvas"></canvas>
+                    </div>
+                    
                     <!-- Audio Waveform -->
                     <div class="trimmer-waveform" id="trimmer-waveform">
                         <canvas id="waveform-canvas"></canvas>
+                        <canvas id="grid-canvas"></canvas>
                         <div class="trim-handles">
                             <div class="trim-handle trim-start" id="trim-start">
-                                <div class="trim-label" id="trim-start-label">0:00</div>
+                                <div class="trim-label" id="trim-start-label">
+                                    <span class="label-time">0:00</span>
+                                    <span class="label-text">START</span>
+                                </div>
+                                <div class="trim-marker start-marker"></div>
                             </div>
-                            <div class="trim-selection" id="trim-selection"></div>
+                            <div class="trim-selection" id="trim-selection">
+                                <div class="selection-info">
+                                    <span id="selection-duration">0:00</span>
+                                </div>
+                            </div>
                             <div class="trim-handle trim-end" id="trim-end">
-                                <div class="trim-label" id="trim-end-label">0:00</div>
+                                <div class="trim-label" id="trim-end-label">
+                                    <span class="label-time">0:00</span>
+                                    <span class="label-text">END</span>
+                                </div>
+                                <div class="trim-marker end-marker"></div>
                             </div>
                         </div>
                         <div class="trim-playhead" id="trim-playhead">
+                            <div class="playhead-line"></div>
                             <div class="playhead-dot"></div>
                         </div>
+                    </div>
+                    
+                    <!-- Zoom Controls -->
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoom-out-btn" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <input type="range" id="zoom-slider" min="1" max="10" value="1" step="0.5" title="Zoom Level">
+                        <button class="zoom-btn" id="zoom-in-btn" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <span class="zoom-level" id="zoom-level">1x</span>
                     </div>
                     
                     <!-- Time Display -->
@@ -1097,6 +1128,6 @@
         <i class="fas fa-cog"></i>
     </button>
 
-    <script src="script.js?v=5.5"></script>
+    <script src="script.js?v=6.0"></script>
 </body>
 </html>

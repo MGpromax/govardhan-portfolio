@@ -197,13 +197,13 @@ function initMobileMenu() {
    ============================================ */
 function initTypewriter() {
     try {
-        const typedText = document.getElementById('typed-text');
+    const typedText = document.getElementById('typed-text');
         if (!typedText) {
             console.error('Typewriter element not found');
             return;
         }
 
-        const phrases = [
+    const phrases = [
             'ಗಾಂಡುತನದಲ್ಲಿ PhD ಹೋಲ್ಡರ್ಸ್! 🎓',
             'ಪಕ್ಕಾ ಗಾಂಡುಗಳು, ಪರ್ಮನೆಂಟ್ ಫ್ರೆಂಡ್ಸ್ಗಳು! 💯',
             'ಎಲ್ಲರೂ ಸೇರಿದ್ರೆ ಊರಿಗೆ ಕಂಟಕ! 🔥',
@@ -215,14 +215,14 @@ function initTypewriter() {
             'ನಿದ್ದೆ ಮಾಡೋದು ನಮ್ಮ Hobby! 😴',
             'Best Friends Forever! ❤️',
             'Pruthvi vs Gowtham = ∞ Roasts! 😈'
-        ];
+    ];
 
         // Initialize with empty text
         typedText.textContent = '';
 
-        let phraseIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
         let typingSpeed = 100;
         let typeTimeout = null;
 
@@ -233,19 +233,19 @@ function initTypewriter() {
                     clearTimeout(typeTimeout);
                 }
 
-                const currentPhrase = phrases[phraseIndex];
+        const currentPhrase = phrases[phraseIndex];
 
                 if (isDeleting) {
                     // Deleting characters
                     if (charIndex > 0) {
-                        charIndex--;
-                        typedText.textContent = currentPhrase.substring(0, charIndex);
+                charIndex--;
+                typedText.textContent = currentPhrase.substring(0, charIndex);
                         typingSpeed = 30; // Faster when deleting
-                    } else {
+                } else {
                         // Finished deleting, move to next phrase
-                        isDeleting = false;
-                        phraseIndex = (phraseIndex + 1) % phrases.length;
-                        typingSpeed = 500; // Pause before typing next
+                    isDeleting = false;
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    typingSpeed = 500; // Pause before typing next
                     }
                 } else {
                     // Typing characters
@@ -1231,7 +1231,7 @@ function showLoginForm() {
     const adminPanel = document.getElementById('admin-panel');
 
     if (loginForm) loginForm.style.display = 'block';
-                                                                                                                                                if (adminPanel) adminPanel.style.display = 'none';
+    if (adminPanel) adminPanel.style.display = 'none';
 }
 
 /* ============================================
@@ -1412,8 +1412,8 @@ function openCloudinaryUpload(member, type) {
     // Check if Cloudinary is loaded
     if (typeof cloudinary === 'undefined' || !cloudinary.createUploadWidget) {
         showToast('❌ Cloudinary widget not loaded! Refresh the page.');
-        return;
-    }
+                return;
+            }
 
     // Validate configuration
     if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
@@ -1425,8 +1425,8 @@ function openCloudinaryUpload(member, type) {
     if (!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET.trim() === '') {
         alert('⚠️ Upload Preset Not Configured!\n\nPlease:\n1. Create a preset in Cloudinary dashboard\n2. Update CLOUDINARY_UPLOAD_PRESET in script.js');
         showToast('❌ Upload preset not set!');
-        return;
-    }
+                return;
+            }
 
     // Determine resource type
     const resourceType = type === 'music' ? 'raw' : type === 'videos' ? 'video' : 'image';
@@ -1449,43 +1449,43 @@ function openCloudinaryUpload(member, type) {
     
     // Small delay to ensure Cloudinary widget is fully ready
     setTimeout(() => {
-        try {
-            const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-                if (error) {
-                    console.error('Cloudinary upload error:', error);
-                    let errorMsg = '❌ Upload failed!';
+    try {
+        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
+                let errorMsg = '❌ Upload failed!';
                     if (error.status === 401 || error.status === 'Unknown API key ') {
                         errorMsg = '❌ Upload preset not found or unauthorized!\n\nPlease check:\n1. Go to Cloudinary Dashboard > Settings > Upload\n2. Create an "unsigned_preset" or update the preset name in script.js\n3. Make sure it\'s set to "Unsigned" mode';
                         alert(errorMsg);
                         showToast('❌ Upload preset error - check console');
-                    } else if (error.status === 400) {
-                        errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
+                } else if (error.status === 400) {
+                    errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
                         showToast(errorMsg);
-                    } else if (error.message) {
-                        errorMsg = '❌ ' + error.message;
-                        showToast(errorMsg);
+                } else if (error.message) {
+                    errorMsg = '❌ ' + error.message;
+                showToast(errorMsg);
                     } else {
                         showToast(errorMsg);
                     }
-                    return;
-                }
+                return;
+            }
 
                 if (result && result.event === 'success') {
-                    const url = result.info.secure_url;
-                    const publicId = result.info.public_id;
-                    
-                    if (type === 'music') {
-                        // Single music file
-                        saveMediaToFirebase(member, 'music', url, publicId);
-                    } else {
-                        // Multiple photos/videos for gallery
-                        saveMediaToFirebaseGallery(member, type, url, publicId);
-                    }
+                const url = result.info.secure_url;
+                const publicId = result.info.public_id;
+                
+                if (type === 'music') {
+                    // Single music file
+                    saveMediaToFirebase(member, 'music', url, publicId);
+                } else {
+                    // Multiple photos/videos for gallery
+                    saveMediaToFirebaseGallery(member, type, url, publicId);
+                }
                 } else if (result && result.event === 'close') {
                     console.log('Upload widget closed');
                 } else if (result && result.event) {
                     console.log('Upload widget event:', result.event);
-                }
+            }
             });
             
             uploadWidget.open();
@@ -1502,7 +1502,7 @@ function openCloudinaryPFPUpload(member) {
         showToast('❌ Cloudinary widget not loaded! Refresh the page.');
         return;
     }
-
+    
     // Validate configuration
     if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
         alert('⚠️ Cloudinary Not Configured!\n\nPlease set CLOUDINARY_CLOUD_NAME in script.js');
@@ -1532,10 +1532,10 @@ function openCloudinaryPFPUpload(member) {
     
     // Small delay to ensure Cloudinary widget is fully ready
     setTimeout(() => {
-        try {
-            const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-                if (error) {
-                    console.error('Cloudinary upload error:', error);
+    try {
+        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+            if (error) {
+                console.error('Cloudinary upload error:', error);
                     let errorMsg = '❌ Upload failed!';
                     if (error.status === 401 || error.status === 'Unknown API key ') {
                         errorMsg = '❌ Upload preset not found or unauthorized!\n\nPlease check:\n1. Go to Cloudinary Dashboard > Settings > Upload\n2. Create an "unsigned_preset" or update the preset name in script.js\n3. Make sure it\'s set to "Unsigned" mode';
@@ -1547,21 +1547,21 @@ function openCloudinaryPFPUpload(member) {
                     } else {
                         showToast(errorMsg);
                     }
-                    return;
-                }
-                
+                return;
+            }
+            
                 if (result && result.event === 'success') {
-                    // Get the cropped circular image URL
-                    const url = result.info.secure_url;
-                    // Apply circular transformation using Cloudinary
-                    const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
-                    const publicId = result.info.public_id;
-                    savePFPToFirebase(member, circularUrl, publicId);
+                // Get the cropped circular image URL
+                const url = result.info.secure_url;
+                // Apply circular transformation using Cloudinary
+                const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
+                const publicId = result.info.public_id;
+                savePFPToFirebase(member, circularUrl, publicId);
                 } else if (result && result.event === 'close') {
                     console.log('Upload widget closed');
                 } else if (result && result.event) {
                     console.log('Upload widget event:', result.event);
-                }
+            }
             });
             
             uploadWidget.open();
@@ -1578,7 +1578,7 @@ function openCloudinaryPhotoUpload(member) {
         showToast('❌ Cloudinary widget not loaded! Refresh the page.');
         return;
     }
-
+    
     // Validate configuration
     if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME.trim() === '') {
         alert('⚠️ Cloudinary Not Configured!\n\nPlease set CLOUDINARY_CLOUD_NAME in script.js');
@@ -2393,6 +2393,105 @@ function initAudioTrimmer() {
             closeTrimmer();
         });
     }
+    
+    // Zoom controls
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomLevelEl = document.getElementById('zoom-level');
+    
+    function updateZoom() {
+        if (zoomLevelEl) zoomLevelEl.textContent = zoomLevel.toFixed(1) + 'x';
+        if (zoomSlider) zoomSlider.value = zoomLevel;
+        drawWaveform();
+        drawTimeRuler();
+        drawGrid();
+        updateTrimVisuals();
+    }
+    
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            zoomLevel = Math.min(10, zoomLevel + 0.5);
+            updateZoom();
+        });
+    }
+    
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            zoomLevel = Math.max(1, zoomLevel - 0.5);
+            updateZoom();
+        });
+    }
+    
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', (e) => {
+            zoomLevel = parseFloat(e.target.value);
+            updateZoom();
+        });
+    }
+    
+    // Keyboard shortcuts for fine-tuning trim positions
+    let activeHandle = null; // 'start' or 'end'
+    
+    document.addEventListener('keydown', (e) => {
+        const isEditorOpen = document.getElementById('song-editor')?.style.display !== 'none';
+        if (!isEditorOpen || !audioBuffer) return;
+        
+        const step = e.shiftKey ? 0.1 : 0.05; // Smaller steps with Shift
+        
+        // Arrow keys to fine-tune
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            
+            // If no handle is active, activate based on which is closer
+            if (!activeHandle) {
+                const duration = audioBuffer.duration;
+                const trimmerAudio = document.getElementById('trimmer-audio');
+                const currentTime = trimmerAudio?.currentTime || 0;
+                const distToStart = Math.abs(currentTime - trimStartTime);
+                const distToEnd = Math.abs(currentTime - trimEndTime);
+                activeHandle = distToStart < distToEnd ? 'start' : 'end';
+            }
+            
+            const adjust = e.key === 'ArrowLeft' ? -step : step;
+            
+            if (activeHandle === 'start') {
+                trimStartTime = Math.max(0, Math.min(trimStartTime + adjust, trimEndTime - 0.1));
+            } else {
+                trimEndTime = Math.max(trimStartTime + 0.1, Math.min(trimEndTime + adjust, audioBuffer.duration));
+            }
+            
+            updateTrimVisuals();
+            updateTrimDisplay();
+        }
+        
+        // Space to toggle active handle
+        if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+            activeHandle = activeHandle === 'start' ? 'end' : 'start';
+            showToast(`🎯 Adjusting ${activeHandle === 'start' ? 'START' : 'END'} (← → arrows)`);
+        }
+    });
+    
+    // Visual feedback for active handle
+    const startHandleEl = document.getElementById('trim-start');
+    const endHandleEl = document.getElementById('trim-end');
+    
+    if (startHandleEl) {
+        startHandleEl.addEventListener('mousedown', () => {
+            activeHandle = 'start';
+            startHandleEl.style.transform = 'scaleX(1.3)';
+            endHandleEl.style.transform = '';
+        });
+    }
+    
+    if (endHandleEl) {
+        endHandleEl.addEventListener('mousedown', () => {
+            activeHandle = 'end';
+            endHandleEl.style.transform = 'scaleX(1.3)';
+            startHandleEl.style.transform = '';
+        });
+    }
 }
 
 function renderPlaylist() {
@@ -3023,6 +3122,159 @@ function drawWaveform() {
     
     // Initialize trim handles after drawing waveform
     initTrimHandles();
+    
+    // Draw time ruler and grid
+    drawTimeRuler();
+    drawGrid();
+}
+
+// Zoom level (1x = no zoom)
+let zoomLevel = 1;
+let zoomOffset = 0;
+
+function drawTimeRuler() {
+    const canvas = document.getElementById('time-ruler-canvas');
+    if (!canvas || !audioBuffer) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const duration = audioBuffer.duration;
+    const visibleDuration = duration / (zoomLevel || 1);
+    const startTime = zoomOffset || 0;
+    
+    ctx.fillStyle = 'rgba(10, 10, 20, 0.9)';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw tick marks
+    const tickInterval = Math.max(1, Math.floor(visibleDuration / 20)); // Max 20 ticks
+    const secondsPerPixel = visibleDuration / width;
+    
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.font = '10px monospace';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    
+    for (let time = Math.floor(startTime); time <= startTime + visibleDuration; time += tickInterval) {
+        const x = ((time - startTime) / visibleDuration) * width;
+        if (x < 0 || x > width) continue;
+        
+        const isMajorTick = time % (tickInterval * 5) === 0;
+        const tickHeight = isMajorTick ? 15 : 8;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, height - tickHeight);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+        
+        if (isMajorTick) {
+            const timeStr = formatTime(time);
+            ctx.fillText(timeStr, x + 3, height / 2);
+        }
+    }
+    
+    // Highlight trim region on ruler
+    if (trimStartTime >= 0 && trimEndTime > trimStartTime) {
+        const startX = ((trimStartTime - startTime) / visibleDuration) * width;
+        const endX = ((trimEndTime - startTime) / visibleDuration) * width;
+        
+        if (startX < width && endX > 0) {
+            const regionStart = Math.max(0, startX);
+            const regionEnd = Math.min(width, endX);
+            const regionWidth = regionEnd - regionStart;
+            
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+            ctx.fillRect(regionStart, 0, regionWidth, height);
+            
+            // Start marker
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX, 0);
+            ctx.lineTo(startX, height);
+            ctx.stroke();
+            
+            // End marker - MORE VISIBLE
+            ctx.strokeStyle = '#ff006e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(endX, 0);
+            ctx.lineTo(endX, height);
+            ctx.stroke();
+            
+            // Glow effect for end marker
+            ctx.shadowColor = '#ff006e';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(endX, 0);
+            ctx.lineTo(endX, height);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+    }
+}
+
+function drawGrid() {
+    const canvas = document.getElementById('grid-canvas');
+    if (!canvas || !audioBuffer) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const duration = audioBuffer.duration;
+    const visibleDuration = duration / (zoomLevel || 1);
+    const startTime = zoomOffset || 0;
+    
+    // Draw vertical grid lines
+    const gridInterval = Math.max(0.5, Math.floor(visibleDuration / 15)); // Max 15 lines
+    const secondsPerPixel = visibleDuration / width;
+    
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    
+    for (let time = Math.floor(startTime * 2) / 2; time <= startTime + visibleDuration; time += gridInterval) {
+        const x = ((time - startTime) / visibleDuration) * width;
+        if (x < 0 || x > width) continue;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+    
+    // Highlight trim region boundaries
+    if (trimStartTime >= 0 && trimEndTime > trimStartTime) {
+        const startX = ((trimStartTime - startTime) / visibleDuration) * width;
+        const endX = ((trimEndTime - startTime) / visibleDuration) * width;
+        
+        // Start line
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(startX, 0);
+        ctx.lineTo(startX, height);
+        ctx.stroke();
+        
+        // End line - VERY VISIBLE
+        ctx.strokeStyle = 'rgba(255, 0, 110, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath();
+        ctx.moveTo(endX, 0);
+        ctx.lineTo(endX, height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
 }
 
 // Track which handle is being dragged
@@ -3156,6 +3408,7 @@ function updateTrimVisuals() {
     const selection = document.getElementById('trim-selection');
     const startLabel = document.getElementById('trim-start-label');
     const endLabel = document.getElementById('trim-end-label');
+    const selectionDuration = document.getElementById('selection-duration');
     
     if (!waveformContainer || !startHandle || !endHandle || !selection || !audioBuffer) return;
     
@@ -3170,20 +3423,25 @@ function updateTrimVisuals() {
     selection.style.left = startPercent + '%';
     selection.style.width = (endPercent - startPercent) + '%';
     
-    // Update labels with better positioning
+    // Update labels with better positioning and precise timing
     if (startLabel) {
-        startLabel.style.left = startPercent + '%';
-        startLabel.textContent = formatTime(trimStartTime);
-        startLabel.style.display = 'block';
+        const labelTime = startLabel.querySelector('.label-time');
+        if (labelTime) labelTime.textContent = formatTime(trimStartTime, true);
+        startLabel.style.display = 'flex';
     }
     if (endLabel) {
-        endLabel.style.left = endPercent + '%';
-        endLabel.textContent = formatTime(trimEndTime);
-        endLabel.style.display = 'block';
+        const labelTime = endLabel.querySelector('.label-time');
+        if (labelTime) labelTime.textContent = formatTime(trimEndTime, true);
+        endLabel.style.display = 'flex';
+    }
+    if (selectionDuration) {
+        selectionDuration.textContent = formatTime(trimEndTime - trimStartTime);
     }
     
-    // Redraw waveform to show updated trim region
+    // Redraw everything to show updated trim region
     drawWaveform();
+    drawTimeRuler();
+    drawGrid();
 }
 
 // Playhead tracking
@@ -3240,9 +3498,14 @@ function updateTrimDisplay() {
     if (durationEl) durationEl.textContent = `Duration: ${formatTime(trimEndTime - trimStartTime)}`;
 }
 
-function formatTime(seconds) {
+function formatTime(seconds, precise = false) {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
+    if (precise) {
+        const ms = Math.floor((seconds % 1) * 10); // Tenths of seconds
+        return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`;
+    }
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
