@@ -2363,6 +2363,16 @@ function initAudioTrimmer() {
         newPlayBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Stop preview if playing
+            if (isPlayingPreview) {
+                stopAudioPreview();
+                const trimmerPreview = document.getElementById('trimmer-preview');
+                const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+                if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+                if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+            }
+            
             const audio = document.getElementById('trimmer-audio');
             if (audio) {
                 audio.play().then(() => {
@@ -2385,6 +2395,16 @@ function initAudioTrimmer() {
         newPauseBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Stop preview if playing
+            if (isPlayingPreview) {
+                stopAudioPreview();
+                const trimmerPreview = document.getElementById('trimmer-preview');
+                const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+                if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+                if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+            }
+            
             const audio = document.getElementById('trimmer-audio');
             if (audio) {
                 audio.pause();
@@ -2422,6 +2442,17 @@ function initAudioTrimmer() {
             e.preventDefault();
             e.stopPropagation();
             
+            // Stop full audio if playing
+            const audio = document.getElementById('trimmer-audio');
+            if (audio && !audio.paused) {
+                audio.pause();
+                const trimmerPlay = document.getElementById('trimmer-play');
+                const trimmerPause = document.getElementById('trimmer-pause');
+                if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+                if (trimmerPause) trimmerPause.style.display = 'none';
+                stopPlayheadTracking();
+            }
+            
             if (isPlayingPreview) {
                 // If already playing, stop it
                 stopAudioPreview();
@@ -2443,6 +2474,18 @@ function initAudioTrimmer() {
         newStopBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Stop full audio if playing
+            const audio = document.getElementById('trimmer-audio');
+            if (audio && !audio.paused) {
+                audio.pause();
+                const trimmerPlay = document.getElementById('trimmer-play');
+                const trimmerPause = document.getElementById('trimmer-pause');
+                if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+                if (trimmerPause) trimmerPause.style.display = 'none';
+                stopPlayheadTracking();
+            }
+            
             stopAudioPreview();
             newStopBtn.style.display = 'none';
             if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
@@ -3816,6 +3859,17 @@ function playTrimmedPreview() {
     if (!audioContext || !audioBuffer) {
         showToast('❌ No audio loaded');
         return;
+    }
+    
+    // Stop full audio if playing
+    const audio = document.getElementById('trimmer-audio');
+    if (audio && !audio.paused) {
+        audio.pause();
+        const trimmerPlay = document.getElementById('trimmer-play');
+        const trimmerPause = document.getElementById('trimmer-pause');
+        if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+        if (trimmerPause) trimmerPause.style.display = 'none';
+        stopPlayheadTracking();
     }
     
     stopAudioPreview();
