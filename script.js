@@ -120,35 +120,51 @@ function initTypewriter() {
             'Pruthvi vs Gowtham = ∞ Roasts! 😈'
         ];
 
+        // Initialize with empty text
+        typedText.textContent = '';
+
         let phraseIndex = 0;
         let charIndex = 0;
         let isDeleting = false;
         let typingSpeed = 100;
+        let typeTimeout = null;
 
         function type() {
             try {
+                // Clear any existing timeout
+                if (typeTimeout) {
+                    clearTimeout(typeTimeout);
+                }
+
                 const currentPhrase = phrases[phraseIndex];
 
                 if (isDeleting) {
-                    charIndex--;
-                    typedText.textContent = currentPhrase.substring(0, charIndex);
-                    typingSpeed = 50;
+                    // Deleting characters
+                    if (charIndex > 0) {
+                        charIndex--;
+                        typedText.textContent = currentPhrase.substring(0, charIndex);
+                        typingSpeed = 30; // Faster when deleting
+                    } else {
+                        // Finished deleting, move to next phrase
+                        isDeleting = false;
+                        phraseIndex = (phraseIndex + 1) % phrases.length;
+                        typingSpeed = 500; // Pause before typing next
+                    }
                 } else {
-                    charIndex++;
-                    typedText.textContent = currentPhrase.substring(0, charIndex);
-                    typingSpeed = 100;
+                    // Typing characters
+                    if (charIndex < currentPhrase.length) {
+                        charIndex++;
+                        typedText.textContent = currentPhrase.substring(0, charIndex);
+                        typingSpeed = 100; // Normal typing speed
+                    } else {
+                        // Finished typing, start deleting after pause
+                        isDeleting = true;
+                        typingSpeed = 2000; // Pause at end before deleting
+                    }
                 }
 
-                if (!isDeleting && charIndex === currentPhrase.length) {
-                    isDeleting = true;
-                    typingSpeed = 2000; // Pause at end
-                } else if (isDeleting && charIndex === 0) {
-                    isDeleting = false;
-                    phraseIndex = (phraseIndex + 1) % phrases.length;
-                    typingSpeed = 500; // Pause before typing next
-                }
-
-                setTimeout(type, typingSpeed);
+                // Schedule next iteration
+                typeTimeout = setTimeout(type, typingSpeed);
             } catch (e) {
                 console.error('Typewriter error:', e);
             }
@@ -158,7 +174,9 @@ function initTypewriter() {
         setTimeout(() => {
             if (typedText && phrases.length > 0) {
                 type();
-                console.log('Typewriter initialized and started');
+                console.log('Typewriter initialized and started with', phrases.length, 'phrases');
+            } else {
+                console.error('Typewriter failed to start - element or phrases missing');
             }
         }, 1000);
     } catch (e) {
