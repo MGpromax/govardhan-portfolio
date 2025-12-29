@@ -40,8 +40,8 @@ const AUTHORIZED_ADMIN = "mgpromax31@gmail.com";
 //
 // 12. Save this file and refresh your website!
 
-const CLOUDINARY_CLOUD_NAME = ""; // ⬅️ PASTE YOUR CLOUD NAME HERE (e.g., "abc123xyz")
-const CLOUDINARY_UPLOAD_PRESET = "govardhan_upload"; // ⬅️ MUST match the preset name you created
+const CLOUDINARY_CLOUD_NAME = "dldf0uldk"; // ✅ Your Cloudinary cloud name
+const CLOUDINARY_UPLOAD_PRESET = "govardhan_upload"; // ✅ Create this preset in Cloudinary (Unsigned mode)
 
 // Global state
 let isAdmin = false;
