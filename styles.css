@@ -3712,3 +3712,833 @@ body.admin-mode .upload-profile-picture {
         right: 80px;
     }
 }
+
+/* ============================================
+   PREMIUM PFP POPUP MODAL
+   ============================================ */
+.pfp-popup-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10005;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.pfp-popup-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.pfp-popup-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(20px);
+}
+
+.pfp-popup-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    animation: pfpPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pfpPopIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.close-pfp-popup {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 0, 110, 0.2);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.close-pfp-popup:hover {
+    background: var(--primary);
+    color: white;
+    transform: rotate(90deg) scale(1.1);
+}
+
+.pfp-member-name {
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+}
+
+/* Rotating Container */
+.pfp-rotating-container {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto 2rem;
+}
+
+.pfp-glow-ring {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--primary),
+        var(--secondary),
+        var(--neon-green),
+        var(--primary)
+    );
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    animation: none;
+}
+
+.pfp-rotating-container.playing .pfp-glow-ring {
+    opacity: 1;
+    animation: glowRingSpin 3s linear infinite;
+}
+
+@keyframes glowRingSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pfp-rotating-circle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 50px rgba(255, 0, 110, 0.3);
+    transition: all 0.5s ease;
+}
+
+.pfp-rotating-container.playing .pfp-rotating-circle {
+    animation: pfpSpin 8s linear infinite;
+    border-color: var(--primary);
+    box-shadow: 
+        0 0 30px var(--primary),
+        0 0 60px rgba(255, 0, 110, 0.5),
+        inset 0 0 30px rgba(255, 0, 110, 0.2);
+}
+
+@keyframes pfpSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pfp-rotating-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Music Visualizer */
+.pfp-music-visualizer {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pfp-rotating-container.playing .pfp-music-visualizer {
+    opacity: 1;
+}
+
+.pfp-music-visualizer span {
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(to top, var(--primary), var(--neon-green));
+    border-radius: 2px;
+    animation: visualizerBar 0.5s ease-in-out infinite alternate;
+}
+
+.pfp-music-visualizer span:nth-child(1) { animation-delay: 0s; }
+.pfp-music-visualizer span:nth-child(2) { animation-delay: 0.1s; }
+.pfp-music-visualizer span:nth-child(3) { animation-delay: 0.2s; }
+.pfp-music-visualizer span:nth-child(4) { animation-delay: 0.3s; }
+.pfp-music-visualizer span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes visualizerBar {
+    0% { height: 5px; }
+    100% { height: 25px; }
+}
+
+/* Music Control Button */
+.pfp-music-control {
+    margin-top: 1rem;
+}
+
+.pfp-music-toggle {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.pfp-music-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(255, 0, 110, 0.5);
+}
+
+.pfp-music-toggle.playing {
+    background: linear-gradient(135deg, var(--neon-green), #00aa55);
+}
+
+.pfp-music-toggle.playing i::before {
+    content: "\f04c"; /* Pause icon */
+}
+
+.pfp-no-music {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+/* ============================================
+   PREMIUM IMAGE CROPPER MODAL
+   ============================================ */
+.cropper-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 10010;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cropper-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.cropper-modal-content {
+    background: linear-gradient(145deg, rgba(25, 25, 35, 0.98), rgba(15, 15, 22, 0.98));
+    border-radius: 24px;
+    padding: 0;
+    max-width: 600px;
+    width: 95%;
+    max-height: 90vh;
+    overflow: hidden;
+    border: 1px solid rgba(255, 0, 110, 0.2);
+    box-shadow: 0 25px 80px rgba(255, 0, 110, 0.3);
+    animation: cropperPopIn 0.4s ease;
+}
+
+@keyframes cropperPopIn {
+    0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.cropper-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background: rgba(255, 0, 110, 0.1);
+    border-bottom: 1px solid rgba(255, 0, 110, 0.2);
+}
+
+.cropper-header h3 {
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.cropper-header h3 i {
+    color: var(--primary);
+}
+
+.cropper-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-close:hover {
+    background: rgba(255, 0, 110, 0.2);
+    color: var(--primary);
+}
+
+.cropper-body {
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.cropper-container {
+    width: 300px;
+    height: 300px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cropper-container img {
+    max-width: 100%;
+    display: block;
+}
+
+/* Cropper.js customization */
+.cropper-view-box {
+    border-radius: 50%;
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.cropper-face {
+    background: transparent;
+}
+
+.cropper-dashed {
+    border-color: rgba(255, 0, 110, 0.5);
+}
+
+.cropper-center {
+    display: none;
+}
+
+.cropper-line {
+    background: var(--primary);
+}
+
+.cropper-point {
+    background: var(--primary);
+    width: 10px;
+    height: 10px;
+}
+
+/* Preview Section */
+.cropper-preview-section {
+    text-align: center;
+}
+
+.cropper-preview-section p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.cropper-preview-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary);
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(255, 0, 110, 0.3);
+}
+
+.cropper-preview-circle .preview {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Cropper Controls */
+.cropper-controls {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.cropper-zoom, .cropper-rotate {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cropper-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-btn:hover {
+    background: rgba(255, 0, 110, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+#zoom-slider {
+    width: 100px;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+}
+
+#zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* Cropper Actions */
+.cropper-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.cropper-cancel, .cropper-confirm {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.cropper-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+}
+
+.cropper-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.cropper-confirm {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    color: white;
+}
+
+.cropper-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 0, 110, 0.4);
+}
+
+/* ============================================
+   PREMIUM AUDIO TRIMMER MODAL
+   ============================================ */
+.trimmer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 10010;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.trimmer-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.trimmer-modal-content {
+    background: linear-gradient(145deg, rgba(25, 25, 35, 0.98), rgba(15, 15, 22, 0.98));
+    border-radius: 24px;
+    padding: 0;
+    max-width: 600px;
+    width: 95%;
+    overflow: hidden;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    box-shadow: 0 25px 80px rgba(0, 255, 136, 0.2);
+    animation: trimmerPopIn 0.4s ease;
+}
+
+@keyframes trimmerPopIn {
+    0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.trimmer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background: rgba(0, 255, 136, 0.1);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.trimmer-header h3 {
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.trimmer-header h3 i {
+    color: var(--neon-green);
+}
+
+.trimmer-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trimmer-close:hover {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--neon-green);
+}
+
+.trimmer-body {
+    padding: 1.5rem;
+}
+
+/* Waveform Container */
+.trimmer-waveform {
+    position: relative;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+#waveform-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Trim Handles */
+.trim-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.trim-handle {
+    position: absolute;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    background: var(--neon-green);
+    cursor: ew-resize;
+    pointer-events: auto;
+    z-index: 3;
+}
+
+.trim-handle::after {
+    content: '|||';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    color: var(--dark-bg);
+    letter-spacing: 1px;
+}
+
+.trim-start {
+    left: 0;
+    border-radius: 6px 0 0 6px;
+}
+
+.trim-end {
+    right: 0;
+    border-radius: 0 6px 6px 0;
+}
+
+.trim-selection {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(0, 255, 136, 0.2);
+    border-top: 2px solid var(--neon-green);
+    border-bottom: 2px solid var(--neon-green);
+    left: 12px;
+    right: 12px;
+    pointer-events: none;
+}
+
+.trim-playhead {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: white;
+    left: 0;
+    z-index: 4;
+    display: none;
+}
+
+/* Time Display */
+.trimmer-time {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.trimmer-time span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+.trim-duration {
+    color: var(--neon-green) !important;
+    font-weight: 600;
+}
+
+/* Trimmer Controls */
+.trimmer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.trimmer-btn {
+    padding: 12px 24px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.trimmer-btn:hover {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+}
+
+.trimmer-btn.playing {
+    background: var(--neon-green);
+    color: var(--dark-bg);
+}
+
+/* Trimmer Actions */
+.trimmer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    margin-top: 1rem;
+    margin: 0 -1.5rem -1.5rem;
+    padding: 1rem 1.5rem;
+}
+
+.trimmer-cancel, .trimmer-confirm {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.trimmer-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+}
+
+.trimmer-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.trimmer-confirm {
+    background: linear-gradient(135deg, var(--neon-green), #00aa55);
+    border: none;
+    color: var(--dark-bg);
+}
+
+.trimmer-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+}
+
+/* ============================================
+   DELETE BUTTONS FOR ADMIN
+   ============================================ */
+.admin-delete-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 8px;
+    z-index: 15;
+}
+
+body.admin-mode .admin-delete-controls {
+    display: flex;
+}
+
+.delete-pfp-btn, .delete-music-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.delete-pfp-btn {
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+}
+
+.delete-music-btn {
+    background: rgba(255, 100, 0, 0.8);
+    color: white;
+}
+
+.delete-pfp-btn:hover, .delete-music-btn:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pfp-rotating-container {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .pfp-glow-ring {
+        width: 240px;
+        height: 240px;
+    }
+    
+    .pfp-rotating-circle {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .cropper-body {
+        flex-direction: column;
+    }
+    
+    .cropper-container {
+        width: 100%;
+        height: 250px;
+    }
+    
+    .cropper-preview-circle {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .cropper-controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

@@ -15,9 +15,11 @@
     <title>ಗಾಂಡು ಚೂತಿಯಗಳು | The Legend Gang</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=3.0">
+    <link rel="stylesheet" href="styles.css?v=4.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Cropper.js for premium image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 </head>
 <body>
     <!-- Animated Background -->
@@ -770,19 +772,152 @@
         </div>
     </div>
     
-    <!-- Profile Picture Popup Modal -->
+    <!-- Premium Profile Picture Popup Modal -->
     <div class="pfp-popup-modal" id="pfp-popup-modal">
+        <div class="pfp-popup-overlay"></div>
         <div class="pfp-popup-content">
-            <button class="close-pfp-popup" id="close-pfp-popup">&times;</button>
-            <div class="pfp-rotating-circle" id="pfp-rotating-circle">
-                <img id="pfp-popup-image" src="" alt="Profile Picture">
+            <button class="close-pfp-popup" id="close-pfp-popup">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- Member Name -->
+            <h3 class="pfp-member-name" id="pfp-member-name"></h3>
+            
+            <!-- Rotating PFP Container -->
+            <div class="pfp-rotating-container" id="pfp-rotating-container">
+                <div class="pfp-glow-ring"></div>
+                <div class="pfp-rotating-circle" id="pfp-rotating-circle">
+                    <img id="pfp-popup-image" src="" alt="Profile Picture">
+                </div>
+                <div class="pfp-music-visualizer" id="pfp-music-visualizer">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
             </div>
+            
+            <!-- Music Control -->
             <div class="pfp-music-control" id="pfp-music-control" style="display: none;">
                 <audio id="pfp-popup-audio" loop></audio>
                 <button class="pfp-music-toggle" id="pfp-music-toggle">
-                    <i class="fas fa-music"></i> <span>Play Music</span>
+                    <i class="fas fa-play"></i>
+                    <span>Tap to Play Music</span>
                 </button>
             </div>
+            
+            <!-- No Music Message -->
+            <p class="pfp-no-music" id="pfp-no-music" style="display: none;">
+                <i class="fas fa-music-slash"></i> No music uploaded
+            </p>
+        </div>
+    </div>
+    
+    <!-- Premium Image Cropper Modal -->
+    <div class="cropper-modal" id="cropper-modal">
+        <div class="cropper-modal-content">
+            <div class="cropper-header">
+                <h3><i class="fas fa-crop-alt"></i> Crop Profile Picture</h3>
+                <button class="cropper-close" id="cropper-close">&times;</button>
+            </div>
+            
+            <div class="cropper-body">
+                <div class="cropper-container">
+                    <img id="cropper-image" src="" alt="Crop Image">
+                </div>
+                
+                <!-- Circular Preview -->
+                <div class="cropper-preview-section">
+                    <p>Preview (What others will see)</p>
+                    <div class="cropper-preview-circle">
+                        <div class="preview" id="cropper-preview"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cropper Controls -->
+            <div class="cropper-controls">
+                <div class="cropper-zoom">
+                    <button class="cropper-btn" id="zoom-out" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1">
+                    <button class="cropper-btn" id="zoom-in" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                </div>
+                <div class="cropper-rotate">
+                    <button class="cropper-btn" id="rotate-left" title="Rotate Left">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="cropper-btn" id="rotate-right" title="Rotate Right">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="cropper-actions">
+                <button class="cropper-cancel" id="cropper-cancel">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="cropper-confirm" id="cropper-confirm">
+                    <i class="fas fa-check"></i> Apply & Upload
+                </button>
+            </div>
+            
+            <!-- Hidden input for file selection -->
+            <input type="file" id="pfp-file-input" accept="image/*" style="display: none;">
+        </div>
+    </div>
+    
+    <!-- Premium Audio Trimmer Modal -->
+    <div class="trimmer-modal" id="trimmer-modal">
+        <div class="trimmer-modal-content">
+            <div class="trimmer-header">
+                <h3><i class="fas fa-cut"></i> Trim Audio</h3>
+                <button class="trimmer-close" id="trimmer-close">&times;</button>
+            </div>
+            
+            <div class="trimmer-body">
+                <!-- Audio Waveform -->
+                <div class="trimmer-waveform" id="trimmer-waveform">
+                    <canvas id="waveform-canvas"></canvas>
+                    <div class="trim-handles">
+                        <div class="trim-handle trim-start" id="trim-start"></div>
+                        <div class="trim-selection" id="trim-selection"></div>
+                        <div class="trim-handle trim-end" id="trim-end"></div>
+                    </div>
+                    <div class="trim-playhead" id="trim-playhead"></div>
+                </div>
+                
+                <!-- Time Display -->
+                <div class="trimmer-time">
+                    <span id="trim-start-time">0:00</span>
+                    <span class="trim-duration" id="trim-duration">Duration: 0:00</span>
+                    <span id="trim-end-time">0:00</span>
+                </div>
+                
+                <!-- Audio Controls -->
+                <div class="trimmer-controls">
+                    <button class="trimmer-btn" id="trimmer-play">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="trimmer-btn" id="trimmer-preview" title="Preview Selection">
+                        <i class="fas fa-headphones"></i> Preview
+                    </button>
+                </div>
+                
+                <audio id="trimmer-audio" style="display: none;"></audio>
+            </div>
+            
+            <div class="trimmer-actions">
+                <button class="trimmer-cancel" id="trimmer-cancel">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="trimmer-confirm" id="trimmer-confirm">
+                    <i class="fas fa-check"></i> Apply & Upload
+                </button>
+            </div>
+            
+            <!-- Hidden input for file selection -->
+            <input type="file" id="music-file-input" accept="audio/*" style="display: none;">
         </div>
     </div>
 
@@ -793,6 +928,9 @@
     
     <!-- Cloudinary Upload Widget -->
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    
+    <!-- Cropper.js for premium image cropping -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         // Verify Cloudinary loaded
         window.addEventListener('load', function() {
@@ -904,6 +1042,6 @@
         <i class="fas fa-cog"></i>
     </button>
 
-    <script src="script.js?v=3.0"></script>
+    <script src="script.js?v=4.0"></script>
 </body>
 </html>

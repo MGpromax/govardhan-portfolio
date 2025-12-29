@@ -1993,3 +1993,698 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+/* ============================================
+   PREMIUM IMAGE CROPPER
+   ============================================ */
+let cropper = null;
+let currentCropperMember = null;
+
+function openImageCropper(member) {
+    currentCropperMember = member;
+    const fileInput = document.getElementById('pfp-file-input');
+    fileInput.click();
+}
+
+function initImageCropper() {
+    const fileInput = document.getElementById('pfp-file-input');
+    const cropperModal = document.getElementById('cropper-modal');
+    const cropperImage = document.getElementById('cropper-image');
+    const cropperClose = document.getElementById('cropper-close');
+    const cropperCancel = document.getElementById('cropper-cancel');
+    const cropperConfirm = document.getElementById('cropper-confirm');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomIn = document.getElementById('zoom-in');
+    const zoomOut = document.getElementById('zoom-out');
+    const rotateLeft = document.getElementById('rotate-left');
+    const rotateRight = document.getElementById('rotate-right');
+    
+    if (!fileInput) return;
+    
+    // File selection
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            showToast('❌ Please select an image file!');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('❌ Image must be less than 10MB!');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            cropperImage.src = event.target.result;
+            cropperModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Initialize Cropper.js
+            if (cropper) {
+                cropper.destroy();
+            }
+            
+            setTimeout(() => {
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.9,
+                    cropBoxResizable: true,
+                    cropBoxMovable: true,
+                    guides: false,
+                    center: false,
+                    highlight: false,
+                    background: false,
+                    responsive: true,
+                    preview: '#cropper-preview',
+                    ready: function() {
+                        console.log('Cropper ready');
+                    }
+                });
+            }, 100);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Close handlers
+    const closeCropper = () => {
+        cropperModal.classList.remove('show');
+        document.body.style.overflow = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        fileInput.value = '';
+    };
+    
+    if (cropperClose) cropperClose.addEventListener('click', closeCropper);
+    if (cropperCancel) cropperCancel.addEventListener('click', closeCropper);
+    
+    // Click outside to close
+    cropperModal.addEventListener('click', (e) => {
+        if (e.target === cropperModal) closeCropper();
+    });
+    
+    // Zoom controls
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', (e) => {
+            if (cropper) cropper.zoomTo(parseFloat(e.target.value));
+        });
+    }
+    
+    if (zoomIn) {
+        zoomIn.addEventListener('click', () => {
+            if (cropper) cropper.zoom(0.1);
+        });
+    }
+    
+    if (zoomOut) {
+        zoomOut.addEventListener('click', () => {
+            if (cropper) cropper.zoom(-0.1);
+        });
+    }
+    
+    // Rotate controls
+    if (rotateLeft) {
+        rotateLeft.addEventListener('click', () => {
+            if (cropper) cropper.rotate(-90);
+        });
+    }
+    
+    if (rotateRight) {
+        rotateRight.addEventListener('click', () => {
+            if (cropper) cropper.rotate(90);
+        });
+    }
+    
+    // Confirm and upload
+    if (cropperConfirm) {
+        cropperConfirm.addEventListener('click', () => {
+            if (!cropper || !currentCropperMember) return;
+            
+            showToast('⏳ Processing image...');
+            
+            // Get cropped canvas at high quality
+            const canvas = cropper.getCroppedCanvas({
+                width: 500,
+                height: 500,
+                fillColor: '#000',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            canvas.toBlob((blob) => {
+                // Upload to Cloudinary
+                uploadBlobToCloudinary(blob, currentCropperMember, 'pfp');
+                closeCropper();
+            }, 'image/jpeg', 0.95); // High quality JPEG
+        });
+    }
+}
+
+// Upload blob to Cloudinary
+function uploadBlobToCloudinary(blob, member, type) {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+        showToast('❌ Cloudinary not configured!');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', blob);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `members/${member}/${type}`);
+    
+    showToast('⏳ Uploading...');
+    
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.secure_url) {
+            savePFPToFirebase(member, data.secure_url, data.public_id);
+            showToast('✅ Profile picture updated!');
+        } else {
+            showToast('❌ Upload failed!');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed!');
+    });
+}
+
+/* ============================================
+   PREMIUM AUDIO TRIMMER
+   ============================================ */
+let audioContext = null;
+let audioBuffer = null;
+let trimStartTime = 0;
+let trimEndTime = 0;
+let currentTrimmerMember = null;
+let isPlayingPreview = false;
+let audioSource = null;
+
+function openAudioTrimmer(member) {
+    currentTrimmerMember = member;
+    const fileInput = document.getElementById('music-file-input');
+    fileInput.click();
+}
+
+function initAudioTrimmer() {
+    const fileInput = document.getElementById('music-file-input');
+    const trimmerModal = document.getElementById('trimmer-modal');
+    const trimmerClose = document.getElementById('trimmer-close');
+    const trimmerCancel = document.getElementById('trimmer-cancel');
+    const trimmerConfirm = document.getElementById('trimmer-confirm');
+    const trimmerPlay = document.getElementById('trimmer-play');
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerAudio = document.getElementById('trimmer-audio');
+    
+    if (!fileInput) return;
+    
+    // File selection
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Validate file
+        if (!file.type.startsWith('audio/')) {
+            showToast('❌ Please select an audio file!');
+            return;
+        }
+        
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('❌ Audio must be less than 50MB!');
+            return;
+        }
+        
+        trimmerModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Load audio for preview
+        const audioUrl = URL.createObjectURL(file);
+        trimmerAudio.src = audioUrl;
+        
+        // Initialize AudioContext for waveform
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const arrayBuffer = await file.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            trimStartTime = 0;
+            trimEndTime = Math.min(audioBuffer.duration, 30); // Max 30 seconds
+            
+            drawWaveform();
+            updateTrimDisplay();
+        } catch (err) {
+            console.error('Audio processing error:', err);
+            showToast('❌ Could not process audio!');
+        }
+    });
+    
+    // Close handlers
+    const closeTrimmer = () => {
+        trimmerModal.classList.remove('show');
+        document.body.style.overflow = '';
+        stopAudioPreview();
+        fileInput.value = '';
+        audioBuffer = null;
+    };
+    
+    if (trimmerClose) trimmerClose.addEventListener('click', closeTrimmer);
+    if (trimmerCancel) trimmerCancel.addEventListener('click', closeTrimmer);
+    
+    // Click outside to close
+    trimmerModal.addEventListener('click', (e) => {
+        if (e.target === trimmerModal) closeTrimmer();
+    });
+    
+    // Play full audio
+    if (trimmerPlay) {
+        trimmerPlay.addEventListener('click', () => {
+            if (trimmerAudio.paused) {
+                trimmerAudio.play();
+                trimmerPlay.innerHTML = '<i class="fas fa-pause"></i>';
+                trimmerPlay.classList.add('playing');
+            } else {
+                trimmerAudio.pause();
+                trimmerPlay.innerHTML = '<i class="fas fa-play"></i>';
+                trimmerPlay.classList.remove('playing');
+            }
+        });
+    }
+    
+    // Preview trimmed section
+    if (trimmerPreview) {
+        trimmerPreview.addEventListener('click', () => {
+            playTrimmedPreview();
+        });
+    }
+    
+    // Confirm and upload
+    if (trimmerConfirm) {
+        trimmerConfirm.addEventListener('click', () => {
+            if (!currentTrimmerMember) return;
+            
+            // For now, upload full audio (trimming requires server-side processing)
+            const fileInput = document.getElementById('music-file-input');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                uploadAudioToCloudinary(file, currentTrimmerMember);
+            }
+            closeTrimmer();
+        });
+    }
+}
+
+function drawWaveform() {
+    const canvas = document.getElementById('waveform-canvas');
+    if (!canvas || !audioBuffer) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const data = audioBuffer.getChannelData(0);
+    const step = Math.ceil(data.length / width);
+    const amp = height / 2;
+    
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, amp);
+    
+    for (let i = 0; i < width; i++) {
+        let min = 1.0;
+        let max = -1.0;
+        
+        for (let j = 0; j < step; j++) {
+            const datum = data[(i * step) + j];
+            if (datum < min) min = datum;
+            if (datum > max) max = datum;
+        }
+        
+        ctx.lineTo(i, (1 + min) * amp);
+        ctx.lineTo(i, (1 + max) * amp);
+    }
+    
+    ctx.strokeStyle = 'var(--neon-green)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function updateTrimDisplay() {
+    const startEl = document.getElementById('trim-start-time');
+    const endEl = document.getElementById('trim-end-time');
+    const durationEl = document.getElementById('trim-duration');
+    
+    if (startEl) startEl.textContent = formatTime(trimStartTime);
+    if (endEl) endEl.textContent = formatTime(trimEndTime);
+    if (durationEl) durationEl.textContent = `Duration: ${formatTime(trimEndTime - trimStartTime)}`;
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function playTrimmedPreview() {
+    if (!audioContext || !audioBuffer) return;
+    
+    stopAudioPreview();
+    
+    audioSource = audioContext.createBufferSource();
+    audioSource.buffer = audioBuffer;
+    audioSource.connect(audioContext.destination);
+    audioSource.start(0, trimStartTime, trimEndTime - trimStartTime);
+    
+    isPlayingPreview = true;
+    showToast('🎵 Playing preview...');
+    
+    audioSource.onended = () => {
+        isPlayingPreview = false;
+    };
+}
+
+function stopAudioPreview() {
+    if (audioSource) {
+        try {
+            audioSource.stop();
+        } catch (e) {}
+        audioSource = null;
+    }
+    isPlayingPreview = false;
+}
+
+// Upload audio to Cloudinary
+function uploadAudioToCloudinary(file, member) {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+        showToast('❌ Cloudinary not configured!');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `members/${member}/music`);
+    formData.append('resource_type', 'auto');
+    
+    showToast('⏳ Uploading audio...');
+    
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.secure_url) {
+            saveMusicToFirebase(member, data.secure_url, data.public_id);
+            showToast('✅ Music uploaded!');
+        } else {
+            console.error('Upload response:', data);
+            showToast('❌ Upload failed!');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showToast('❌ Upload failed!');
+    });
+}
+
+function saveMusicToFirebase(member, url, publicId) {
+    const db = firebase.database();
+    db.ref(`members/${member}/music`).set({
+        url: url,
+        publicId: publicId,
+        uploadedAt: Date.now()
+    }).then(() => {
+        console.log('Music saved to Firebase');
+    }).catch(err => {
+        console.error('Firebase save error:', err);
+    });
+}
+
+/* ============================================
+   PREMIUM PFP POPUP
+   ============================================ */
+function initPremiumPFPPopup() {
+    const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
+    const memberNames = {
+        'govardhan': 'Govardhan',
+        'gowtham': 'Gowtham', 
+        'varun': 'Varun',
+        'gahan': 'Gahan',
+        'pruthvi': 'Pruthvi',
+        'likhith': 'Likhith'
+    };
+    
+    members.forEach(member => {
+        const pfpImage = document.getElementById(`pfp-${member}`);
+        if (pfpImage) {
+            pfpImage.addEventListener('click', (e) => {
+                if (!isAdmin) {
+                    openPremiumPFPPopup(member, memberNames[member]);
+                }
+            });
+        }
+        
+        // Also handle click on member image wrapper
+        const imageWrapper = document.querySelector(`.member-card[data-member="${member}"] .member-image`);
+        if (imageWrapper) {
+            imageWrapper.style.cursor = 'pointer';
+            imageWrapper.addEventListener('click', (e) => {
+                // Don't open if clicking on admin buttons
+                if (e.target.closest('.upload-btn')) return;
+                if (!isAdmin) {
+                    openPremiumPFPPopup(member, memberNames[member]);
+                }
+            });
+        }
+    });
+    
+    // Close popup handlers
+    const closeBtn = document.getElementById('close-pfp-popup');
+    const popupModal = document.getElementById('pfp-popup-modal');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePremiumPFPPopup);
+    }
+    
+    if (popupModal) {
+        popupModal.addEventListener('click', (e) => {
+            if (e.target === popupModal || e.target.classList.contains('pfp-popup-overlay')) {
+                closePremiumPFPPopup();
+            }
+        });
+    }
+    
+    // Music toggle
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    if (musicToggle) {
+        musicToggle.addEventListener('click', togglePFPMusic);
+    }
+}
+
+function openPremiumPFPPopup(member, memberName) {
+    const popupModal = document.getElementById('pfp-popup-modal');
+    const popupImage = document.getElementById('pfp-popup-image');
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const memberNameEl = document.getElementById('pfp-member-name');
+    const musicControl = document.getElementById('pfp-music-control');
+    const noMusicEl = document.getElementById('pfp-no-music');
+    const rotatingContainer = document.getElementById('pfp-rotating-container');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (!popupModal || !popupImage) return;
+    
+    // Reset state
+    rotatingContainer.classList.remove('playing');
+    if (musicToggle) {
+        musicToggle.classList.remove('playing');
+        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+    }
+    
+    // Set member name
+    if (memberNameEl) memberNameEl.textContent = memberName;
+    
+    const db = firebase.database();
+    
+    // Load PFP
+    db.ref(`members/${member}/pfp`).once('value', (snapshot) => {
+        const pfpData = snapshot.val();
+        if (pfpData && pfpData.url) {
+            popupImage.src = pfpData.url;
+            popupModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Load music
+            db.ref(`members/${member}/music`).once('value', (musicSnapshot) => {
+                const musicData = musicSnapshot.val();
+                if (musicData && musicData.url) {
+                    popupAudio.src = musicData.url;
+                    musicControl.style.display = 'block';
+                    if (noMusicEl) noMusicEl.style.display = 'none';
+                } else {
+                    musicControl.style.display = 'none';
+                    if (noMusicEl) noMusicEl.style.display = 'block';
+                }
+            });
+        } else {
+            showToast('No profile picture found');
+        }
+    });
+}
+
+function togglePFPMusic() {
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const rotatingContainer = document.getElementById('pfp-rotating-container');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (!popupAudio) return;
+    
+    if (popupAudio.paused) {
+        popupAudio.play().then(() => {
+            rotatingContainer.classList.add('playing');
+            musicToggle.classList.add('playing');
+            musicToggle.innerHTML = '<i class="fas fa-pause"></i><span>Pause Music</span>';
+        }).catch(err => {
+            console.log('Playback error:', err);
+            showToast('❌ Could not play audio');
+        });
+    } else {
+        popupAudio.pause();
+        rotatingContainer.classList.remove('playing');
+        musicToggle.classList.remove('playing');
+        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+    }
+}
+
+function closePremiumPFPPopup() {
+    const popupModal = document.getElementById('pfp-popup-modal');
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    const rotatingContainer = document.getElementById('pfp-rotating-container');
+    const musicToggle = document.getElementById('pfp-music-toggle');
+    
+    if (popupModal) {
+        popupModal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    
+    if (popupAudio) {
+        popupAudio.pause();
+        popupAudio.currentTime = 0;
+    }
+    
+    if (rotatingContainer) {
+        rotatingContainer.classList.remove('playing');
+    }
+    
+    if (musicToggle) {
+        musicToggle.classList.remove('playing');
+        musicToggle.innerHTML = '<i class="fas fa-play"></i><span>Tap to Play Music</span>';
+    }
+}
+
+/* ============================================
+   DELETE FUNCTIONS FOR ADMIN
+   ============================================ */
+function deletePFP(member) {
+    if (!confirm(`Delete ${member}'s profile picture?`)) return;
+    
+    const db = firebase.database();
+    db.ref(`members/${member}/pfp`).remove()
+        .then(() => {
+            showToast('✅ Profile picture deleted!');
+            // Reset the display
+            const pfpImg = document.getElementById(`pfp-${member}`);
+            if (pfpImg) {
+                pfpImg.style.display = 'none';
+                pfpImg.src = '';
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            showToast('❌ Could not delete!');
+        });
+}
+
+function deleteMusic(member) {
+    if (!confirm(`Delete ${member}'s music?`)) return;
+    
+    const db = firebase.database();
+    db.ref(`members/${member}/music`).remove()
+        .then(() => {
+            showToast('✅ Music deleted!');
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            showToast('❌ Could not delete!');
+        });
+}
+
+/* ============================================
+   UPDATE INIT FUNCTIONS
+   ============================================ */
+// Override the PFP upload to use custom cropper
+function updatePFPUploadButtons() {
+    const members = ['govardhan', 'gowtham', 'varun', 'gahan', 'pruthvi', 'likhith'];
+    
+    members.forEach(member => {
+        const pfpBtn = document.querySelector(`.upload-pfp-btn[data-member="${member}"]`);
+        if (pfpBtn) {
+            // Remove old listener by cloning
+            const newBtn = pfpBtn.cloneNode(true);
+            pfpBtn.parentNode.replaceChild(newBtn, pfpBtn);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isAdmin) {
+                    openImageCropper(member);
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+        }
+        
+        const musicBtn = document.querySelector(`.upload-music-btn[data-member="${member}"]`);
+        if (musicBtn) {
+            // Remove old listener by cloning
+            const newBtn = musicBtn.cloneNode(true);
+            musicBtn.parentNode.replaceChild(newBtn, musicBtn);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isAdmin) {
+                    openAudioTrimmer(member);
+                } else {
+                    showToast('⚠️ Only admin can upload!');
+                }
+            });
+        }
+    });
+}
+
+// Initialize all premium features
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for other scripts to load
+    setTimeout(() => {
+        initImageCropper();
+        initAudioTrimmer();
+        initPremiumPFPPopup();
+        updatePFPUploadButtons();
+        console.log('✨ Premium features initialized!');
+    }, 1500);
+});
+
