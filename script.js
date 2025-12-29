@@ -937,6 +937,7 @@ function initAdminPanel() {
     if (closeModal) {
         closeModal.addEventListener('click', () => {
             adminModal.classList.remove('show');
+            document.body.style.overflow = ''; // Ensure scroll is restored
         });
     }
 
@@ -945,6 +946,7 @@ function initAdminPanel() {
         adminModal.addEventListener('click', (e) => {
             if (e.target === adminModal) {
                 adminModal.classList.remove('show');
+                document.body.style.overflow = ''; // Ensure scroll is restored
             }
         });
     }
@@ -1009,6 +1011,9 @@ function initAdminPanel() {
     // Logout
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
+            // Close any open modals and restore scroll
+            closeAllModals();
+            
             firebase.auth().signOut()
                 .then(() => {
                     showToast('👋 Logged out successfully!');
@@ -1018,6 +1023,31 @@ function initAdminPanel() {
                 });
         });
     }
+}
+
+// Helper function to close all modals and restore scroll
+function closeAllModals() {
+    // Close gallery modal
+    const galleryModal = document.getElementById('gallery-modal');
+    if (galleryModal) galleryModal.classList.remove('show');
+    
+    // Close PFP popup
+    const pfpModal = document.getElementById('pfp-popup-modal');
+    if (pfpModal) pfpModal.classList.remove('show');
+    
+    // Close call popup
+    const callModal = document.getElementById('call-popup-modal');
+    if (callModal) callModal.classList.remove('show');
+    
+    // Stop any playing audio
+    const popupAudio = document.getElementById('pfp-popup-audio');
+    if (popupAudio) {
+        popupAudio.pause();
+        popupAudio.currentTime = 0;
+    }
+    
+    // Restore scroll
+    document.body.style.overflow = '';
 }
 
 function enableAdminMode() {
@@ -1037,6 +1067,9 @@ function disableAdminMode() {
         adminFab.classList.remove('admin-active');
         adminFab.innerHTML = '<i class="fas fa-cog"></i>';
     }
+    
+    // Close any open modals and restore scroll
+    closeAllModals();
 }
 
 function showAdminPanel(user) {
@@ -1129,13 +1162,17 @@ function initGalleryButtons() {
     const galleryModal = document.getElementById('gallery-modal');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            if (galleryModal) galleryModal.classList.remove('show');
+            if (galleryModal) {
+                galleryModal.classList.remove('show');
+                document.body.style.overflow = ''; // Restore scroll
+            }
         });
     }
     if (galleryModal) {
         galleryModal.addEventListener('click', (e) => {
             if (e.target === galleryModal) {
                 galleryModal.classList.remove('show');
+                document.body.style.overflow = ''; // Restore scroll
             }
         });
     }
