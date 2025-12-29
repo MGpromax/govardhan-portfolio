@@ -1236,18 +1236,13 @@ function openCloudinaryUpload(member, type) {
     console.log('Creating widget with preset:', presetName);
     console.log('Resource type for', type, ':', resourceType);
     
-    // Create config object with explicit string values
+    // Simplified widget options - only essential parameters
     const widgetOptions = {
         cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
         uploadPreset: presetName,
-        sources: type === 'music' ? ['local'] : ['local', 'camera'], // No camera for music
-        resourceType: resourceType,
-        publicIdPrefix: `members/${member}/${type}/`,
+        sources: ['local'],
         multiple: type !== 'music',
-        maxFileSize: type === 'photos' ? 10000000 : type === 'music' ? 50000000 : 100000000, // 50MB for music
-        clientAllowedFormats: type === 'photos' ? ['jpg', 'jpeg', 'png', 'gif', 'webp'] : 
-                             type === 'music' ? ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'] : 
-                             ['mp4', 'webm', 'mov', 'avi']
+        resourceType: resourceType
     };
     
     console.log('Widget options:', JSON.stringify(widgetOptions, null, 2));
@@ -1327,22 +1322,14 @@ function openCloudinaryPFPUpload(member) {
     
     console.log('Opening Cloudinary PFP upload with preset:', presetName);
     
+    // Simplified widget options - only essential parameters
     const widgetOptions = {
         cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
         uploadPreset: presetName,
-        sources: ['local', 'camera'],
-        resourceType: 'image',
-        publicIdPrefix: `members/${member}/pfp/`,
+        sources: ['local'],
         multiple: false,
-        maxFileSize: 10000000, // 10MB
-        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         cropping: true,
-        croppingAspectRatio: 1, // Square/circular for profile pictures
-        croppingDefaultSelectionRatio: 1,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: 'custom', // Allows manual positioning
-        showAdvancedOptions: false,
-        showCompletedButton: true
+        croppingAspectRatio: 1
     };
     
     console.log('PFP Widget options:', JSON.stringify(widgetOptions, null, 2));
@@ -1415,16 +1402,12 @@ function openCloudinaryPhotoUpload(member) {
     
     console.log('Opening Cloudinary photo upload with preset:', presetName);
     
-    // Build widget options - ensure uploadPreset is the FIRST property
+    // Simplified widget options - only essential parameters
     const widgetOptions = {
         cloudName: String(CLOUDINARY_CLOUD_NAME).trim(),
-        uploadPreset: String(presetName), // Force string conversion again
-        sources: ['local', 'camera'],
-        resourceType: 'image',
-        multiple: false,
-        maxFileSize: 10000000, // 10MB
-        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-        publicIdPrefix: `members/${member}/photo/`
+        uploadPreset: presetName,
+        sources: ['local'],
+        multiple: false
     };
     
     // Double-check the preset value
