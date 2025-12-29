@@ -39,12 +39,13 @@ function isAuthorizedAdmin(email) {
     if (!email) return false;
     const normalizedEmail = email.toLowerCase().trim();
     // Multiple verification layers
+    // mgpromax31@gmail.com = 20 chars, '3' at index 8, '1' at index 9
     const checks = [
         normalizedEmail.includes('mgpromax'),
         normalizedEmail.endsWith('@gmail.com'),
         normalizedEmail.length === 20,
-        normalizedEmail.charAt(9) === '3',
-        normalizedEmail.charAt(10) === '1'
+        normalizedEmail.charAt(8) === '3',
+        normalizedEmail.charAt(9) === '1'
     ];
     return checks.every(check => check === true);
 }
