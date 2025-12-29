@@ -15,7 +15,7 @@
     <title>ಗಾಂಡು ಚೂತಿಯಗಳು | The Legend Gang</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=2.0">
+    <link rel="stylesheet" href="styles.css?v=3.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -879,39 +879,99 @@
         });
     </script>
 
-    <!-- Admin Login Modal -->
+    <!-- Admin Login Modal - Premium Design -->
     <div class="admin-modal" id="admin-modal">
         <div class="admin-modal-content">
             <button class="close-modal" id="close-admin-modal">&times;</button>
-            <div class="admin-header">
-                <i class="fas fa-user-shield"></i>
-                <h2>Admin Login</h2>
+            
+            <!-- Animated Background -->
+            <div class="admin-modal-bg">
+                <div class="admin-glow admin-glow-1"></div>
+                <div class="admin-glow admin-glow-2"></div>
             </div>
-<div id="login-form" class="admin-form">
-                <p>Sign in to edit the website</p>
+            
+            <div class="admin-header">
+                <div class="admin-icon-wrapper">
+                    <i class="fas fa-user-shield"></i>
+                    <div class="admin-icon-ring"></div>
+                </div>
+                <h2>Admin Portal</h2>
+                <p class="admin-subtitle">Secure Access Control</p>
+            </div>
+            
+            <div id="login-form" class="admin-form">
                 <div class="login-inputs">
-                    <input type="email" id="admin-email" placeholder="Email" class="admin-input">
-                    <input type="password" id="admin-password" placeholder="Password" class="admin-input">
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="admin-email" placeholder="Email Address" class="admin-input">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="admin-password" placeholder="Password" class="admin-input">
+                    </div>
                     <button class="btn btn-primary btn-login" id="email-login">
-                        <i class="fas fa-sign-in-alt"></i> Login
+                        <i class="fas fa-sign-in-alt"></i> <span>Sign In</span>
                     </button>
                 </div>
-                <div class="login-divider"><span>or</span></div>
+                <div class="login-divider"><span>OR</span></div>
                 <button class="btn btn-google" id="google-login">
-                    <i class="fab fa-google"></i> Sign in with Google
+                    <i class="fab fa-google"></i> <span>Continue with Google</span>
                 </button>
-                <p class="admin-note">⚠️ Only authorized admins can login</p>
+                <p class="admin-note"><i class="fas fa-shield-alt"></i> Protected Area • Authorized Personnel Only</p>
             </div>
+            
             <div id="admin-panel" class="admin-form" style="display: none;">
-                <div class="admin-user-info">
-                    <img id="admin-avatar" src="" alt="Admin">
-                    <span id="admin-name"></span>
-                    <button class="btn btn-small btn-logout" id="logout-btn">Logout</button>
+                <!-- Logged In User Card -->
+                <div class="admin-user-card">
+                    <div class="admin-user-avatar">
+                        <img id="admin-avatar" src="" alt="Admin">
+                        <span class="online-indicator"></span>
+                    </div>
+                    <div class="admin-user-details">
+                        <span class="admin-badge"><i class="fas fa-crown"></i> ADMIN</span>
+                        <span id="admin-name" class="admin-user-name"></span>
+                    </div>
+                    <button class="btn-logout-new" id="logout-btn">
+                        <i class="fas fa-power-off"></i>
+                    </button>
                 </div>
-                <h3>🎛️ Admin Controls</h3>
-                <p class="admin-instruction">Click on any member's 📷 🎥 🎵 buttons to upload media!</p>
-                <div class="admin-status">
-                    <span class="status-dot active"></span> Admin Mode Active
+                
+                <!-- Control Panel -->
+                <div class="admin-controls-section">
+                    <h3><i class="fas fa-sliders-h"></i> Control Panel</h3>
+                    
+                    <div class="admin-feature-grid">
+                        <div class="admin-feature-item">
+                            <i class="fas fa-image"></i>
+                            <span>Upload PFP</span>
+                        </div>
+                        <div class="admin-feature-item">
+                            <i class="fas fa-camera"></i>
+                            <span>Add Photos</span>
+                        </div>
+                        <div class="admin-feature-item">
+                            <i class="fas fa-music"></i>
+                            <span>Add Music</span>
+                        </div>
+                        <div class="admin-feature-item">
+                            <i class="fas fa-video"></i>
+                            <span>Add Videos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-instruction-box">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Click on any member card's upload buttons to add media!</p>
+                    </div>
+                </div>
+                
+                <!-- Status Bar -->
+                <div class="admin-status-bar">
+                    <div class="status-indicator active">
+                        <span class="status-pulse"></span>
+                        <span class="status-text">Admin Mode Active</span>
+                    </div>
+                    <div class="status-time" id="admin-session-time">Session: Active</div>
                 </div>
             </div>
         </div>
