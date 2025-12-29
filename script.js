@@ -1247,34 +1247,36 @@ function openCloudinaryUpload(member, type) {
     
     console.log('Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    try {
-        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-            if (error) {
-                console.error('Cloudinary upload error:', error);
-                let errorMsg = '❌ Upload failed!';
-                if (error.status === 401) {
-                    errorMsg = '❌ Unauthorized! Check your Cloudinary cloud name and upload preset.';
-                } else if (error.status === 400) {
-                    errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
-                } else if (error.message) {
-                    errorMsg = '❌ ' + error.message;
+    // Small delay to ensure Cloudinary widget is fully ready
+    setTimeout(() => {
+        try {
+            const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    let errorMsg = '❌ Upload failed!';
+                    if (error.status === 401) {
+                        errorMsg = '❌ Unauthorized! Check your Cloudinary cloud name and upload preset.';
+                    } else if (error.status === 400) {
+                        errorMsg = '❌ Invalid request! Check your Cloudinary configuration.';
+                    } else if (error.message) {
+                        errorMsg = '❌ ' + error.message;
+                    }
+                    showToast(errorMsg);
+                    return;
                 }
-                showToast(errorMsg);
-                return;
-            }
 
-            if (result.event === 'success') {
-                const url = result.info.secure_url;
-                const publicId = result.info.public_id;
-                
-                if (type === 'music') {
-                    // Single music file
-                    saveMediaToFirebase(member, 'music', url, publicId);
-                } else {
-                    // Multiple photos/videos for gallery
-                    saveMediaToFirebaseGallery(member, type, url, publicId);
+                if (result.event === 'success') {
+                    const url = result.info.secure_url;
+                    const publicId = result.info.public_id;
+                    
+                    if (type === 'music') {
+                        // Single music file
+                        saveMediaToFirebase(member, 'music', url, publicId);
+                    } else {
+                        // Multiple photos/videos for gallery
+                        saveMediaToFirebaseGallery(member, type, url, publicId);
+                    }
                 }
-            }
             });
             
             uploadWidget.open();
@@ -1329,22 +1331,24 @@ function openCloudinaryPFPUpload(member) {
     
     console.log('PFP Widget options:', JSON.stringify(widgetOptions, null, 2));
     
-    try {
-        const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
-            if (error) {
-                console.error('Cloudinary upload error:', error);
-                showToast('❌ Upload error: ' + error.message);
-                return;
-            }
-            
-            if (result.event === 'success') {
-                // Get the cropped circular image URL
-                const url = result.info.secure_url;
-                // Apply circular transformation using Cloudinary
-                const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
-                const publicId = result.info.public_id;
-                savePFPToFirebase(member, circularUrl, publicId);
-            }
+    // Small delay to ensure Cloudinary widget is fully ready
+    setTimeout(() => {
+        try {
+            const uploadWidget = cloudinary.createUploadWidget(widgetOptions, (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    showToast('❌ Upload error: ' + error.message);
+                    return;
+                }
+                
+                if (result.event === 'success') {
+                    // Get the cropped circular image URL
+                    const url = result.info.secure_url;
+                    // Apply circular transformation using Cloudinary
+                    const circularUrl = url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,r_max/');
+                    const publicId = result.info.public_id;
+                    savePFPToFirebase(member, circularUrl, publicId);
+                }
             });
             
             uploadWidget.open();
