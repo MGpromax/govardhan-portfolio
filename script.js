@@ -2225,23 +2225,45 @@ function initAudioTrimmer() {
     const editorBack = document.getElementById('editor-back');
     const saveTrim = document.getElementById('save-trim');
     
-    if (!fileInput) return;
+    console.log('🎵 Audio Trimmer Init - fileInput:', !!fileInput, 'addSongBtn:', !!addSongBtn);
     
-    // Add Song button
+    if (!fileInput) {
+        console.error('❌ music-file-input not found!');
+        return;
+    }
+    
+    // Add Song button - IMPORTANT: Use direct click handler
     if (addSongBtn) {
-        addSongBtn.addEventListener('click', () => {
+        console.log('🎵 Adding click listener to Add Song button');
+        addSongBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎵 Add Song clicked! Triggering file input...');
             fileInput.click();
-        });
+        };
+    } else {
+        console.error('❌ add-song-btn not found!');
     }
     
     // File selection - add to playlist
-    fileInput.addEventListener('change', async (e) => {
+    fileInput.onchange = async function(e) {
+        console.log('🎵 File selected!', e.target.files);
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            console.log('🎵 No file selected');
+            return;
+        }
         
-        // Validate file
-        if (!file.type.startsWith('audio/')) {
+        console.log('🎵 Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
+        
+        // Validate file - be more lenient with type checking
+        const validTypes = ['audio/', 'video/mp4', 'video/mpeg'];
+        const isValidType = validTypes.some(type => file.type.startsWith(type)) || 
+                           file.name.match(/\.(mp3|wav|ogg|m4a|aac|mp4|flac|wma)$/i);
+        
+        if (!isValidType) {
             showToast('❌ Please select an audio file!');
+            console.error('Invalid file type:', file.type);
             fileInput.value = '';
             return;
         }
@@ -2254,11 +2276,13 @@ function initAudioTrimmer() {
         
         // Add to playlist
         try {
+            showToast('⏳ Loading audio...');
             const audioUrl = URL.createObjectURL(file);
             const tempAudio = new Audio(audioUrl);
             
-            tempAudio.addEventListener('loadedmetadata', () => {
+            tempAudio.onloadedmetadata = function() {
                 const duration = tempAudio.duration;
+                console.log('🎵 Audio loaded, duration:', duration);
                 
                 playlist.push({
                     file: file,
@@ -2273,13 +2297,19 @@ function initAudioTrimmer() {
                 renderPlaylist();
                 showToast(`✅ Added: ${file.name}`);
                 fileInput.value = '';
-            });
+            };
+            
+            tempAudio.onerror = function(err) {
+                console.error('Audio load error:', err);
+                showToast('❌ Could not load audio file!');
+                fileInput.value = '';
+            };
         } catch (err) {
             console.error('Audio processing error:', err);
             showToast('❌ Could not process audio!');
             fileInput.value = '';
         }
-    });
+    };
     
     // Close handlers
     const closeTrimmer = () => {
