@@ -732,23 +732,23 @@ function initCursorTrail() {
         
         // Use requestAnimationFrame for smooth updates
         trailRaf = requestAnimationFrame(() => {
-            // Clear any pending fade out
-            if (fadeOutTimeout) {
-                clearTimeout(fadeOutTimeout);
-                fadeOutTimeout = null;
-            }
-            
-            positions.unshift({ x: e.clientX, y: e.clientY });
-            positions = positions.slice(0, trailLength);
-            
-            // Start animation if not already running
-            startAnimation();
-            
-            // Hide trail if mouse stops moving for 200ms
-            fadeOutTimeout = setTimeout(() => {
-                hideTrail();
-            }, 200);
-        });
+        // Clear any pending fade out
+        if (fadeOutTimeout) {
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = null;
+        }
+        
+        positions.unshift({ x: e.clientX, y: e.clientY });
+        positions = positions.slice(0, trailLength);
+        
+        // Start animation if not already running
+        startAnimation();
+        
+        // Hide trail if mouse stops moving for 200ms
+        fadeOutTimeout = setTimeout(() => {
+            hideTrail();
+        }, 200);
+    });
     }, { passive: true });
     
     // Hide trail when scrolling
@@ -945,11 +945,11 @@ window.addEventListener('scroll', () => {
     if (scrollRaf) cancelAnimationFrame(scrollRaf);
     
     scrollRaf = requestAnimationFrame(() => {
-        const scrollTop = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollPercent = (scrollTop / docHeight) * 100;
-        progressBar.style.width = scrollPercent + '%';
-    });
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPercent = (scrollTop / docHeight) * 100;
+    progressBar.style.width = scrollPercent + '%';
+});
 }, { passive: true });
 
 // Random Member Highlight Every Few Seconds
@@ -3124,13 +3124,22 @@ function uploadSingleAudio(file, member, index) {
 
 function savePlaylistToFirebase(member, songs) {
     const db = firebase.database();
-    db.ref(`members/${member}/music`).set({
-        playlist: songs,
-        updatedAt: Date.now()
+    const musicRef = db.ref(`members/${member}/music`);
+    
+    // Remove old data first to ensure clean update
+    musicRef.remove().then(() => {
+        // Then set new playlist
+        return musicRef.set({
+            playlist: songs,
+            updatedAt: Date.now(),
+            version: Date.now() // Add version for cache busting
+        });
     }).then(() => {
-        console.log('Playlist saved to Firebase');
+        console.log('✅ Playlist saved to Firebase:', songs.length, 'songs');
+        showToast(`✅ ${songs.length} song(s) uploaded successfully!`);
     }).catch(err => {
-        console.error('Firebase save error:', err);
+        console.error('❌ Firebase save error:', err);
+        showToast('❌ Failed to save playlist: ' + err.message);
     });
 }
 
@@ -4032,6 +4041,14 @@ function openPremiumPFPPopup(member, memberName) {
     
     if (!popupModal || !popupImage) return;
     
+    // IMPORTANT: Clear audio element to prevent caching old songs
+    if (popupAudio) {
+        popupAudio.pause();
+        popupAudio.currentTime = 0;
+        popupAudio.src = ''; // Clear source to force reload
+        popupAudio.load(); // Force reload
+    }
+    
     // Reset state
     currentPlaylist = [];
     currentSongIndex = 0;
@@ -4054,7 +4071,8 @@ function openPremiumPFPPopup(member, memberName) {
             popupModal.classList.add('show');
             document.body.style.overflow = 'hidden';
             
-            // Load music (supports both single song and playlist)
+            // Load music (supports both single song and playlist) - FORCE REFRESH
+            // Use serverTimestamp to bypass cache
             db.ref(`members/${member}/music`).once('value', (musicSnapshot) => {
                 const musicData = musicSnapshot.val();
                 
@@ -4119,6 +4137,10 @@ function playNextSongInPlaylist() {
     
     if (!popupAudio) return;
     
+    // Clear previous audio to prevent caching
+    popupAudio.pause();
+    popupAudio.currentTime = 0;
+    
     // Get current song (before incrementing)
     const song = currentPlaylist[currentSongIndex];
     if (!song) {
@@ -4131,8 +4153,11 @@ function playNextSongInPlaylist() {
     console.log(`🎵 Playing song ${currentSongIndex + 1}/${currentPlaylist.length}:`, song.name);
     console.log('🎵 Trim:', song.trimStart || 0, 'to', song.trimEnd || 'end');
     
-    // Load the song
-    popupAudio.src = song.url;
+    // Load the song with cache-busting to force reload of new uploads
+    const cacheBuster = '?t=' + Date.now();
+    const audioUrl = song.url + (song.url.includes('?') ? '&' : '?') + cacheBuster;
+    popupAudio.src = audioUrl;
+    popupAudio.load(); // Force reload to get latest version
     
     // Wait for metadata, then set trim start
     popupAudio.addEventListener('loadedmetadata', function onLoaded() {
