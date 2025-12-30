@@ -4557,6 +4557,9 @@ function playNextSongInPlaylist() {
                             rotatingContainer.style.cursor = '';
                             rotatingContainer.removeEventListener('click', onClick);
                             
+                            // Initialize audio visualizer for sound waves
+                            initAudioVisualizer(popupAudio);
+                            
                             // Set up trim check after manual play
                             setupTrimCheck(song, popupAudio);
                         });
