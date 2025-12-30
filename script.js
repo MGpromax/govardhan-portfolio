@@ -4369,6 +4369,9 @@ function initPremiumPFPPopup() {
 let currentPlaylist = [];
 let currentSongIndex = 0;
 let isPlaylistPlaying = false;
+let audioAnalyser = null;
+let audioDataArray = null;
+let animationFrameId = null;
 
 function openPremiumPFPPopup(member, memberName) {
     const popupModal = document.getElementById('pfp-popup-modal');
