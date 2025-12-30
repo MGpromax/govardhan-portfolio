@@ -2449,13 +2449,17 @@ function initAudioTrimmer() {
             }
             
             if (isPlayingPreview) {
-                // If already playing, stop it
-                stopAudioPreview();
-                newPreviewBtn.style.display = 'inline-flex';
-                if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+                // If already playing, PAUSE it (toggles pause/resume)
+                pauseAudioPreview();
             } else {
-                // Start preview
-                playTrimmedPreview();
+                // Start or resume preview
+                if (previewElapsedTime > 0) {
+                    // Resume from where we paused
+                    resumePreviewFromPaused();
+                } else {
+                    // Start fresh preview
+                    playTrimmedPreview();
+                }
                 newPreviewBtn.style.display = 'none';
                 if (trimmerStopPreview) trimmerStopPreview.style.display = 'inline-flex';
             }
@@ -2860,10 +2864,38 @@ async function loadSongWaveform(song) {
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         
-        trimStartTime = song.trimStart;
-        trimEndTime = song.trimEnd;
+        // IMPORTANT: Reset trim times to song's saved values (or full duration if not trimmed)
+        // This ensures when editing again, it shows the correct trim positions
+        if (song.trimStart !== undefined && song.trimStart !== null) {
+            trimStartTime = Math.max(0, Math.min(song.trimStart, audioBuffer.duration));
+        } else {
+            trimStartTime = 0;
+        }
+        
+        if (song.trimEnd !== undefined && song.trimEnd !== null && song.trimEnd > 0) {
+            trimEndTime = Math.max(trimStartTime + 0.1, Math.min(song.trimEnd, audioBuffer.duration));
+        } else {
+            trimEndTime = audioBuffer.duration;
+        }
+        
+        // Ensure play/pause buttons are visible and in correct state
+        const trimmerPlay = document.getElementById('trimmer-play');
+        const trimmerPause = document.getElementById('trimmer-pause');
+        const trimmerAudio = document.getElementById('trimmer-audio');
+        
+        if (trimmerPlay) trimmerPlay.style.display = 'inline-flex';
+        if (trimmerPause) trimmerPause.style.display = 'none';
+        
+        // Stop any playing audio and reset
+        if (trimmerAudio) {
+            trimmerAudio.pause();
+            trimmerAudio.currentTime = 0;
+        }
+        stopAudioPreview();
+        stopPlayheadTracking();
         
         drawWaveform();
+        updateTrimVisuals();
         updateTrimDisplay();
     } catch (err) {
         console.error('Waveform error:', err);
@@ -3859,6 +3891,44 @@ function formatTime(seconds, precise = false) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function resumePreviewFromPaused() {
+    if (!audioContext || !audioBuffer) return;
+    
+    const duration = trimEndTime - trimStartTime;
+    const remaining = duration - previewElapsedTime;
+    
+    if (remaining <= 0) {
+        // Already finished, restart
+        previewElapsedTime = 0;
+        playTrimmedPreview();
+        return;
+    }
+    
+    // Resume from where we paused
+    audioSource = audioContext.createBufferSource();
+    audioSource.buffer = audioBuffer;
+    audioSource.connect(audioContext.destination);
+    audioSource.start(0, trimStartTime + previewElapsedTime, remaining);
+    
+    isPlayingPreview = true;
+    
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+    
+    if (trimmerPreview) trimmerPreview.style.display = 'none';
+    if (trimmerStopPreview) trimmerStopPreview.style.display = 'inline-flex';
+    
+    startPreviewPlayheadTracking();
+    
+    audioSource.onended = () => {
+        isPlayingPreview = false;
+        previewElapsedTime = 0; // Reset
+        stopPreviewPlayheadTracking();
+        if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+        if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+    };
+}
+
 function playTrimmedPreview() {
     if (!audioContext || !audioBuffer) {
         showToast('❌ No audio loaded');
@@ -3877,6 +3947,7 @@ function playTrimmedPreview() {
     }
     
     stopAudioPreview();
+    previewElapsedTime = 0; // Reset elapsed time
     
     const trimmerPreview = document.getElementById('trimmer-preview');
     const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
@@ -3895,8 +3966,84 @@ function playTrimmedPreview() {
     const duration = (trimEndTime - trimStartTime).toFixed(1);
     showToast(`🎵 Playing preview (${duration}s)...`);
     
+    // Start preview playhead tracking
+    startPreviewPlayheadTracking();
+    
     audioSource.onended = () => {
         isPlayingPreview = false;
+        stopPreviewPlayheadTracking();
+        if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+        if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+    };
+}
+
+// Pause preview (can resume)
+let previewPausedAt = 0;
+let previewElapsedTime = 0;
+
+function pauseAudioPreview() {
+    if (!isPlayingPreview || !audioSource) return;
+    
+    // Stop the audio source
+    if (audioSource) {
+        try {
+            audioSource.stop();
+        } catch (e) {
+            // Already stopped
+        }
+        audioSource = null;
+    }
+    
+    // Record elapsed time for resume
+    if (previewStartTime) {
+        previewElapsedTime += (Date.now() - previewStartTime) / 1000;
+    }
+    
+    isPlayingPreview = false;
+    stopPreviewPlayheadTracking();
+    
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+    
+    if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
+    if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+    
+    showToast('⏸️ Preview paused');
+}
+
+function resumePreviewFromPaused() {
+    if (!audioContext || !audioBuffer) return;
+    
+    const duration = trimEndTime - trimStartTime;
+    const remaining = duration - previewElapsedTime;
+    
+    if (remaining <= 0) {
+        // Already finished, restart
+        previewElapsedTime = 0;
+        playTrimmedPreview();
+        return;
+    }
+    
+    // Resume from where we paused
+    audioSource = audioContext.createBufferSource();
+    audioSource.buffer = audioBuffer;
+    audioSource.connect(audioContext.destination);
+    audioSource.start(0, trimStartTime + previewElapsedTime, remaining);
+    
+    isPlayingPreview = true;
+    
+    const trimmerPreview = document.getElementById('trimmer-preview');
+    const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
+    
+    if (trimmerPreview) trimmerPreview.style.display = 'none';
+    if (trimmerStopPreview) trimmerStopPreview.style.display = 'inline-flex';
+    
+    startPreviewPlayheadTracking();
+    
+    audioSource.onended = () => {
+        isPlayingPreview = false;
+        previewElapsedTime = 0; // Reset
+        stopPreviewPlayheadTracking();
         if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
         if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
     };
@@ -3912,12 +4059,65 @@ function stopAudioPreview() {
         audioSource = null;
     }
     isPlayingPreview = false;
+    previewElapsedTime = 0; // Reset elapsed time
+    previewPausedAt = 0;
+    stopPreviewPlayheadTracking();
     
     // Update button states
     const trimmerPreview = document.getElementById('trimmer-preview');
     const trimmerStopPreview = document.getElementById('trimmer-stop-preview');
     if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
     if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
+}
+
+// Preview playhead tracking
+let previewStartTime = 0;
+let previewPlayheadInterval = null;
+
+function startPreviewPlayheadTracking() {
+    if (previewPlayheadInterval) clearInterval(previewPlayheadInterval);
+    previewStartTime = Date.now();
+    
+    const playhead = document.getElementById('trim-playhead');
+    
+    if (!playhead || !audioBuffer) return;
+    
+    const duration = trimEndTime - trimStartTime;
+    const totalDuration = audioBuffer.duration;
+    
+    previewPlayheadInterval = setInterval(() => {
+        if (!isPlayingPreview) {
+            stopPreviewPlayheadTracking();
+            return;
+        }
+        
+        const elapsed = (Date.now() - previewStartTime) / 1000 + previewElapsedTime; // seconds
+        const progress = Math.min(elapsed / duration, 1); // 0 to 1
+        
+        // Calculate position on waveform
+        const currentTime = trimStartTime + elapsed;
+        const percent = Math.min((currentTime / totalDuration) * 100, 100);
+        
+        playhead.style.left = percent + '%';
+        playhead.style.display = 'block';
+        
+        // Stop tracking if reached end
+        if (elapsed >= duration) {
+            stopPreviewPlayheadTracking();
+        }
+    }, 50); // Update every 50ms for smooth tracking
+}
+
+function stopPreviewPlayheadTracking() {
+    if (previewPlayheadInterval) {
+        clearInterval(previewPlayheadInterval);
+        previewPlayheadInterval = null;
+    }
+    // Don't hide playhead if we're paused - keep it visible
+    if (!isPlayingPreview && previewElapsedTime <= 0) {
+        const playhead = document.getElementById('trim-playhead');
+        if (playhead) playhead.style.display = 'none';
+    }
 }
 
 // Upload audio to Cloudinary
