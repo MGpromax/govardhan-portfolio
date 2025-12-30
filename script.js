@@ -4242,12 +4242,19 @@ function openPremiumPFPPopup(member, memberName) {
     
     if (!popupModal || !popupImage) return;
     
-    // IMPORTANT: Clear audio element to prevent caching old songs
+    // IMPORTANT: Aggressively clear audio element to prevent caching old songs
     if (popupAudio) {
         popupAudio.pause();
         popupAudio.currentTime = 0;
-        popupAudio.src = ''; // Clear source to force reload
+        popupAudio.removeAttribute('src'); // Remove src attribute completely
+        popupAudio.src = ''; // Clear source
         popupAudio.load(); // Force reload
+        
+        // Clear all event listeners by cloning
+        const newAudio = popupAudio.cloneNode(true);
+        popupAudio.parentNode.replaceChild(newAudio, popupAudio);
+        
+        console.log('🔄 Audio element cleared and reset for fresh load');
     }
     
     // Reset state
@@ -4273,15 +4280,28 @@ function openPremiumPFPPopup(member, memberName) {
             document.body.style.overflow = 'hidden';
             
             // Load music (supports both single song and playlist) - FORCE REFRESH
-            // Use serverTimestamp to bypass cache
-            db.ref(`members/${member}/music`).once('value', (musicSnapshot) => {
+            // Add cache-busting query parameter to Firebase read
+            const musicRef = db.ref(`members/${member}/music`);
+            musicRef.once('value', (musicSnapshot) => {
                 const musicData = musicSnapshot.val();
+                
+                console.log('🎵 Loaded music data from Firebase:', musicData);
                 
                 if (musicData) {
                     // Check if it's a playlist or single song
                     if (musicData.playlist && Array.isArray(musicData.playlist)) {
-                        // Playlist format
-                        currentPlaylist = musicData.playlist.sort((a, b) => a.order - b.order);
+                        // Playlist format - add cache-busting to each URL
+                        currentPlaylist = musicData.playlist.sort((a, b) => a.order - b.order).map(song => {
+                            // Add cache-busting to each song URL
+                            const baseUrl = song.url.split('?')[0];
+                            const timestamp = Date.now();
+                            const random = Math.random().toString(36).substring(7);
+                            return {
+                                ...song,
+                                url: `${baseUrl}?t=${timestamp}&r=${random}&v=${musicData.version || timestamp}`
+                            };
+                        });
+                        
                         if (currentPlaylist.length > 0) {
                             if (noMusicEl) noMusicEl.style.display = 'none';
                             // Auto-play the playlist
@@ -4290,9 +4310,14 @@ function openPremiumPFPPopup(member, memberName) {
                             if (noMusicEl) noMusicEl.style.display = 'block';
                         }
                     } else if (musicData.url) {
-                        // Single song format (backwards compatible)
+                        // Single song format (backwards compatible) - add cache-busting
+                        const baseUrl = musicData.url.split('?')[0];
+                        const timestamp = Date.now();
+                        const random = Math.random().toString(36).substring(7);
+                        const cacheBustedUrl = `${baseUrl}?t=${timestamp}&r=${random}&v=${musicData.uploadedAt || timestamp}`;
+                        
                         currentPlaylist = [{ 
-                            url: musicData.url, 
+                            url: cacheBustedUrl, 
                             name: 'Song',
                             trimStart: 0,
                             trimEnd: 0
@@ -4338,9 +4363,12 @@ function playNextSongInPlaylist() {
     
     if (!popupAudio) return;
     
-    // Clear previous audio to prevent caching
+    // AGGRESSIVELY clear previous audio to prevent caching
     popupAudio.pause();
     popupAudio.currentTime = 0;
+    popupAudio.removeAttribute('src'); // Remove src completely
+    popupAudio.src = '';
+    popupAudio.load();
     
     // Get current song (before incrementing)
     const song = currentPlaylist[currentSongIndex];
@@ -4354,20 +4382,31 @@ function playNextSongInPlaylist() {
     console.log(`🎵 Playing song ${currentSongIndex + 1}/${currentPlaylist.length}:`, song.name);
     console.log('🎵 Trim:', song.trimStart || 0, 'to', song.trimEnd || 'end');
     
-    // Load the song with cache-busting to force reload of new uploads
-    const cacheBuster = '?t=' + Date.now();
-    const audioUrl = song.url + (song.url.includes('?') ? '&' : '?') + cacheBuster;
-    popupAudio.src = audioUrl;
-    popupAudio.load(); // Force reload to get latest version
+    // AGGRESSIVE cache-busting - remove existing params and add multiple new ones
+    let audioUrl = song.url.split('?')[0]; // Remove any existing query params
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    audioUrl += `?t=${timestamp}&r=${random}&v=${timestamp}&cb=${timestamp}`;
     
-    // Wait for metadata, then set trim start
-    popupAudio.addEventListener('loadedmetadata', function onLoaded() {
-        if (song.trimStart && song.trimStart > 0) {
-            popupAudio.currentTime = song.trimStart;
-        }
+    console.log('🎵 Loading fresh audio (cache-busted):', audioUrl);
+    
+    // Small delay to ensure audio element is fully cleared
+    setTimeout(() => {
+        popupAudio.src = audioUrl;
+        popupAudio.load(); // Force reload to get latest version
         
-        // Auto-play after setting currentTime
-        const playPromise = popupAudio.play().catch(err => {
+        // Wait for metadata, then set trim start
+        // Use one-time listener to prevent duplicates
+        const onLoadedHandler = function onLoaded() {
+            // Remove listener after first call
+            popupAudio.removeEventListener('loadedmetadata', onLoadedHandler);
+            
+            if (song.trimStart && song.trimStart > 0) {
+                popupAudio.currentTime = song.trimStart;
+            }
+            
+            // Auto-play after setting currentTime
+            const playPromise = popupAudio.play().catch(err => {
             console.error('❌ Autoplay prevented or error:', err);
             // Try again after user interaction hint
             if (rotatingContainer) {
