@@ -4626,6 +4626,9 @@ function togglePFPMusic() {
             rotatingContainer.classList.add('playing');
             musicToggle.classList.add('playing');
             
+            // Initialize audio visualizer for sound waves
+            initAudioVisualizer(popupAudio);
+            
             // Show current song info if playlist
             if (currentPlaylist.length > 1) {
                 musicToggle.innerHTML = `<i class="fas fa-pause"></i><span>Playing ${currentSongIndex + 1}/${currentPlaylist.length}</span>`;
