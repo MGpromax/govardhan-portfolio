@@ -4570,6 +4570,9 @@ function playNextSongInPlaylist() {
                     if (rotatingContainer) rotatingContainer.classList.add('playing');
                     console.log('🎵 Music started, rotation should begin');
                     
+                    // Initialize audio visualizer for sound waves
+                    initAudioVisualizer(popupAudio);
+                    
                     // Set up trim check after playback starts
                     setupTrimCheck(song, popupAudio);
                 });
@@ -4649,6 +4652,9 @@ function closePremiumPFPPopup() {
     const popupAudio = document.getElementById('pfp-popup-audio');
     const rotatingContainer = document.getElementById('pfp-rotating-container');
     
+    // Stop audio visualizer
+    stopAudioVisualizer();
+    
     // Stop playlist
     isPlaylistPlaying = false;
     currentPlaylist = [];
@@ -4671,6 +4677,78 @@ function closePremiumPFPPopup() {
         rotatingContainer.style.cursor = '';
         rotatingContainer.onclick = null;
     }
+}
+
+// Initialize audio visualizer for sound waves
+function initAudioVisualizer(audioElement) {
+    try {
+        // Stop existing visualizer
+        stopAudioVisualizer();
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaElementSource(audioElement);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256; // Lower for smoother animation
+        analyser.smoothingTimeConstant = 0.8;
+        
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        
+        audioAnalyser = analyser;
+        audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+        
+        // Start animation loop
+        animateSoundWaves();
+    } catch (err) {
+        console.error('Audio visualizer error:', err);
+        // Fallback: just use CSS animations
+    }
+}
+
+// Animate sound waves based on audio frequency
+function animateSoundWaves() {
+    if (!audioAnalyser || !isPlaylistPlaying) {
+        return;
+    }
+    
+    audioAnalyser.getByteFrequencyData(audioDataArray);
+    
+    // Calculate average frequency (bass + mid range)
+    let sum = 0;
+    const bassRange = Math.min(10, audioDataArray.length);
+    for (let i = 0; i < bassRange; i++) {
+        sum += audioDataArray[i];
+    }
+    const averageFrequency = sum / bassRange;
+    
+    // Normalize to 0-1 range (0-255 -> 0-1)
+    const intensity = averageFrequency / 255;
+    
+    // Update sound wave rings intensity
+    const soundWaves = document.getElementById('pfp-sound-waves');
+    if (soundWaves) {
+        const rings = soundWaves.querySelectorAll('.sound-wave-ring');
+        rings.forEach((ring, index) => {
+            // Vary intensity based on ring index
+            const ringIntensity = Math.max(0.3, intensity * (1 - index * 0.15));
+            const scale = 1 + (intensity * 0.3); // Slight scale boost
+            
+            ring.style.opacity = ringIntensity;
+            ring.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        });
+    }
+    
+    animationFrameId = requestAnimationFrame(animateSoundWaves);
+}
+
+// Stop audio visualizer
+function stopAudioVisualizer() {
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    audioAnalyser = null;
+    audioDataArray = null;
 }
 
 /* ============================================
