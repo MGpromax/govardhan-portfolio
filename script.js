@@ -3089,39 +3089,161 @@ function audioBufferToWav(buffer) {
     return new Blob([arrayBuffer], { type: 'audio/wav' });
 }
 
+// Create trimmed audio blob from song
+async function createTrimmedAudioBlob(song) {
+    try {
+        // Load audio first to get actual duration
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch(song.url);
+        const arrayBuffer = await response.arrayBuffer();
+        const fullAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        
+        // Get trim settings with actual duration
+        const trimStart = song.trimStart || 0;
+        const trimEnd = song.trimEnd || fullAudioBuffer.duration;
+        const actualDuration = fullAudioBuffer.duration;
+        
+        // Check if song has trim settings (start > 0 or end < full duration)
+        const hasTrim = (trimStart > 0.1 || (trimEnd < actualDuration - 0.1));
+        
+        if (!hasTrim) {
+            // No meaningful trim, return original file
+            audioCtx.close();
+            return song.file;
+        }
+        
+        console.log(`✂️ Creating trimmed audio for "${song.name}": ${trimStart.toFixed(2)}s to ${trimEnd.toFixed(2)}s (from ${actualDuration.toFixed(2)}s)`);
+        
+        const trimDuration = trimEnd - trimStart;
+        
+        // Calculate sample positions
+        const sampleRate = fullAudioBuffer.sampleRate;
+        const startSample = Math.floor(trimStart * sampleRate);
+        const endSample = Math.floor(trimEnd * sampleRate);
+        const trimmedLength = endSample - startSample;
+        
+        // Create buffer for trimmed portion
+        const numberOfChannels = fullAudioBuffer.numberOfChannels;
+        const trimmedBuffer = audioCtx.createBuffer(
+            numberOfChannels,
+            trimmedLength,
+            sampleRate
+        );
+        
+        // Copy only the trimmed portion
+        for (let channel = 0; channel < numberOfChannels; channel++) {
+            const sourceData = fullAudioBuffer.getChannelData(channel);
+            const trimmedData = trimmedBuffer.getChannelData(channel);
+            
+            for (let i = 0; i < trimmedLength; i++) {
+                const sourceIndex = startSample + i;
+                if (sourceIndex < sourceData.length) {
+                    trimmedData[i] = sourceData[sourceIndex];
+                }
+            }
+        }
+        
+        // Convert to WAV blob
+        const trimmedBlob = audioBufferToWav(trimmedBuffer);
+        audioCtx.close();
+        
+        console.log(`✅ Trimmed audio created: ${trimDuration.toFixed(2)}s (${trimmedLength} samples)`);
+        return trimmedBlob;
+    } catch (err) {
+        console.error('Error creating trimmed audio:', err);
+        // Fallback to original file if trimming fails
+        return song.file;
+    }
+}
+
 async function uploadPlaylist() {
-    if (playlist.length === 0 || !currentTrimmerMember) return;
+    if (playlist.length === 0 || !currentTrimmerMember) {
+        showToast('❌ No songs in playlist!');
+        return;
+    }
     
-    showToast('⏳ Uploading playlist...');
+    // Confirm upload with trim details
+    const trimSummary = playlist.map((song, i) => {
+        const hasTrim = (song.trimStart > 0 || (song.trimEnd && song.trimEnd < song.duration));
+        const duration = (song.trimEnd - (song.trimStart || 0)).toFixed(1);
+        return `${i + 1}. "${song.name}" ${hasTrim ? `(✂️ Trimmed: ${duration}s)` : '(Full)'}`;
+    }).join('\n');
+    
+    const confirmMsg = `Upload ${playlist.length} song(s)?\n\n${trimSummary}\n\nTrimmed songs will upload as trimmed audio files.`;
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    showToast('⏳ Uploading playlist with trim settings...');
     
     const uploadedSongs = [];
+    let successCount = 0;
+    let trimmedCount = 0;
     
     for (let i = 0; i < playlist.length; i++) {
         const song = playlist[i];
-        showToast(`⏳ Uploading song ${i + 1}/${playlist.length}...`);
+        const hasTrim = (song.trimStart > 0 || (song.trimEnd && song.trimEnd < song.duration));
+        const trimInfo = hasTrim ? ` (✂️ Trimmed: ${formatTime(song.trimEnd - song.trimStart)})` : ' (Full)';
+        
+        showToast(`⏳ Uploading song ${i + 1}/${playlist.length}: ${song.name}${trimInfo}...`);
         
         try {
-            const uploadedUrl = await uploadSingleAudio(song.file, currentTrimmerMember, i);
+            // Create trimmed audio blob if song is trimmed
+            let audioFile = song.file;
+            if (hasTrim) {
+                console.log(`📦 Creating trimmed audio for song ${i + 1}: "${song.name}"`);
+                audioFile = await createTrimmedAudioBlob(song);
+                trimmedCount++;
+            }
+            
+            // Upload the audio file (trimmed or original)
+            const uploadedUrl = await uploadSingleAudio(audioFile, currentTrimmerMember, i);
+            
             if (uploadedUrl) {
                 uploadedSongs.push({
                     url: uploadedUrl,
                     name: song.name,
-                    duration: song.trimEnd - song.trimStart,
-                    trimStart: song.trimStart,
-                    trimEnd: song.trimEnd,
-                    order: i
+                    duration: (song.trimEnd || song.duration || 0) - (song.trimStart || 0),
+                    trimStart: song.trimStart || 0,
+                    trimEnd: song.trimEnd || song.duration || 0,
+                    order: i,
+                    trimmed: hasTrim
                 });
+                successCount++;
+                console.log(`✅ Uploaded song ${i + 1}/${playlist.length}: "${song.name}"${trimInfo}`);
+            } else {
+                console.error(`❌ Failed to upload song ${i + 1}: "${song.name}"`);
+                showToast(`⚠️ Failed to upload "${song.name}". Continuing...`);
             }
         } catch (err) {
-            console.error('Upload error for song', i, err);
+            console.error(`❌ Upload error for song ${i + 1} ("${song.name}"):`, err);
+            showToast(`⚠️ Error uploading "${song.name}": ${err.message}. Continuing...`);
         }
     }
     
     if (uploadedSongs.length > 0) {
-        savePlaylistToFirebase(currentTrimmerMember, uploadedSongs);
-        showToast(`✅ Uploaded ${uploadedSongs.length} song(s)!`);
+        // Save to Firebase
+        await savePlaylistToFirebase(currentTrimmerMember, uploadedSongs);
+        
+        // Show detailed success message
+        const successMsg = `✅ Successfully uploaded ${successCount} song(s)!\n` +
+            (trimmedCount > 0 ? `✂️ ${trimmedCount} song(s) uploaded as trimmed audio\n` : '') +
+            `📝 Trim settings saved: All songs will play with correct trim positions`;
+        
+        showToast(successMsg);
+        alert(successMsg);
+        
+        // Close trimmer modal
+        const trimmerModal = document.getElementById('trimmer-modal');
+        if (trimmerModal) {
+            trimmerModal.classList.remove('show');
+        }
+        
+        // Reload member cards to show updated music
+        loadMembersData();
     } else {
-        showToast('❌ Upload failed!');
+        showToast('❌ All uploads failed!');
+        alert('❌ Failed to upload any songs. Please check console for errors.');
     }
 }
 
@@ -3154,25 +3276,42 @@ function uploadSingleAudio(file, member, index) {
     });
 }
 
-function savePlaylistToFirebase(member, songs) {
+async function savePlaylistToFirebase(member, songs) {
     const db = firebase.database();
     const musicRef = db.ref(`members/${member}/music`);
     
-    // Remove old data first to ensure clean update
-    musicRef.remove().then(() => {
-        // Then set new playlist
-        return musicRef.set({
+    try {
+        // Remove old data first to ensure clean update
+        await musicRef.remove();
+        
+        // Then set new playlist with detailed trim information
+        const playlistData = {
             playlist: songs,
             updatedAt: Date.now(),
-            version: Date.now() // Add version for cache busting
+            version: Date.now(), // Add version for cache busting
+            totalSongs: songs.length,
+            trimmedSongs: songs.filter(s => s.trimmed).length
+        };
+        
+        await musicRef.set(playlistData);
+        
+        console.log('✅ Playlist saved to Firebase:', {
+            totalSongs: songs.length,
+            trimmedSongs: playlistData.trimmedSongs,
+            songs: songs.map(s => ({
+                name: s.name,
+                trimStart: s.trimStart,
+                trimEnd: s.trimEnd,
+                duration: s.duration,
+                trimmed: s.trimmed
+            }))
         });
-    }).then(() => {
-        console.log('✅ Playlist saved to Firebase:', songs.length, 'songs');
-        showToast(`✅ ${songs.length} song(s) uploaded successfully!`);
-    }).catch(err => {
+        
+        return true;
+    } catch (err) {
         console.error('❌ Firebase save error:', err);
-        showToast('❌ Failed to save playlist: ' + err.message);
-    });
+        throw err;
+    }
 }
 
 function drawWaveform() {
