@@ -514,32 +514,8 @@ function initCardEffects() {
         });
     });
 
-    // Optimized tilt effect with requestAnimationFrame (smooth, no lag)
-    cards.forEach(card => {
-        let tiltRaf = null;
-        card.addEventListener('mousemove', (e) => {
-            // Cancel previous frame if pending
-            if (tiltRaf) cancelAnimationFrame(tiltRaf);
-            
-            // Use requestAnimationFrame for smooth 60fps updates
-            tiltRaf = requestAnimationFrame(() => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / 25;
-                const rotateY = (centerX - x) / 25;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
-            });
-        });
-
-        card.addEventListener('mouseleave', () => {
-            if (tiltRaf) cancelAnimationFrame(tiltRaf);
-            card.style.transform = '';
-        });
-    });
+    // DISABLED tilt effect - causes too much lag, using simple hover only
+    // Cards now use CSS-only hover effects for better performance
 }
 
 /* ============================================
