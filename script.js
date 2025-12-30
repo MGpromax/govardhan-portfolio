@@ -4436,8 +4436,12 @@ function playNextSongInPlaylist() {
             });
         }
         
-        popupAudio.removeEventListener('loadedmetadata', onLoaded);
-    }, { once: true });
+        popupAudio.removeEventListener('loadedmetadata', onLoadedHandler);
+    };
+    
+    // Add the listener with once option
+    popupAudio.addEventListener('loadedmetadata', onLoadedHandler, { once: true });
+    }, 100);
 }
 
 // Helper function to set up trim end checking
