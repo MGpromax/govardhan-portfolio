@@ -4398,49 +4398,44 @@ function playNextSongInPlaylist() {
         // Wait for metadata, then set trim start
         // Use one-time listener to prevent duplicates
         const onLoadedHandler = function onLoaded() {
-            // Remove listener after first call
-            popupAudio.removeEventListener('loadedmetadata', onLoadedHandler);
-            
             if (song.trimStart && song.trimStart > 0) {
                 popupAudio.currentTime = song.trimStart;
             }
             
             // Auto-play after setting currentTime
             const playPromise = popupAudio.play().catch(err => {
-            console.error('❌ Autoplay prevented or error:', err);
-            // Try again after user interaction hint
-            if (rotatingContainer) {
-                rotatingContainer.style.cursor = 'pointer';
-                rotatingContainer.onclick = function onClick() {
-                    popupAudio.play().then(() => {
-                        isPlaylistPlaying = true;
-                        rotatingContainer.classList.add('playing');
-                        rotatingContainer.style.cursor = '';
-                        rotatingContainer.removeEventListener('click', onClick);
-                        
-                        // Set up trim check after manual play
-                        setupTrimCheck(song, popupAudio);
-                    });
-                };
-            }
-        });
-        
-        if (playPromise) {
-            playPromise.then(() => {
-                isPlaylistPlaying = true;
-                if (rotatingContainer) rotatingContainer.classList.add('playing');
-                console.log('🎵 Music started, rotation should begin');
-                
-                // Set up trim check after playback starts
-                setupTrimCheck(song, popupAudio);
+                console.error('❌ Autoplay prevented or error:', err);
+                // Try again after user interaction hint
+                if (rotatingContainer) {
+                    rotatingContainer.style.cursor = 'pointer';
+                    rotatingContainer.onclick = function onClick() {
+                        popupAudio.play().then(() => {
+                            isPlaylistPlaying = true;
+                            rotatingContainer.classList.add('playing');
+                            rotatingContainer.style.cursor = '';
+                            rotatingContainer.removeEventListener('click', onClick);
+                            
+                            // Set up trim check after manual play
+                            setupTrimCheck(song, popupAudio);
+                        });
+                    };
+                }
             });
-        }
+            
+            if (playPromise) {
+                playPromise.then(() => {
+                    isPlaylistPlaying = true;
+                    if (rotatingContainer) rotatingContainer.classList.add('playing');
+                    console.log('🎵 Music started, rotation should begin');
+                    
+                    // Set up trim check after playback starts
+                    setupTrimCheck(song, popupAudio);
+                });
+            }
+        };
         
-        popupAudio.removeEventListener('loadedmetadata', onLoadedHandler);
-    };
-    
-    // Add the listener with once option
-    popupAudio.addEventListener('loadedmetadata', onLoadedHandler, { once: true });
+        // Add the listener with once option to auto-remove after first call
+        popupAudio.addEventListener('loadedmetadata', onLoadedHandler, { once: true });
     }, 100);
 }
 
