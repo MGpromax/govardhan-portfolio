@@ -3971,6 +3971,7 @@ function playTrimmedPreview() {
     
     audioSource.onended = () => {
         isPlayingPreview = false;
+        previewElapsedTime = 0; // Reset
         stopPreviewPlayheadTracking();
         if (trimmerPreview) trimmerPreview.style.display = 'inline-flex';
         if (trimmerStopPreview) trimmerStopPreview.style.display = 'none';
