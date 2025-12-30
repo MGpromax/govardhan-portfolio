@@ -514,23 +514,29 @@ function initCardEffects() {
         });
     });
 
-    // Simplified tilt effect with throttling
+    // Optimized tilt effect with requestAnimationFrame (smooth, no lag)
     cards.forEach(card => {
+        let tiltRaf = null;
         card.addEventListener('mousemove', (e) => {
-            throttleUpdate(card, () => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / 25; // Reduced intensity
-                const rotateY = (centerX - x) / 25;
+            // Cancel previous frame if pending
+            if (tiltRaf) cancelAnimationFrame(tiltRaf);
             
+            // Use requestAnimationFrame for smooth 60fps updates
+            tiltRaf = requestAnimationFrame(() => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 25;
+                const rotateY = (centerX - x) / 25;
+                
                 card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
             });
         });
 
         card.addEventListener('mouseleave', () => {
+            if (tiltRaf) cancelAnimationFrame(tiltRaf);
             card.style.transform = '';
         });
     });
@@ -734,9 +740,10 @@ function initCursorTrail() {
         }
     }
     
-    // Throttled mousemove handler for better performance
+    // Optimized mousemove handler with requestAnimationFrame (smooth, no lag)
     let lastMoveTime = 0;
-    const throttleDelay = 5; // Smoother updates
+    const throttleDelay = 16; // ~60fps (16ms between frames)
+    let trailRaf = null;
     
     document.addEventListener('mousemove', (e) => {
         const now = Date.now();
@@ -744,23 +751,29 @@ function initCursorTrail() {
         lastMoveTime = now;
         lastMouseMoveTime = now;
         
-        // Clear any pending fade out
-        if (fadeOutTimeout) {
-            clearTimeout(fadeOutTimeout);
-            fadeOutTimeout = null;
-        }
+        // Cancel previous frame if pending
+        if (trailRaf) cancelAnimationFrame(trailRaf);
         
-        positions.unshift({ x: e.clientX, y: e.clientY });
-        positions = positions.slice(0, trailLength);
-        
-        // Start animation if not already running
-        startAnimation();
-        
-        // Hide trail if mouse stops moving for 200ms
-        fadeOutTimeout = setTimeout(() => {
-            hideTrail();
-        }, 200);
-    });
+        // Use requestAnimationFrame for smooth updates
+        trailRaf = requestAnimationFrame(() => {
+            // Clear any pending fade out
+            if (fadeOutTimeout) {
+                clearTimeout(fadeOutTimeout);
+                fadeOutTimeout = null;
+            }
+            
+            positions.unshift({ x: e.clientX, y: e.clientY });
+            positions = positions.slice(0, trailLength);
+            
+            // Start animation if not already running
+            startAnimation();
+            
+            // Hide trail if mouse stops moving for 200ms
+            fadeOutTimeout = setTimeout(() => {
+                hideTrail();
+            }, 200);
+        });
+    }, { passive: true });
     
     // Hide trail when scrolling
     let scrollTimeout = null;
@@ -950,12 +963,18 @@ progressBar.style.cssText = `
 `;
 document.body.appendChild(progressBar);
 
+// Optimized scroll handler with requestAnimationFrame (smooth, no lag)
+let scrollRaf = null;
 window.addEventListener('scroll', () => {
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const scrollPercent = (scrollTop / docHeight) * 100;
-    progressBar.style.width = scrollPercent + '%';
-});
+    if (scrollRaf) cancelAnimationFrame(scrollRaf);
+    
+    scrollRaf = requestAnimationFrame(() => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+        progressBar.style.width = scrollPercent + '%';
+    });
+}, { passive: true });
 
 // Random Member Highlight Every Few Seconds
 function randomHighlight() {
